@@ -1,0 +1,58 @@
+/* ═══════════════════════════════════════════════════════════
+   ARCO EDUCAÇÃO — Design Tokens
+   Preservar estes valores em todas as versões do produto.
+═══════════════════════════════════════════════════════════ */
+:root {
+  /* Cores base */
+  --navy:       #0F1F3D;
+  --navy2:      #162744;
+  --navy3:      #1e305a;
+  --orange:     #E8521A;
+  --orange2:    #F06330;
+  --orange-lt:  #FEF0EB;
+
+  /* Superfícies */
+  --bg:         #F5F4F1;
+  --surface:    #FFFFFF;
+  --surface2:   #FAFAF8;
+
+  /* Bordas */
+  --border:     #E8E6DF;
+  --border2:    #D8D5CC;
+
+  /* Texto */
+  --t1:         #1A1A18;
+  --t2:         #3D3D3A;
+  --t3:         #6B6B66;
+  --t4:         #9E9E98;
+
+  /* Semânticas */
+  --green:      #15803D;
+  --green-lt:   #DCFCE7;
+  --green-dk:   #166534;
+  --amber:      #B45309;
+  --amber-lt:   #FEF3C7;
+  --red:        #B91C1C;
+  --red-lt:     #FEE2E2;
+  --blue:       #1D4ED8;
+  --blue-lt:    #DBEAFE;
+  --blue-dk:    #1e40af;
+  --teal:       #0F766E;
+  --teal-lt:    #CCFBF1;
+
+  /* Shape */
+  --r:          12px;
+  --rsm:        7px;
+
+  /* Tipografia */
+  --f:          'Plus Jakarta Sans', system-ui, sans-serif;
+
+  /* Sombras */
+  --shadow-sm:  0 1px 4px rgba(0,0,0,.06);
+  --shadow-md:  0 3px 12px rgba(0,0,0,.09);
+  --shadow-lg:  0 6px 24px rgba(0,0,0,.12);
+
+  /* Transições */
+  --ease:       cubic-bezier(.4,0,.2,1);
+  --dur:        .16s;
+}
