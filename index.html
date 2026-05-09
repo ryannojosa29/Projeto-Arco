@@ -90,7 +90,7 @@
     </div>
   </div>
   <div class="pb">
-    <div class="g1 g4 mb12">
+    <div class="g1 g-kpi mb12">
       <div class="home-performance-card">
         <div class="performance-header">
           <div class="performance-header-left">
@@ -113,7 +113,7 @@
           <div class="performance-subtitle">Média da rede</div>
           <div class="performance-trend" id="dash-kpi-media-note"></div>
         </div>
-        <div class="performance-link" onclick="goTo('escolas')">Ver desempenho →</div>
+        <div class="performance-link" onclick="goTo('escolas')">Ver desempenho</div>
       </div>
       <div class="kpi kpi-dash">
         <div class="kpi-dash-top">
@@ -123,7 +123,7 @@
         <div class="kpi-val" id="dash-kpi-presenca">—</div>
         <div class="kpi-note" id="dash-kpi-presenca-note"></div>
         <div class="kpi-progress"><div class="kpi-progress-fill" id="dash-kpi-presenca-bar" style="width:0%"></div></div>
-        <div class="kpi-cta" onclick="goTo('alunos')">Ver participação →</div>
+        <div class="kpi-cta" onclick="goTo('alunos')">Ver participação</div>
       </div>
       <div class="kpi kpi-dash">
         <div class="kpi-dash-top">
@@ -134,7 +134,7 @@
         <div class="kpi-note a" id="dash-kpi-criticas-note"></div>
         <div class="kpi-note" id="dash-kpi-criticas-sub"></div>
         <div class="kpi-note kpi-note-hab" id="dash-kpi-criticas-hab"></div>
-        <div class="kpi-cta" onclick="goTo('simulados')">Ver habilidades →</div>
+        <div class="kpi-cta" onclick="goTo('simulados')">Ver habilidades</div>
       </div>
       <div class="kpi kpi-dash">
         <div class="kpi-dash-top">
@@ -144,7 +144,7 @@
         <div class="kpi-val" id="dash-kpi-atencao">—</div>
         <div class="kpi-note" id="dash-kpi-atencao-note"></div>
         <div class="kpi-note" id="dash-kpi-atencao-sub"></div>
-        <div class="kpi-cta" onclick="goTo('alunos')">Ver alunos →</div>
+        <div class="kpi-cta" onclick="goTo('alunos')">Ver alunos</div>
       </div>
     </div>
     <div class="g1 g2 mb12">
@@ -154,7 +154,7 @@
             <div class="card-title">Panorama da rede</div>
             <div class="card-sub">Resumo executivo do desempenho em relação à média Arco.</div>
             <div id="dash-panorama-items"></div>
-            <div class="section-cta" onclick="goTo('escolas')">Ver análise completa →</div>
+            <div class="section-cta" onclick="goTo('escolas')">Ver análise completa</div>
           </div>
           <div class="panorama-deco" aria-hidden="true">
             <svg viewBox="0 0 120 180" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -181,7 +181,7 @@
         <div class="card-title">Prioridades do momento</div>
         <div class="card-sub">Focos que merecem atenção agora.</div>
         <div id="dash-prioridades-items"></div>
-        <div class="section-cta" onclick="goTo('simulados')">Ver todas as prioridades →</div>
+        <div class="section-cta" onclick="goTo('simulados')">Ver todas as prioridades</div>
       </div>
     </div>
     <div class="dash-section-header">
@@ -195,171 +195,229 @@
 
 <!-- ══════════════════════════ PAGE: SIMULADOS ══════════════════════════ -->
 <div class="page hidden" id="page-simulados">
+
+  <!-- HEADER + EXEC STRIP + TABS -->
   <div class="ph">
-    <div class="ph-top" style="margin-bottom:0">
-      <div><div class="ph-title">Simulados</div><div class="ph-sub">Analise a estrutura, comportamento e desempenho do simulado questão por questão.</div></div>
+    <div class="ph-top" style="margin-bottom:12px">
+      <div>
+        <div class="ph-title">Simulados</div>
+        <div class="ph-sub">Analise a aplicação, a qualidade da prova e o comportamento questão por questão.</div>
+      </div>
       <div class="ph-brand">
         <div class="brand-logo"><svg class="brand-arc" viewBox="0 0 22 7" fill="none"><path d="M1 6Q11 1 21 6" stroke="#E8521A" stroke-width="2" stroke-linecap="round" fill="none"/></svg><span class="brand-word">arco</span></div>
         <div class="brand-div"></div>
         <div class="brand-sl">Transformando dados educacionais em <strong>decisões pedagógicas.</strong></div>
       </div>
     </div>
+    <!-- EXECUTIVE KPI STRIP -->
+    <div class="sim-exec-strip">
+      <div class="sim-exec-card">
+        <div class="sec-lbl">Média geral</div>
+        <div class="sec-val" id="exec-media">—</div>
+        <div class="sec-note" id="exec-media-note">—</div>
+      </div>
+      <div class="sec-div"></div>
+      <div class="sim-exec-card">
+        <div class="sec-lbl">Participação</div>
+        <div class="sec-val" id="exec-part">—</div>
+        <div class="sec-note" id="exec-part-note">—</div>
+      </div>
+      <div class="sec-div"></div>
+      <div class="sim-exec-card">
+        <div class="sec-lbl">Questões críticas</div>
+        <div class="sec-val sec-r" id="exec-crit">—</div>
+        <div class="sec-note" id="exec-crit-note">—</div>
+      </div>
+      <div class="sec-div"></div>
+      <div class="sim-exec-card">
+        <div class="sec-lbl">Índice de qualidade</div>
+        <div class="sec-val sec-b" id="exec-iq">—</div>
+        <div class="sec-note" id="exec-iq-note">—</div>
+      </div>
+      <div class="sec-div"></div>
+      <div class="sim-exec-card">
+        <div class="sec-lbl">Habilidade crítica</div>
+        <div class="sec-val sec-sm" id="exec-hab">—</div>
+        <div class="sec-note" id="exec-hab-note">—</div>
+      </div>
+    </div>
+    <!-- TABS -->
+    <div class="tabs">
+      <div class="tab active" data-simtab="anatomia" onclick="switchSimTab('anatomia',this)">Anatomia do simulado</div>
+      <div class="tab" data-simtab="disciplinas" onclick="switchSimTab('disciplinas',this)">Disciplinas</div>
+      <div class="tab" data-simtab="evolucao" onclick="switchSimTab('evolucao',this)">Evolução</div>
+    </div>
   </div>
+
+  <!-- FILTER BAR — apenas simulado -->
   <div class="fbar">
     <div class="fsel">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
       <div>
         <div class="f-label">Simulado</div>
         <select class="fsel-input" id="sel-simulado" onchange="setSimulado(this.value)">
-          <option value="sim1">1º Simulado ENEM 2025</option>
+          <option value="sim5">5º Simulado ENEM 2025</option>
         </select>
       </div>
     </div>
-    <div class="fsel">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
-      <div>
-        <div class="f-label">Disciplina</div>
-        <select class="fsel-input" onchange="setSimDisciplina(this.value)">
-          <option value="Todas">Todas</option>
-          <option value="Física">Física</option>
-          <option value="Química">Química</option>
-          <option value="Matemática">Matemática</option>
-          <option value="Língua Inglesa">Língua Inglesa</option>
-          <option value="Linguagens">Linguagens</option>
-          <option value="C. Humanas">C. Humanas</option>
-        </select>
-      </div>
-    </div>
-    <div class="fsel">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-      <div>
-        <div class="f-label">Turma</div>
-        <select class="fsel-input" onchange="setSimTurma(this.value)">
-          <option value="todas">Todas</option>
-          <option value="turma1">Turma 1</option>
-          <option value="turma2">Turma 2</option>
-          <option value="turma3">Turma 3</option>
-        </select>
-      </div>
-    </div>
+    <div style="flex:1"></div>
     <button class="btn-exp" onclick="gerarPDF()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      Exportar PDF
+      Exportar análise
     </button>
   </div>
-  <div class="pb" style="display:grid;grid-template-columns:1fr 308px;gap:14px;padding-bottom:0;overflow:hidden;flex:1">
-    <div style="overflow-y:auto;padding-bottom:30px">
-      <div class="card mb12">
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px">
-          <div><div class="card-title">Anatomia do simulado</div><div class="card-sub" style="margin-bottom:10px">Clique em uma questão para ver a análise completa.</div></div>
-        </div>
-        <div class="qlegend">
-          <div class="qli"><div class="qldot" style="background:var(--green)"></div>Acima do esperado</div>
-          <div class="qli"><div class="qldot" style="background:var(--amber)"></div>Atenção</div>
-          <div class="qli"><div class="qldot" style="background:var(--red)"></div>Crítica</div>
-          <div class="qli"><div class="qldot" style="background:var(--t4)"></div>Neutra</div>
-        </div>
-        <div class="qgrid" id="q-grid"></div>
-      </div>
-      <div class="g1 g3 mb12">
+
+  <!-- ═══ TAB: ANATOMIA ═══════════════════════════════════════ -->
+  <div class="stc stc-active" id="stc-anatomia">
+    <div class="sim-anat-grid">
+
+      <!-- LEFT: grade de questões + resumo -->
+      <div class="sim-anat-left">
         <div class="card">
-          <div class="card-title mb8">Distribuição por alternativa</div>
-          <div id="sim-dist-chart" style="height:130px"></div>
-          <div class="pnote orange mt12">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            <span class="pnote-text" id="sim-dist-note">Selecione uma questão para ver a análise.</span>
+          <div class="sim-grid-hd">
+            <div class="card-title" style="margin-bottom:0">Grade de questões</div>
+            <div class="sim-legend">
+              <div class="sim-leg-item"><span class="sim-leg-dot" style="background:var(--green)"></span>Acima</div>
+              <div class="sim-leg-item"><span class="sim-leg-dot" style="background:var(--amber)"></span>Atenção</div>
+              <div class="sim-leg-item"><span class="sim-leg-dot" style="background:var(--red)"></span>Crítica</div>
+              <div class="sim-leg-item"><span class="sim-leg-dot" style="background:var(--border2)"></span>Neutra</div>
+            </div>
           </div>
+          <div class="qgrid2" id="q-grid"></div>
         </div>
-        <div class="card">
-          <div class="card-title mb8">Desempenho por turma</div>
-          <div id="sim-turma-chart" style="height:130px"></div>
-          <div class="pnote blue mt12">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-            <span class="pnote-text">Selecione uma questão para comparar turmas.</span>
+        <div class="card" style="margin-top:10px">
+          <div class="card-title mb8">Resumo do simulado</div>
+          <div class="qr-stats mb10">
+            <div class="qr-stat"><div class="qrs-n">48</div><div class="qrs-note">total</div><div class="qrs-lbl">Questões</div></div>
+            <div class="qr-stat sec-r"><div class="qrs-n" id="qr-criticas">—</div><div class="qrs-note" id="qr-criticas-pct">—</div><div class="qrs-lbl">Críticas</div></div>
+            <div class="qr-stat sec-g"><div class="qrs-n" id="qr-acima">—</div><div class="qrs-note" id="qr-acima-pct">—</div><div class="qrs-lbl">Acima</div></div>
+            <div class="qr-stat sec-a"><div class="qrs-n" id="qr-att">—</div><div class="qrs-note" id="qr-att-pct">—</div><div class="qrs-lbl">Atenção</div></div>
           </div>
-        </div>
-        <div class="card">
-          <div class="card-title mb8">Sinais detectados</div>
+          <div class="card-sub-title mb8">Sinais detectados</div>
           <div class="sig-grid" style="grid-template-columns:1fr 1fr">
-            <div class="sig"><div class="sig-ico r"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div class="sig-num" id="sig-baixa-disc">—</div><div class="sig-desc">baixa discriminação</div></div>
-            <div class="sig"><div class="sig-ico a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div class="sig-num" id="sig-criticas">—</div><div class="sig-desc">habilidades críticas</div></div>
-            <div class="sig"><div class="sig-ico o"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div class="sig-num" id="sig-distratores">—</div><div class="sig-desc">distratores dominantes</div></div>
-            <div class="sig"><div class="sig-ico b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg></div><div class="sig-num" id="sig-faceis">—</div><div class="sig-desc">questões muito fáceis</div></div>
+            <div class="sig"><div class="sig-ico r"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div class="sig-num" id="sig-criticas">—</div><div class="sig-desc">críticas</div></div>
+            <div class="sig"><div class="sig-ico a"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div class="sig-num" id="sig-baixa-disc">—</div><div class="sig-desc">baixa disc.</div></div>
+            <div class="sig"><div class="sig-ico o"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div class="sig-num" id="sig-distratores">—</div><div class="sig-desc">distratores</div></div>
+            <div class="sig"><div class="sig-ico b"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg></div><div class="sig-num" id="sig-faceis">—</div><div class="sig-desc">fáceis</div></div>
           </div>
         </div>
       </div>
-    </div>
-    <!-- RIGHT: Question Panel -->
-    <div style="overflow-y:auto;padding-bottom:30px">
-      <div class="qpanel">
-        <div class="qp-hd">
-          <div style="display:flex;align-items:center;gap:9px">
-            <div class="qp-num">Questão <span id="q-num">01</span></div>
-            <div class="qp-badge badge-att" id="q-status">Atenção</div>
+
+      <!-- RIGHT: painel de detalhamento da questão -->
+      <div class="sim-anat-right">
+        <div class="qcenter">
+          <div class="qc-hd">
+            <div class="qc-hd-left">
+              <span class="qc-num">Questão <span id="q-num">01</span></span>
+              <span class="q-status-badge att" id="q-status">Atenção pedagógica</span>
+            </div>
+            <div class="qc-nav">
+              <button class="qp-navbtn" onclick="selectQ(Math.max(0,S.selectedQIdx-1))">‹</button>
+              <span class="qph-pos" id="qp-pos">1 de 48</span>
+              <button class="qp-navbtn" onclick="selectQ(Math.min(47,S.selectedQIdx+1))">›</button>
+            </div>
           </div>
-          <div class="qp-nav">
-            <button class="qp-navbtn" onclick="selectQ(Math.max(0,S.selectedQIdx-1))">‹</button>
-            <span id="qp-pos">1/48</span>
-            <button class="qp-navbtn" onclick="selectQ(Math.min(QUESTOES.length-1,S.selectedQIdx+1))">›</button>
+          <div class="qmeta-chips">
+            <div class="qmeta-chip"><div class="qmc-lbl">Disciplina</div><div class="qmc-val" id="q-disc">—</div></div>
+            <div class="qmc-sep"></div>
+            <div class="qmeta-chip"><div class="qmc-lbl">Componente</div><div class="qmc-val" id="q-comp">—</div></div>
+            <div class="qmc-sep"></div>
+            <div class="qmeta-chip"><div class="qmc-lbl">Assunto</div><div class="qmc-val" id="q-assunto">—</div></div>
+            <div class="qmc-sep"></div>
+            <div class="qmeta-chip"><div class="qmc-lbl">Dificuldade</div><div class="qmc-val" id="q-diff">—</div></div>
           </div>
-        </div>
-        <div style="display:flex;border-bottom:1px solid var(--border);margin:-14px -18px 0;padding:0 18px">
-          <div class="tab active" style="padding:8px 12px;font-size:11.5px" onclick="simQTab('qt-q',this)">Questão</div>
-          <div class="tab" style="padding:8px 12px;font-size:11.5px" onclick="simQTab('qt-comp',this)">Componentes</div>
-          <div class="tab" style="padding:8px 12px;font-size:11.5px" onclick="simQTab('qt-bncc',this)">BNCC</div>
-        </div>
-        <div id="qt-q">
-          <div class="qf">
-            <div class="qf-item"><div class="qf-label">Disciplina</div><div class="qf-val" id="q-disc">—</div></div>
-            <div class="qf-item"><div class="qf-label">Dificuldade</div><div class="qf-val" id="q-diff">—</div></div>
-            <div class="qf-item"><div class="qf-label">Componente</div><div class="qf-val" id="q-comp">—</div></div>
-            <div class="qf-item"><div class="qf-label">Taxa de acerto</div><div class="qf-val" id="q-acerto">—</div></div>
-            <div class="qf-item" style="grid-column:span 2"><div class="qf-label">Assunto</div><div class="qf-val" id="q-assunto">—</div></div>
-          </div>
-          <div class="q-answers">
-            <div class="qa-item"><div class="qa-lbl">Alternativa correta</div><div class="qa-val g" id="q-gab">—</div></div>
-            <div style="width:1px;height:32px;background:var(--border)"></div>
-            <div class="qa-item"><div class="qa-lbl">Distrator dominante</div><div class="qa-val o" id="q-dist">—</div></div>
+          <div class="qmetrics-row">
+            <div class="qmetric-box"><div class="qmb-val" id="q-acerto">—</div><div class="qmb-lbl">Índice de acerto</div><div class="qmb-tag" id="q-acerto-tag">—</div></div>
+            <div class="qmb-sep"></div>
+            <div class="qmetric-box"><div class="qmb-val" id="q-discrim">—</div><div class="qmb-lbl">Discriminante</div><div class="qmb-tag" id="q-discrim-tag">—</div></div>
+            <div class="qmb-sep"></div>
+            <div class="qmetric-box"><div class="qmb-val" id="q-grau">—</div><div class="qmb-lbl">Grau dific.</div><div class="qmb-tag" id="q-grau-tag">—</div></div>
+            <div class="qmb-sep"></div>
+            <div class="qmetric-box"><div class="qmb-val" id="q-bisserial">—</div><div class="qmb-lbl">Ponto-bisserial</div><div class="qmb-tag" id="q-bisserial-tag">—</div></div>
           </div>
           <div id="q-infer" class="infer-panel blue">
             <div class="infer-titulo">Selecione uma questão</div>
             <div class="infer-texto">Clique em uma questão na grade para ver a análise pedagógica completa.</div>
           </div>
-          <div>
-            <div style="font-size:9.5px;color:var(--t4);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:7px">Índices</div>
-            <div class="ind-grid">
-              <div class="ind"><div class="ind-label">Discriminante</div><div class="ind-val ib" id="q-discrim">—</div></div>
-              <div class="ind"><div class="ind-label">Dificuldade</div><div class="ind-val ia" id="q-diff2">—</div></div>
-              <div class="ind"><div class="ind-label">Status</div><div class="ind-val ig" id="q-status2">—</div></div>
+          <div class="qc-sec-lbl">Hipótese pedagógica</div>
+          <div class="qc-hipo" id="q-hipotese">—</div>
+          <div class="qc-sec-lbl">Distribuição por alternativa</div>
+          <div class="qalt-bars" id="q-alt-bars"><div class="qalt-empty">Selecione uma questão.</div></div>
+          <div class="qnet-card">
+            <div class="qnet-card-hd">Contexto da rede — <span id="qnet-disc" style="color:var(--blue);font-weight:700">—</span></div>
+            <div class="qnet-rows">
+              <div class="qnet-row"><div class="qnr-lbl">Média da rede (disciplina)</div><div class="qnr-val" id="qnet-rede">—</div></div>
+              <div class="qnet-row"><div class="qnr-lbl">Esta questão</div><div class="qnr-val" id="qnet-q">—</div></div>
+              <div class="qnet-row"><div class="qnr-lbl">Diferença</div><div class="qnr-val" id="qnet-diff">—</div></div>
+            </div>
+            <div class="qnet-msg" id="qnet-msg">—</div>
+          </div>
+          <div class="act-grid mt4">
+            <div class="act-btn primary" style="grid-column:span 2" onclick="gerarDevolutiva()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>Gerar devolutiva
+            </div>
+            <div class="act-btn outline" onclick="gerarPDF()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/></svg>PDF
+            </div>
+            <div class="act-btn outline">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>Revisar
             </div>
           </div>
         </div>
-        <div id="qt-comp" style="display:none">
-          <div class="qf-item mb8"><div class="qf-label">Componente curricular</div><div class="qf-val" id="q-comp2">—</div></div>
-          <div class="qf-item"><div class="qf-label">Assunto detalhado</div><div class="qf-val" id="q-assunto2">—</div></div>
-          <div class="pnote orange mt12"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span class="pnote-text" id="q-comp-note">—</span></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ═══ TAB: DISCIPLINAS ════════════════════════════════════ -->
+  <div class="stc" id="stc-disciplinas">
+    <div class="disc-tab-grid">
+      <div class="disc-tab-col">
+        <div class="card">
+          <div class="card-title mb8">Disciplinas</div>
+          <div id="disc-list-body"></div>
         </div>
-        <div id="qt-bncc" style="display:none">
-          <div class="qf-item mb8"><div class="qf-label">Área do conhecimento</div><div class="qf-val" id="q-bncc-area">—</div></div>
-          <div class="qf-item"><div class="qf-label">Habilidade BNCC</div><div class="qf-val" id="q-bncc-hab">—</div></div>
+      </div>
+      <div class="disc-tab-col">
+        <div class="card mb12">
+          <div class="card-title" id="disc-detail-name" style="margin-bottom:12px">—</div>
+          <div class="disc-metrics-grid mb14">
+            <div class="dsr-box"><div class="dsr-val" id="disc-acerto">—</div><div class="dsr-lbl">Acerto médio</div></div>
+            <div class="dsr-box"><div class="dsr-val" id="disc-discrim">—</div><div class="dsr-lbl">Discriminante</div><div class="dsr-tag" id="disc-discrim-tag">—</div></div>
+            <div class="dsr-box"><div class="dsr-val" style="color:var(--red)" id="disc-criticas">—</div><div class="dsr-lbl">Críticas</div></div>
+            <div class="dsr-box"><div class="dsr-val dsr-val-sm" id="disc-assunto-sensivel">—</div><div class="dsr-lbl">Assunto sensível</div></div>
+          </div>
+          <div class="card-sub-title mb8">Componentes</div>
+          <div id="disc-comp-list"></div>
         </div>
-        <div class="act-grid">
-          <div class="act-btn primary" style="grid-column:span 2" onclick="gerarDevolutiva()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            Gerar devolutiva
-          </div>
-          <div class="act-btn outline" onclick="gerarPDF()">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/></svg>
-            Baixar PDF
-          </div>
-          <div class="act-btn outline">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-            Revisar
-          </div>
+      </div>
+      <div class="disc-tab-col">
+        <div class="card">
+          <div class="card-title mb2">Questões</div>
+          <div class="card-sub mb12">Conclusão pedagógica expansível.</div>
+          <div id="disc-q-list"></div>
         </div>
       </div>
     </div>
   </div>
+
+  <!-- ═══ TAB: EVOLUÇÃO ════════════════════════════════════════ -->
+  <div class="stc" id="stc-evolucao">
+    <div class="pb" style="padding-bottom:44px">
+      <div class="evo-tipo-bar mb14">
+        <button class="evo-tipo-btn active" onclick="setEvolucaoTipo('media',this)">Média geral</button>
+        <button class="evo-tipo-btn" onclick="setEvolucaoTipo('acerto',this)">Índice de acerto</button>
+        <button class="evo-tipo-btn" onclick="setEvolucaoTipo('participacao',this)">Participação</button>
+        <button class="evo-tipo-btn" onclick="setEvolucaoTipo('qualidade',this)">Índice de qualidade</button>
+      </div>
+      <div id="evo-charts-grid" class="evo-charts-grid mb12"></div>
+      <div class="card">
+        <div class="card-title mb4">Interpretação automática da evolução</div>
+        <div class="ih-text" id="evo-insight-text">—</div>
+      </div>
+    </div>
+  </div>
+
   <div class="footer"><div class="footer-l"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Dados confidenciais.</div><div class="footer-r">© 2025 Arco Educação.</div></div>
 </div>
 

@@ -281,3 +281,120 @@ function getProfessor(key) {
 /* ── ETIQUETAS PARA SIMULADO NAS OPÇÕES ───────────────────── */
 const SIM_LABELS = SIMULADOS.map(s => s.label);
 const SIM_LABELS_CURTOS = SIMULADOS.map(s => s.labelCurto);
+
+/* ── PER-SIMULADO QUESTION FACTORY ────────────────────────── */
+/*
+  Cada simulado representa um momento diferente do ciclo letivo.
+  As questões são as mesmas, mas o desempenho dos alunos varia.
+  Fatores derivados de REDE_MEDIA_SIM: sim1=43.5/53.6≈0.812 ... sim5=1.0
+  Offsets determinísticos por índice criam variação realista por questão.
+*/
+const _SIM_FACTORS = { sim1: 0.812, sim2: 0.841, sim3: 0.892, sim4: 0.937, sim5: 1.0 };
+const _SIM_Q_OFFSETS = [2,-3,1,-2,3,-1,2,-3,1,-2,3,-1,2,-3,1,-2,3,-1,2,-3,1,-2,3,-1,2,-3,1,-2,3,-1,2,-3,1,-2,3,-1,2,-3,1,-2,3,-1,2,-3,1,-2,3,-1];
+
+/* Gabarito rotation per simulado — deterministic, no Math.random */
+const _GAB_LETTERS = ['A','B','C','D','E'];
+const _GAB_SHIFT_PATTERNS = {
+  sim1: [1,0,2,0,1,2,0,1,0,2,1,0,1,2,0,1,0,2,1,0,1,2,0,1,0,2,1,0,1,2,0,1,0,2,1,0,1,2,0,1,0,2,1,0,1,2,0,1],
+  sim2: [0,1,0,2,0,1,0,2,1,0,2,1,0,1,0,2,1,0,2,1,0,1,2,0,1,0,2,1,0,2,1,0,1,0,2,1,0,1,0,2,1,0,1,0,2,1,0,2],
+  sim3: [2,0,1,0,0,1,2,0,2,1,0,2,0,1,2,0,1,0,1,2,0,1,0,2,1,0,1,2,0,1,2,0,1,2,0,1,2,0,1,0,2,1,0,2,1,0,1,0],
+  sim4: [0,0,1,0,1,0,1,0,0,1,0,1,0,0,1,0,1,0,0,1,0,1,0,0,1,0,1,0,0,1,0,1,0,0,1,0,1,0,0,1,0,1,0,0,1,0,1,0],
+  sim5: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+};
+
+function getQuestoesForSim(simId) {
+  const f      = _SIM_FACTORS[simId] ?? 1.0;
+  const shifts = _GAB_SHIFT_PATTERNS[simId] || _GAB_SHIFT_PATTERNS.sim5;
+  return QUESTOES_RAW.map((q, i) => {
+    const off           = _SIM_Q_OFFSETS[i] * (1 - f) * 4;
+    const acerto        = Math.min(95, Math.max(10, Math.round(q.acerto * f + off)));
+    const discriminante = parseFloat(Math.min(0.60, Math.max(0.08, q.discriminante * (0.82 + f * 0.18))).toFixed(2));
+    const distPct       = Math.min(45, Math.round(q.distPct * (1 + (1 - f) * 0.5)));
+    const status        = acerto >= 65 ? 'above' : acerto >= 38 ? 'att' : 'crit';
+    // Deterministic gabarito rotation
+    const shift   = shifts[i] || 0;
+    const gabIdx  = _GAB_LETTERS.indexOf(q.gab);
+    const distIdx = _GAB_LETTERS.indexOf(q.dist);
+    const gab     = _GAB_LETTERS[(gabIdx + shift) % 5];
+    let   dist    = _GAB_LETTERS[(distIdx + shift) % 5];
+    if (dist === gab) dist = _GAB_LETTERS[(distIdx + shift + 1) % 5];
+    return { ...q, acerto, discriminante, distPct, status, gab, dist };
+  });
+}
+
+/* Calculates the most critical topic from a question set (dynamic, never hardcoded) */
+function getCriticalTopicForSim(questions) {
+  if (!questions || !questions.length) return { comp: '—', disciplina: '—', assunto: '—', totalCriticas: 0, mediaAcerto: 0 };
+  const byComp = {};
+  questions.forEach(q => {
+    if (!byComp[q.comp]) byComp[q.comp] = { comp: q.comp, disc: q.disc, qs: [] };
+    byComp[q.comp].qs.push(q);
+  });
+  const stats = Object.values(byComp).map(c => {
+    const criticas    = c.qs.filter(q => q.status === 'crit').length;
+    const att         = c.qs.filter(q => q.status === 'att').length;
+    const mediaAcerto = c.qs.reduce((s, q) => s + q.acerto, 0) / c.qs.length;
+    const score       = criticas * 10 + att * 3 + (100 - mediaAcerto) * 0.1;
+    return { comp: c.comp, disc: c.disc, qs: c.qs, criticas, mediaAcerto, score };
+  });
+  stats.sort((a, b) => b.score - a.score);
+  const top    = stats[0];
+  const worstQ = top.qs.slice().sort((a, b) => a.acerto - b.acerto)[0];
+  return {
+    comp:          top.comp,
+    disciplina:    top.disc,
+    assunto:       worstQ.assunto,
+    totalCriticas: top.criticas,
+    mediaAcerto:   Math.round(top.mediaAcerto),
+  };
+}
+
+/* ── QUALITY INDEX PER SIMULADO (0–100) ────────────────────── */
+const SIM_QUALIDADE = { sim1: 62, sim2: 66, sim3: 68, sim4: 71, sim5: 73 };
+
+/* ── EVOLUÇÃO POR TIPO DE GRÁFICO ──────────────────────────── */
+const SIM_EVO_LABELS = ['1º Sim.', '2º Sim.', '3º Sim.', '4º Sim.', '5º Sim.'];
+
+const SIM_EVO_TIPOS = {
+  media: {
+    chartTitle: 'Média Geral',
+    unit: '%',
+    series: [
+      { label: 'Alunos',  data: [43.5, 45.1, 47.8, 50.2, 53.6], color: '#E8521A' },
+      { label: 'Escolas', data: [42.8, 44.9, 47.1, 49.8, 52.9], color: '#1D4ED8' },
+      { label: 'Turmas',  data: [41.2, 43.8, 46.5, 49.1, 52.3], color: '#059669' },
+    ],
+    insight: 'A média geral da rede cresceu +10,1 p.p. ao longo dos 5 simulados. Alunos e turmas apresentaram evolução consistente, com aceleração entre o 3º e 5º simulado. Manter as estratégias de preparação em curso e identificar escolas com crescimento abaixo da tendência.',
+  },
+  acerto: {
+    chartTitle: 'Índice de Acerto',
+    unit: '%',
+    series: [
+      { label: 'Alunos',  data: [41, 45, 52, 58, 63], color: '#E8521A' },
+      { label: 'Escolas', data: [44, 48, 54, 60, 64], color: '#1D4ED8' },
+      { label: 'Turmas',  data: [39, 43, 50, 56, 61], color: '#059669' },
+    ],
+    insight: 'O índice de acerto médio cresceu robustamente — maior salto entre o 2º e 3º simulado (+7 p.p. para alunos). Escolas mantiveram acerto 3–4 p.p. acima dos alunos em média. Monitorar turmas: crescimento proporcional, mas ainda abaixo do esperado para o ciclo.',
+  },
+  participacao: {
+    chartTitle: 'Participação',
+    unit: '%',
+    series: [
+      { label: 'Alunos',  data: [78, 81, 83, 85, 87], color: '#E8521A' },
+      { label: 'Escolas', data: [89, 90, 91, 92, 93], color: '#1D4ED8' },
+      { label: 'Turmas',  data: [75, 78, 80, 82, 84], color: '#059669' },
+    ],
+    insight: 'A participação cresceu de forma gradual e sustentada. Escolas lideram com 93% no 5º simulado — resultado de gestão ativa do calendário. O crescimento entre alunos (+9 p.p.) indica maior engajamento com o programa ao longo do ano. Meta: atingir 90% de adesão dos alunos.',
+  },
+  qualidade: {
+    chartTitle: 'Índice de Qualidade',
+    unit: '',
+    series: [
+      { label: 'Geral (rede)',  data: [62, 66, 68, 71, 73], color: '#E8521A' },
+      { label: 'Matemática',   data: [58, 63, 67, 70, 72], color: '#1D4ED8' },
+      { label: 'Física',       data: [60, 64, 66, 69, 71], color: '#059669' },
+      { label: 'Química',      data: [64, 68, 70, 73, 75], color: '#D97706' },
+    ],
+    insight: 'O índice de qualidade do simulado — que combina discriminação média, equilíbrio de dificuldade e consistência das alternativas — cresceu em todas as disciplinas. Matemática mostrou a maior evolução (+14 pontos). Física ainda apresenta capacidade diagnóstica abaixo do esperado: priorizar revisão dos distratores.',
+  },
+};

@@ -12,6 +12,8 @@ const S = {
   simEscola:     'A',
   simTurma:      'todas',
   selectedQIdx:  0,
+  simTab:        'anatomia',
+  simEvoTipo:    'media',
 
   /* Escolas */
   escolaKey:     'A',
@@ -87,13 +89,7 @@ function refreshDashboard() {
 }
 
 function refreshSimulados() {
-  const q = QUESTOES ? QUESTOES[S.selectedQIdx] : null;
-  if (q) {
-    if (typeof renderSimDistChart  === 'function') renderSimDistChart(q);
-    if (typeof renderSimTurmaChart === 'function') renderSimTurmaChart(q);
-  }
-  if (typeof renderEscolaDistChart === 'function') renderEscolaDistChart();
-  if (typeof buildQGrid            === 'function') buildQGrid();
+  if (typeof refreshSimuladosPage === 'function') refreshSimuladosPage();
 }
 
 function refreshEscolas() {
