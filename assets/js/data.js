@@ -284,13 +284,25 @@ const SIM_LABELS_CURTOS = SIMULADOS.map(s => s.labelCurto);
 
 /* ── PER-SIMULADO QUESTION FACTORY ────────────────────────── */
 /*
-  Cada simulado representa um momento diferente do ciclo letivo.
-  As questões são as mesmas, mas o desempenho dos alunos varia.
-  Fatores derivados de REDE_MEDIA_SIM: sim1=43.5/53.6≈0.812 ... sim5=1.0
-  Offsets determinísticos por índice criam variação realista por questão.
+  Perfis pedagógicos distintos por simulado (nunca uma simples escala global):
+  sim1 → fragilidade principal em Matemática (Álgebra, Geometria, Funções)
+  sim2 → fragilidade principal em Física (Mecânica, Cinemática)
+  sim3 → fragilidade principal em Química (Orgânica, Termoquímica, Estequiometria)
+  sim4 → fragilidade principal em Linguagens (Literatura, Gramática)
+  sim5 → prova equilibrada; Eletromagnetismo ainda crítico em Física
 */
-const _SIM_FACTORS = { sim1: 0.812, sim2: 0.841, sim3: 0.892, sim4: 0.937, sim5: 1.0 };
+
+/* Per-questão offset de variação determinística */
 const _SIM_Q_OFFSETS = [2,-3,1,-2,3,-1,2,-3,1,-2,3,-1,2,-3,1,-2,3,-1,2,-3,1,-2,3,-1,2,-3,1,-2,3,-1,2,-3,1,-2,3,-1,2,-3,1,-2,3,-1,2,-3,1,-2,3,-1];
+
+/* Fator de acerto por disciplina por simulado — cria identidade pedagógica distinta */
+const _SIM_DISC_FACTORS = {
+  sim1: { 'Física':0.88, 'Química':0.84, 'Matemática':0.66, 'Língua Inglesa':0.91, 'Linguagens':0.86, 'C. Humanas':0.84 },
+  sim2: { 'Física':0.62, 'Química':0.88, 'Matemática':0.86, 'Língua Inglesa':0.90, 'Linguagens':0.87, 'C. Humanas':0.85 },
+  sim3: { 'Física':0.86, 'Química':0.64, 'Matemática':0.87, 'Língua Inglesa':0.91, 'Linguagens':0.87, 'C. Humanas':0.87 },
+  sim4: { 'Física':0.88, 'Química':0.87, 'Matemática':0.86, 'Língua Inglesa':0.76, 'Linguagens':0.60, 'C. Humanas':0.88 },
+  sim5: { 'Física':0.87, 'Química':0.94, 'Matemática':0.94, 'Língua Inglesa':0.96, 'Linguagens':0.94, 'C. Humanas':0.93 },
+};
 
 /* Gabarito rotation per simulado — deterministic, no Math.random */
 const _GAB_LETTERS = ['A','B','C','D','E'];
@@ -302,23 +314,319 @@ const _GAB_SHIFT_PATTERNS = {
   sim5: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
 };
 
+/* Temas pedagógicos por simulado — 48 entradas por prova, determinístico */
+const SIM_TOPIC_SETS = {
+  /* ── SIM 1 — Predominância de Matemática ── */
+  sim1: [
+    /* idx 0–19 Matemática */
+    { disc:'Matemática',    comp:'Combinatória',        assunto:'Princípio Multiplicativo',              habilidade:'Resolver problemas de contagem por produto entre opções', diff:'Médio' },
+    { disc:'Matemática',    comp:'Probabilidade',       assunto:'Eventos Independentes',                 habilidade:'Calcular probabilidade de dois eventos independentes', diff:'Médio-alto' },
+    { disc:'Matemática',    comp:'Funções',             assunto:'Função Afim — Taxa de Variação',        habilidade:'Interpretar taxa de variação em funções do 1º grau', diff:'Fácil' },
+    { disc:'Matemática',    comp:'Geometria Plana',     assunto:'Polígonos Regulares e Áreas',           habilidade:'Calcular áreas de figuras compostas por polígonos', diff:'Médio-alto' },
+    { disc:'Matemática',    comp:'Álgebra',             assunto:'Equações do 2º Grau',                   habilidade:'Aplicar fórmula de Bhaskara em contextos reais', diff:'Alto' },
+    { disc:'Matemática',    comp:'Estatística',         assunto:'Medidas de Dispersão',                  habilidade:'Interpretar desvio padrão e variância de conjuntos', diff:'Médio' },
+    { disc:'Matemática',    comp:'Progressões',         assunto:'Progressão Geométrica — Razão e Soma',  habilidade:'Calcular termos e soma finita de uma PG', diff:'Fácil' },
+    { disc:'Matemática',    comp:'Geometria Esp.',      assunto:'Prismas e Pirâmides',                   habilidade:'Calcular volume de prismas e pirâmides geométricas', diff:'Alto' },
+    { disc:'Matemática',    comp:'Funções',             assunto:'Função Logarítmica',                    habilidade:'Resolver equações logarítmicas em contextos aplicados', diff:'Médio-alto' },
+    { disc:'Matemática',    comp:'Combinatória',        assunto:'Permutações com Repetição',             habilidade:'Contar agrupamentos ordenados com elementos repetidos', diff:'Alto' },
+    { disc:'Matemática',    comp:'Trigonometria',       assunto:'Lei dos Senos e Cossenos',              habilidade:'Resolver triângulos oblíquos pela lei dos senos', diff:'Médio-alto' },
+    { disc:'Matemática',    comp:'Probabilidade',       assunto:'Probabilidade Condicional',             habilidade:'Calcular probabilidade em situações com eventos dependentes', diff:'Alto' },
+    { disc:'Matemática',    comp:'Geometria Analítica', assunto:'Retas no Plano Cartesiano',             habilidade:'Calcular distâncias e posições relativas de retas', diff:'Médio' },
+    { disc:'Matemática',    comp:'Funções',             assunto:'Função Quadrática — Vértice e Zeros',   habilidade:'Identificar máximos, mínimos e raízes de parábolas', diff:'Médio' },
+    { disc:'Matemática',    comp:'Álgebra',             assunto:'Sistemas Lineares — Substituição',      habilidade:'Resolver sistemas pelo método da substituição ou adição', diff:'Médio' },
+    { disc:'Matemática',    comp:'Estatística',         assunto:'Médias Ponderadas e Aritméticas',       habilidade:'Calcular e interpretar médias em situações práticas', diff:'Fácil' },
+    { disc:'Matemática',    comp:'Progressões',         assunto:'Interpolação Aritmética',               habilidade:'Inserir meios aritméticos entre termos de uma progressão', diff:'Médio' },
+    { disc:'Matemática',    comp:'Combinatória',        assunto:'Análise Combinatória — Princípio da Adição', habilidade:'Aplicar o princípio da adição em contagens exclusivas', diff:'Médio' },
+    { disc:'Matemática',    comp:'Funções',             assunto:'Função Exponencial — Modelagem',        habilidade:'Modelar crescimento e decaimento exponencial em contextos reais', diff:'Médio' },
+    { disc:'Matemática',    comp:'Geometria Plana',     assunto:'Trigonometria no Triângulo Retângulo',  habilidade:'Aplicar razões trigonométricas em triângulos retângulos', diff:'Médio-alto' },
+    /* idx 20–25 Física */
+    { disc:'Física',        comp:'Mecânica',            assunto:'Leis de Newton e Forças',               habilidade:'Aplicar as três leis de Newton em situações práticas', diff:'Médio' },
+    { disc:'Física',        comp:'Mecânica',            assunto:'Trabalho e Energia Mecânica',           habilidade:'Relacionar trabalho realizado e variação de energia cinética', diff:'Médio' },
+    { disc:'Física',        comp:'Termodinâmica',       assunto:'Gases Ideais — Equação de Estado',      habilidade:'Aplicar a lei dos gases ideais em situações reais', diff:'Médio' },
+    { disc:'Física',        comp:'Óptica',              assunto:'Reflexão e Refração da Luz',            habilidade:'Aplicar as leis de Snell-Descartes em meios distintos', diff:'Fácil' },
+    { disc:'Física',        comp:'Mecânica',            assunto:'Cinemática — MRU e MRUV',               habilidade:'Interpretar gráficos de posição e velocidade', diff:'Médio' },
+    { disc:'Física',        comp:'Ondulatória',         assunto:'Ondas Mecânicas — Propriedades',        habilidade:'Analisar comprimento de onda, frequência e velocidade', diff:'Médio-alto' },
+    /* idx 26–29 Química */
+    { disc:'Química',       comp:'Estequiometria',      assunto:'Cálculo Estequiométrico',               habilidade:'Relacionar moles e proporções em equações balanceadas', diff:'Médio' },
+    { disc:'Química',       comp:'Termoquímica',        assunto:'Entalpia de Reação',                    habilidade:'Interpretar variações de entalpia em diagramas energéticos', diff:'Alto' },
+    { disc:'Química',       comp:'Orgânica',            assunto:'Funções Orgânicas — Classificação',     habilidade:'Classificar compostos orgânicos por grupos funcionais', diff:'Médio' },
+    { disc:'Química',       comp:'Cinética Química',    assunto:'Fatores de Velocidade de Reação',       habilidade:'Relacionar temperatura, concentração e velocidade de reação', diff:'Médio-alto' },
+    /* idx 30–35 Língua Inglesa */
+    { disc:'Língua Inglesa',comp:'Reading',             assunto:'Main Idea and Purpose',                 habilidade:'Identificar propósito comunicativo em textos em inglês', diff:'Fácil' },
+    { disc:'Língua Inglesa',comp:'Reading',             assunto:'Inference and Implication',             habilidade:'Inferir informação implícita em textos variados', diff:'Médio' },
+    { disc:'Língua Inglesa',comp:'Vocabulary',          assunto:'Contextual Meaning',                    habilidade:'Interpretar vocabulário pelo contexto da leitura', diff:'Médio' },
+    { disc:'Língua Inglesa',comp:'Grammar',             assunto:'Modal Verbs and Conditionals',          habilidade:'Empregar modais em situações comunicativas reais', diff:'Médio-alto' },
+    { disc:'Língua Inglesa',comp:'Reading',             assunto:'Text Organization',                     habilidade:'Identificar estrutura e progressão do texto', diff:'Médio' },
+    { disc:'Língua Inglesa',comp:'Vocabulary',          assunto:'Synonyms and Antonyms',                 habilidade:'Reconhecer relações lexicais entre palavras em inglês', diff:'Fácil' },
+    /* idx 36–42 Linguagens */
+    { disc:'Linguagens',    comp:'Interpretação',       assunto:'Texto Argumentativo',                   habilidade:'Identificar tese e estratégias de argumentação', diff:'Médio' },
+    { disc:'Linguagens',    comp:'Literatura',          assunto:'Romantismo Brasileiro',                  habilidade:'Relacionar obra literária e contexto histórico', diff:'Alto' },
+    { disc:'Linguagens',    comp:'Gramática',           assunto:'Coerência e Coesão Textual',            habilidade:'Identificar mecanismos de coesão referencial', diff:'Médio' },
+    { disc:'Linguagens',    comp:'Interpretação',       assunto:'Charge e Linguagem Visual',             habilidade:'Interpretar a linguagem não-verbal e a ironia', diff:'Fácil' },
+    { disc:'Linguagens',    comp:'Literatura',          assunto:'Modernismo — 2ª Geração',               habilidade:'Reconhecer características do modernismo brasileiro', diff:'Alto' },
+    { disc:'Linguagens',    comp:'Gramática',           assunto:'Morfossintaxe e Análise Sintática',     habilidade:'Analisar função sintática de termos na oração', diff:'Médio' },
+    { disc:'Linguagens',    comp:'Interpretação',       assunto:'Publicidade e Persuasão',               habilidade:'Reconhecer intenções comunicativas em anúncios', diff:'Fácil' },
+    /* idx 43–47 C. Humanas */
+    { disc:'C. Humanas',    comp:'História',            assunto:'Revolução Industrial',                  habilidade:'Relacionar industrialização e transformações sociais', diff:'Médio' },
+    { disc:'C. Humanas',    comp:'Geografia',           assunto:'Geopolítica e Conflitos Regionais',     habilidade:'Analisar disputas territoriais e conflitos contemporâneos', diff:'Alto' },
+    { disc:'C. Humanas',    comp:'Filosofia',           assunto:'Contratualismo e Estado',               habilidade:'Comparar as teorias do contrato social', diff:'Médio' },
+    { disc:'C. Humanas',    comp:'Sociologia',          assunto:'Estratificação Social e Mobilidade',    habilidade:'Identificar fatores determinantes da mobilidade social', diff:'Médio' },
+    { disc:'C. Humanas',    comp:'História',            assunto:'Revoluções do Séc. XIX',                habilidade:'Relacionar revoluções oitocentistas e ideais liberais', diff:'Médio' },
+  ],
+
+  /* ── SIM 2 — Predominância de Física ── */
+  sim2: [
+    /* idx 0–17 Física */
+    { disc:'Física',        comp:'Mecânica',            assunto:'Leis de Newton — Dinâmica',             habilidade:'Aplicar as três leis de Newton a sistemas físicos reais', diff:'Médio' },
+    { disc:'Física',        comp:'Mecânica',            assunto:'Trabalho e Energia Cinética',           habilidade:'Relacionar trabalho de forças com variação de energia', diff:'Médio' },
+    { disc:'Física',        comp:'Mecânica',            assunto:'Cinemática — MRUV e Gráficos',          habilidade:'Interpretar gráficos de posição, velocidade e aceleração', diff:'Médio' },
+    { disc:'Física',        comp:'Mecânica',            assunto:'Dinâmica — Plano Inclinado',            habilidade:'Decompor forças sobre planos inclinados com atrito', diff:'Médio-alto' },
+    { disc:'Física',        comp:'Mecânica',            assunto:'Impulso e Quantidade de Movimento',     habilidade:'Aplicar conservação do momento linear em colisões', diff:'Alto' },
+    { disc:'Física',        comp:'Mecânica',            assunto:'Movimento Circular Uniforme',           habilidade:'Calcular aceleração e força centrípeta em trajetórias circulares', diff:'Médio-alto' },
+    { disc:'Física',        comp:'Termodinâmica',       assunto:'Calorimetria e Equilíbrio Térmico',     habilidade:'Calcular trocas de calor entre corpos até equilíbrio', diff:'Médio' },
+    { disc:'Física',        comp:'Termodinâmica',       assunto:'Gases Ideais — Transformações',         habilidade:'Aplicar as leis de Boyle, Charles e Gay-Lussac', diff:'Médio' },
+    { disc:'Física',        comp:'Termodinâmica',       assunto:'1ª Lei da Termodinâmica',               habilidade:'Relacionar calor, trabalho e variação de energia interna', diff:'Alto' },
+    { disc:'Física',        comp:'Eletromagnetismo',    assunto:'Circuitos Elétricos em Série',          habilidade:'Calcular corrente e tensão em circuitos resistivos simples', diff:'Médio-alto' },
+    { disc:'Física',        comp:'Eletromagnetismo',    assunto:'Campo Magnético e Força de Lorentz',    habilidade:'Calcular força sobre cargas e fios condutores em campo', diff:'Alto' },
+    { disc:'Física',        comp:'Eletromagnetismo',    assunto:'Lei de Faraday — Indução Magnética',    habilidade:'Analisar fluxo magnético variável e fem induzida', diff:'Alto' },
+    { disc:'Física',        comp:'Eletromagnetismo',    assunto:'Eletrostática — Lei de Coulomb',        habilidade:'Calcular força e campo elétrico entre cargas puntiformes', diff:'Médio-alto' },
+    { disc:'Física',        comp:'Eletromagnetismo',    assunto:'Lei de Ohm e Resistência Elétrica',     habilidade:'Relacionar tensão, corrente e resistência em condutores', diff:'Médio' },
+    { disc:'Física',        comp:'Ondulatória',         assunto:'Efeito Doppler',                        habilidade:'Interpretar variação de frequência por movimento relativo', diff:'Alto' },
+    { disc:'Física',        comp:'Óptica',              assunto:'Lentes e Espelhos — Formação de Imagens', habilidade:'Determinar posição e tamanho de imagens por lentes', diff:'Médio' },
+    { disc:'Física',        comp:'Física Moderna',      assunto:'Efeito Fotoelétrico',                   habilidade:'Relacionar energia do fóton ao limiar fotoelétrico', diff:'Alto' },
+    { disc:'Física',        comp:'Hidrostática',        assunto:'Empuxo e Princípio de Arquimedes',      habilidade:'Aplicar o princípio de Arquimedes à flutuação de corpos', diff:'Médio' },
+    /* idx 18–21 Química */
+    { disc:'Química',       comp:'Estequiometria',      assunto:'Cálculo Estequiométrico',               habilidade:'Calcular proporções em equações químicas balanceadas', diff:'Médio' },
+    { disc:'Química',       comp:'Orgânica',            assunto:'Isomeria Orgânica — Plana e Espacial',  habilidade:'Identificar tipos de isomeria em compostos carbonados', diff:'Alto' },
+    { disc:'Química',       comp:'Soluções',            assunto:'Concentração Molar e Diluição',         habilidade:'Calcular concentração molar antes e após diluição', diff:'Fácil' },
+    { disc:'Química',       comp:'Termoquímica',        assunto:'Entalpia — Lei de Hess',                habilidade:'Calcular entalpia de reações usando ciclos de Hess', diff:'Alto' },
+    /* idx 22–29 Matemática */
+    { disc:'Matemática',    comp:'Funções',             assunto:'Função Quadrática — Parábola',          habilidade:'Identificar zeros, vértice e concavidade de parábolas', diff:'Médio' },
+    { disc:'Matemática',    comp:'Geometria Plana',     assunto:'Trigonometria — Lei dos Cossenos',      habilidade:'Resolver triângulos oblíquos pela lei dos cossenos', diff:'Médio-alto' },
+    { disc:'Matemática',    comp:'Estatística',         assunto:'Probabilidade — Espaço Amostral',       habilidade:'Calcular probabilidade em experimentos equiprováveis', diff:'Médio-alto' },
+    { disc:'Matemática',    comp:'Geometria Esp.',      assunto:'Volumes de Sólidos — Cone e Esfera',    habilidade:'Calcular volume de cones, pirâmides e esferas', diff:'Alto' },
+    { disc:'Matemática',    comp:'Progressões',         assunto:'PA e PG — Soma de Termos',              habilidade:'Calcular soma dos n primeiros termos de PA e PG', diff:'Fácil' },
+    { disc:'Matemática',    comp:'Álgebra',             assunto:'Sistemas de Equações Lineares',         habilidade:'Resolver sistemas pelo método da eliminação', diff:'Médio' },
+    { disc:'Matemática',    comp:'Combinatória',        assunto:'Permutações e Arranjos Simples',        habilidade:'Calcular arranjos e permutações sem repetição', diff:'Alto' },
+    { disc:'Matemática',    comp:'Funções',             assunto:'Função Exponencial — Crescimento',      habilidade:'Modelar situações de crescimento e decaimento exponencial', diff:'Médio' },
+    /* idx 30–35 Língua Inglesa */
+    { disc:'Língua Inglesa',comp:'Reading',             assunto:'Main Idea and Purpose',                 habilidade:'Identificar propósito comunicativo em textos em inglês', diff:'Fácil' },
+    { disc:'Língua Inglesa',comp:'Reading',             assunto:'Inference and Implication',             habilidade:'Inferir informação não explicitada no texto', diff:'Médio' },
+    { disc:'Língua Inglesa',comp:'Vocabulary',          assunto:'Contextual Meaning',                    habilidade:'Interpretar vocabulário em contexto de leitura', diff:'Médio' },
+    { disc:'Língua Inglesa',comp:'Grammar',             assunto:'Modal Verbs and Conditionals',          habilidade:'Usar modais para expressar possibilidade e obrigação', diff:'Médio-alto' },
+    { disc:'Língua Inglesa',comp:'Reading',             assunto:'Text Organization',                     habilidade:'Identificar estrutura e progressão de textos', diff:'Médio' },
+    { disc:'Língua Inglesa',comp:'Vocabulary',          assunto:'Synonyms and Antonyms',                 habilidade:'Reconhecer equivalências e antonímias lexicais', diff:'Fácil' },
+    /* idx 36–42 Linguagens */
+    { disc:'Linguagens',    comp:'Interpretação',       assunto:'Gêneros Textuais e Discursivos',        habilidade:'Identificar características e função de gêneros textuais', diff:'Médio' },
+    { disc:'Linguagens',    comp:'Literatura',          assunto:'Pré-Modernismo Brasileiro',             habilidade:'Interpretar textos do período pré-modernista', diff:'Médio' },
+    { disc:'Linguagens',    comp:'Gramática',           assunto:'Concordância Verbal e Nominal',         habilidade:'Aplicar regras de concordância em frases complexas', diff:'Médio-alto' },
+    { disc:'Linguagens',    comp:'Interpretação',       assunto:'Intertextualidade e Paródia',           habilidade:'Identificar relações intertextuais em textos variados', diff:'Alto' },
+    { disc:'Linguagens',    comp:'Literatura',          assunto:'Realismo e Naturalismo',                habilidade:'Reconhecer características do Realismo na literatura brasileira', diff:'Alto' },
+    { disc:'Linguagens',    comp:'Gramática',           assunto:'Pontuação e Produção de Sentido',       habilidade:'Interpretar o efeito da pontuação na coesão textual', diff:'Médio' },
+    { disc:'Linguagens',    comp:'Interpretação',       assunto:'Funções da Linguagem',                  habilidade:'Identificar a função dominante em textos de diferentes gêneros', diff:'Médio' },
+    /* idx 43–47 C. Humanas */
+    { disc:'C. Humanas',    comp:'História',            assunto:'Imperialismo e Colonialismo Europeu',   habilidade:'Analisar expansão colonial e exploração de recursos', diff:'Alto' },
+    { disc:'C. Humanas',    comp:'Geografia',           assunto:'Globalização e Desigualdade',           habilidade:'Relacionar globalização e concentração de renda', diff:'Médio' },
+    { disc:'C. Humanas',    comp:'Filosofia',           assunto:'Iluminismo e Razão Moderna',            habilidade:'Identificar princípios iluministas e seus desdobramentos', diff:'Médio' },
+    { disc:'C. Humanas',    comp:'Sociologia',          assunto:'Trabalho e Alienação',                  habilidade:'Interpretar conceitos de alienação e divisão do trabalho', diff:'Médio' },
+    { disc:'C. Humanas',    comp:'História',            assunto:'Revoluções Burguesas',                  habilidade:'Relacionar revoluções burguesas e ascensão do capitalismo', diff:'Médio' },
+  ],
+
+  /* ── SIM 3 — Predominância de Química ── */
+  sim3: [
+    /* idx 0–5 Física */
+    { disc:'Física',        comp:'Mecânica',            assunto:'Leis de Newton — Aplicações',           habilidade:'Aplicar princípios da dinâmica em sistemas reais', diff:'Médio' },
+    { disc:'Física',        comp:'Mecânica',            assunto:'Trabalho e Energia — Potência',         habilidade:'Relacionar potência, trabalho e intervalo de tempo', diff:'Médio' },
+    { disc:'Física',        comp:'Termodinâmica',       assunto:'Calorimetria — Calor Específico',       habilidade:'Calcular variação de temperatura em trocas de calor', diff:'Médio' },
+    { disc:'Física',        comp:'Óptica',              assunto:'Reflexão e Refração da Luz',            habilidade:'Aplicar leis da reflexão e refração em meios diferentes', diff:'Fácil' },
+    { disc:'Física',        comp:'Mecânica',            assunto:'Hidrostática — Pressão e Empuxo',       habilidade:'Aplicar o princípio de Arquimedes em situações práticas', diff:'Médio' },
+    { disc:'Física',        comp:'Ondulatória',         assunto:'Propriedades das Ondas',                habilidade:'Calcular comprimento de onda, frequência e velocidade', diff:'Médio-alto' },
+    /* idx 6–23 Química */
+    { disc:'Química',       comp:'Estequiometria',      assunto:'Cálculo Estequiométrico — Moles',       habilidade:'Calcular quantidade de moles e proporções reacionais', diff:'Médio' },
+    { disc:'Química',       comp:'Estequiometria',      assunto:'Reagente Limitante e Rendimento',       habilidade:'Identificar reagente limitante e calcular rendimento', diff:'Médio-alto' },
+    { disc:'Química',       comp:'Termoquímica',        assunto:'Entalpia de Reação — Diagrama',         habilidade:'Interpretar variação de entalpia em diagramas energéticos', diff:'Alto' },
+    { disc:'Química',       comp:'Termoquímica',        assunto:'Lei de Hess — Ciclos',                  habilidade:'Calcular entalpia de reações usando ciclos de Hess', diff:'Alto' },
+    { disc:'Química',       comp:'Eletroquímica',       assunto:'Pilhas — Potencial Padrão',             habilidade:'Calcular ddp e identificar polo positivo e negativo', diff:'Médio' },
+    { disc:'Química',       comp:'Eletroquímica',       assunto:'Eletrólise — Cálculos com Faraday',     habilidade:'Calcular massa depositada por eletrólise', diff:'Médio-alto' },
+    { disc:'Química',       comp:'Orgânica',            assunto:'Isomeria Orgânica — Tipos',             habilidade:'Identificar isomeria plana e espacial em compostos', diff:'Alto' },
+    { disc:'Química',       comp:'Orgânica',            assunto:'Funções Orgânicas — Nomenclatura',      habilidade:'Reconhecer grupos funcionais e nomear compostos', diff:'Médio' },
+    { disc:'Química',       comp:'Orgânica',            assunto:'Reações Orgânicas — Adição e Substituição', habilidade:'Prever produtos em reações de adição e substituição', diff:'Médio-alto' },
+    { disc:'Química',       comp:'Gases',               assunto:'Transformações Gasosas — Leis',         habilidade:'Aplicar as leis de Boyle, Charles e Gay-Lussac', diff:'Médio' },
+    { disc:'Química',       comp:'Gases',               assunto:'Equação de Clapeyron — PV = nRT',       habilidade:'Calcular grandezas usando a equação dos gases ideais', diff:'Médio' },
+    { disc:'Química',       comp:'Soluções',            assunto:'Concentração Molar e Diluição',         habilidade:'Calcular concentração molar antes e após diluição', diff:'Fácil' },
+    { disc:'Química',       comp:'Soluções',            assunto:'Propriedades Coligativas',              habilidade:'Calcular crioscopia e ebulioscopia em soluções', diff:'Médio' },
+    { disc:'Química',       comp:'Cinética Química',    assunto:'Velocidade de Reação — Fatores',        habilidade:'Relacionar temperatura, concentração e catálise à velocidade', diff:'Médio-alto' },
+    { disc:'Química',       comp:'Cinética Química',    assunto:'Catálise — Mecanismo e Energia',        habilidade:'Interpretar o papel do catalisador na energia de ativação', diff:'Médio' },
+    { disc:'Química',       comp:'Equilíbrio Químico',  assunto:'Constante de Equilíbrio — Kc e Kp',    habilidade:'Calcular Kc e prever sentido de deslocamento do equilíbrio', diff:'Alto' },
+    { disc:'Química',       comp:'Equilíbrio Químico',  assunto:'Princípio de Le Chatelier',             habilidade:'Analisar perturbações e deslocamento de equilíbrio', diff:'Médio-alto' },
+    { disc:'Química',       comp:'Ácidos e Bases',      assunto:'pH, pOH e Força de Ácidos',             habilidade:'Calcular pH de soluções ácidas e básicas', diff:'Médio' },
+    /* idx 24–29 Matemática */
+    { disc:'Matemática',    comp:'Funções',             assunto:'Função Quadrática — Raízes e Vértice',  habilidade:'Identificar zeros e vértice de parábolas em contextos', diff:'Médio' },
+    { disc:'Matemática',    comp:'Geometria Plana',     assunto:'Trigonometria — Triângulo Retângulo',   habilidade:'Aplicar razões trigonométricas em triângulos retângulos', diff:'Médio' },
+    { disc:'Matemática',    comp:'Estatística',         assunto:'Probabilidade — Regra da Adição',       habilidade:'Calcular probabilidade da união de eventos mutuamente exclusivos', diff:'Médio-alto' },
+    { disc:'Matemática',    comp:'Progressões',         assunto:'PA — Soma dos n Primeiros Termos',      habilidade:'Calcular soma dos termos de uma progressão aritmética', diff:'Fácil' },
+    { disc:'Matemática',    comp:'Álgebra',             assunto:'Sistemas Lineares — 2 Variáveis',       habilidade:'Resolver sistemas de duas equações lineares', diff:'Médio' },
+    { disc:'Matemática',    comp:'Combinatória',        assunto:'Arranjos e Combinações Simples',        habilidade:'Diferenciar e calcular arranjos e combinações', diff:'Alto' },
+    /* idx 30–35 Língua Inglesa */
+    { disc:'Língua Inglesa',comp:'Reading',             assunto:'Main Idea and Purpose',                 habilidade:'Identificar ideia central e propósito comunicativo do texto', diff:'Fácil' },
+    { disc:'Língua Inglesa',comp:'Reading',             assunto:'Inference and Implication',             habilidade:'Inferir dados implícitos em textos variados', diff:'Médio' },
+    { disc:'Língua Inglesa',comp:'Vocabulary',          assunto:'Contextual Meaning',                    habilidade:'Interpretar significado de palavras pelo contexto', diff:'Médio' },
+    { disc:'Língua Inglesa',comp:'Grammar',             assunto:'Verb Tenses and Aspects',               habilidade:'Distinguir usos de tempos verbais no inglês', diff:'Médio-alto' },
+    { disc:'Língua Inglesa',comp:'Reading',             assunto:'Reading for Detail',                    habilidade:'Localizar informações específicas em textos longos', diff:'Fácil' },
+    { disc:'Língua Inglesa',comp:'Vocabulary',          assunto:'Idiomatic Expressions',                 habilidade:'Interpretar expressões idiomáticas em contexto', diff:'Médio' },
+    /* idx 36–42 Linguagens */
+    { disc:'Linguagens',    comp:'Interpretação',       assunto:'Texto Expositivo e Argumentativo',      habilidade:'Distinguir narração, exposição e argumentação em textos', diff:'Médio' },
+    { disc:'Linguagens',    comp:'Literatura',          assunto:'Barroco e Quinhentismo Brasileiro',     habilidade:'Reconhecer características formais do Barroco na literatura', diff:'Alto' },
+    { disc:'Linguagens',    comp:'Gramática',           assunto:'Coerência Textual — Progressão Temática', habilidade:'Identificar mecanismos de progressão temática em textos', diff:'Médio' },
+    { disc:'Linguagens',    comp:'Interpretação',       assunto:'Humor e Ironia em Textos',              habilidade:'Interpretar o humor e a ironia em diferentes gêneros textuais', diff:'Fácil' },
+    { disc:'Linguagens',    comp:'Literatura',          assunto:'Naturalismo — Características',         habilidade:'Identificar marcas do Naturalismo na literatura brasileira', diff:'Alto' },
+    { disc:'Linguagens',    comp:'Gramática',           assunto:'Regência Verbal e Nominal',             habilidade:'Aplicar regras de regência em frases reais', diff:'Médio' },
+    { disc:'Linguagens',    comp:'Interpretação',       assunto:'Intertextualidade e Referência',        habilidade:'Reconhecer relações intertextuais entre textos diferentes', diff:'Médio' },
+    /* idx 43–47 C. Humanas */
+    { disc:'C. Humanas',    comp:'História',            assunto:'Segunda Guerra Mundial',                habilidade:'Interpretar causas e consequências da Segunda Guerra Mundial', diff:'Médio-alto' },
+    { disc:'C. Humanas',    comp:'Geografia',           assunto:'Biomas e Impactos Ambientais',          habilidade:'Analisar impactos ambientais de ações humanas nos biomas', diff:'Médio' },
+    { disc:'C. Humanas',    comp:'Filosofia',           assunto:'Ética — Correntes Filosóficas',         habilidade:'Comparar abordagens éticas clássicas e contemporâneas', diff:'Médio' },
+    { disc:'C. Humanas',    comp:'Sociologia',          assunto:'Cultura e Identidade Coletiva',         habilidade:'Reconhecer diversidade cultural e identitária na sociedade', diff:'Fácil' },
+    { disc:'C. Humanas',    comp:'História',            assunto:'Guerra Fria e Bipolaridade',            habilidade:'Analisar o contexto de tensão entre EUA e URSS', diff:'Alto' },
+  ],
+
+  /* ── SIM 4 — Predominância de Linguagens / Língua Inglesa ── */
+  sim4: [
+    /* idx 0–4 Física */
+    { disc:'Física',        comp:'Mecânica',            assunto:'Leis de Newton — Sistemas',             habilidade:'Aplicar as leis de Newton em sistemas com múltiplas forças', diff:'Médio' },
+    { disc:'Física',        comp:'Mecânica',            assunto:'Energia Cinética e Potencial',          habilidade:'Relacionar conservação de energia em sistemas mecânicos', diff:'Médio' },
+    { disc:'Física',        comp:'Termodinâmica',       assunto:'Dilatação Térmica',                     habilidade:'Calcular dilatação linear e volumétrica de sólidos', diff:'Fácil' },
+    { disc:'Física',        comp:'Eletromagnetismo',    assunto:'Circuitos Elétricos — Resistência',     habilidade:'Calcular resistência equivalente em circuitos mistos', diff:'Médio-alto' },
+    { disc:'Física',        comp:'Ondulatória',         assunto:'Ondas Sonoras — Velocidade e Freq.',    habilidade:'Calcular velocidade e comprimento de ondas sonoras', diff:'Médio' },
+    /* idx 5–9 Matemática */
+    { disc:'Matemática',    comp:'Funções',             assunto:'Função Afim — Modelagem Linear',        habilidade:'Modelar situações práticas com funções do 1º grau', diff:'Fácil' },
+    { disc:'Matemática',    comp:'Geometria Plana',     assunto:'Áreas de Figuras Planas',               habilidade:'Calcular área de triângulos, retângulos e círculos', diff:'Médio' },
+    { disc:'Matemática',    comp:'Estatística',         assunto:'Leitura de Gráficos e Tabelas',         habilidade:'Interpretar dados em gráficos de barras e histogramas', diff:'Médio' },
+    { disc:'Matemática',    comp:'Progressões',         assunto:'Progressão Aritmética — Termos',        habilidade:'Calcular termos e soma de progressões aritméticas', diff:'Fácil' },
+    { disc:'Matemática',    comp:'Álgebra',             assunto:'Equações Lineares — Contextos Reais',   habilidade:'Resolver equações lineares em situações práticas', diff:'Médio' },
+    /* idx 10–13 Química */
+    { disc:'Química',       comp:'Estequiometria',      assunto:'Cálculo Estequiométrico',               habilidade:'Calcular proporções em reações químicas balanceadas', diff:'Médio' },
+    { disc:'Química',       comp:'Soluções',            assunto:'Concentração e Diluição de Soluções',   habilidade:'Calcular concentração molar após diluição', diff:'Fácil' },
+    { disc:'Química',       comp:'Orgânica',            assunto:'Funções Orgânicas — Grupos Funcionais', habilidade:'Identificar grupos funcionais em fórmulas estruturais', diff:'Médio' },
+    { disc:'Química',       comp:'Gases',               assunto:'Leis dos Gases — Transformações',       habilidade:'Aplicar as leis dos gases em transformações gasosas', diff:'Médio' },
+    /* idx 14–25 Língua Inglesa */
+    { disc:'Língua Inglesa',comp:'Reading',             assunto:'Main Idea and Purpose',                 habilidade:'Identificar o propósito comunicativo de um texto', diff:'Fácil' },
+    { disc:'Língua Inglesa',comp:'Reading',             assunto:'Inference and Implication',             habilidade:'Inferir informação implícita em textos em inglês', diff:'Médio' },
+    { disc:'Língua Inglesa',comp:'Vocabulary',          assunto:'Contextual Meaning',                    habilidade:'Determinar o significado de palavras pelo contexto textual', diff:'Médio' },
+    { disc:'Língua Inglesa',comp:'Grammar',             assunto:'Modal Verbs and Conditionals',          habilidade:'Usar modais para expressar diferentes matizes de sentido', diff:'Médio-alto' },
+    { disc:'Língua Inglesa',comp:'Reading',             assunto:'Text Organization',                     habilidade:'Reconhecer a organização estrutural de um texto', diff:'Médio' },
+    { disc:'Língua Inglesa',comp:'Vocabulary',          assunto:'Synonyms and Antonyms',                 habilidade:'Reconhecer relações de sinonímia e antonímia em inglês', diff:'Fácil' },
+    { disc:'Língua Inglesa',comp:'Text Analysis',       assunto:'Communicative Purpose',                 habilidade:'Reconhecer função comunicativa de gêneros textuais variados', diff:'Médio' },
+    { disc:'Língua Inglesa',comp:'Reading',             assunto:'Reading for Detail',                    habilidade:'Localizar informações específicas em textos extensos', diff:'Fácil' },
+    { disc:'Língua Inglesa',comp:'Grammar',             assunto:'Cohesion and Reference',                habilidade:'Identificar elementos de referência e coesão textual', diff:'Médio' },
+    { disc:'Língua Inglesa',comp:'Vocabulary',          assunto:'Idiomatic Expressions',                 habilidade:'Compreender expressões idiomáticas em contextos reais', diff:'Médio-alto' },
+    { disc:'Língua Inglesa',comp:'Text Analysis',       assunto:'Implicit Information',                  habilidade:'Interpretar informação não explicitada em textos variados', diff:'Médio' },
+    { disc:'Língua Inglesa',comp:'Grammar',             assunto:'Verb Tenses and Time Frames',           habilidade:'Distinguir tempos verbais e seus valores aspectuais em inglês', diff:'Médio' },
+    /* idx 26–38 Linguagens */
+    { disc:'Linguagens',    comp:'Interpretação',       assunto:'Texto Argumentativo',                   habilidade:'Identificar tese, argumentos e contra-argumentos', diff:'Médio' },
+    { disc:'Linguagens',    comp:'Literatura',          assunto:'Romantismo Brasileiro',                 habilidade:'Relacionar obra literária e contexto histórico', diff:'Alto' },
+    { disc:'Linguagens',    comp:'Gramática',           assunto:'Coerência e Coesão Textual',            habilidade:'Identificar mecanismos de coesão referencial e sequencial', diff:'Médio' },
+    { disc:'Linguagens',    comp:'Interpretação',       assunto:'Charge e Linguagem Visual',             habilidade:'Interpretar linguagem não-verbal e marcas de ironia', diff:'Fácil' },
+    { disc:'Linguagens',    comp:'Literatura',          assunto:'Modernismo — 2ª Geração',               habilidade:'Reconhecer características do modernismo brasileiro', diff:'Alto' },
+    { disc:'Linguagens',    comp:'Gramática',           assunto:'Morfossintaxe e Análise Sintática',     habilidade:'Analisar função sintática de termos na oração', diff:'Médio' },
+    { disc:'Linguagens',    comp:'Interpretação',       assunto:'Publicidade e Persuasão',               habilidade:'Reconhecer intenções comunicativas em textos publicitários', diff:'Fácil' },
+    { disc:'Linguagens',    comp:'Interpretação',       assunto:'Gêneros Textuais Digitais',             habilidade:'Reconhecer características de gêneros textuais digitais', diff:'Médio' },
+    { disc:'Linguagens',    comp:'Literatura',          assunto:'Pré-Modernismo Brasileiro',             habilidade:'Interpretar textos de Euclides da Cunha e Lima Barreto', diff:'Médio' },
+    { disc:'Linguagens',    comp:'Gramática',           assunto:'Concordância Verbal e Nominal',         habilidade:'Aplicar regras de concordância em frases complexas', diff:'Médio-alto' },
+    { disc:'Linguagens',    comp:'Interpretação',       assunto:'Intertextualidade e Paródia',           habilidade:'Identificar referências e relações intertextuais', diff:'Alto' },
+    { disc:'Linguagens',    comp:'Literatura',          assunto:'Quinhentismo e Barroco',                habilidade:'Identificar marcas formais do Barroco na literatura portuguesa e brasileira', diff:'Alto' },
+    { disc:'Linguagens',    comp:'Gramática',           assunto:'Regência Verbal e Crase',               habilidade:'Aplicar as regras de regência verbal e uso correto da crase', diff:'Médio' },
+    /* idx 39–47 C. Humanas */
+    { disc:'C. Humanas',    comp:'História',            assunto:'Revolução Industrial',                  habilidade:'Relacionar industrialização e transformações sociais', diff:'Médio' },
+    { disc:'C. Humanas',    comp:'Geografia',           assunto:'Urbanização e Metropolização',          habilidade:'Analisar processos de crescimento e expansão urbana', diff:'Médio' },
+    { disc:'C. Humanas',    comp:'Filosofia',           assunto:'Ética e Política',                      habilidade:'Distinguir conceitos de ética, moral e política', diff:'Fácil' },
+    { disc:'C. Humanas',    comp:'Sociologia',          assunto:'Democracia e Cidadania',                habilidade:'Relacionar participação política e estado democrático', diff:'Médio' },
+    { disc:'C. Humanas',    comp:'História',            assunto:'Colonização Americana e Resistência',   habilidade:'Analisar processos de colonização e resistência indígena', diff:'Médio-alto' },
+    { disc:'C. Humanas',    comp:'Geografia',           assunto:'Geopolítica e Conflitos Contemporâneos', habilidade:'Analisar disputas territoriais e conflitos contemporâneos', diff:'Alto' },
+    { disc:'C. Humanas',    comp:'Filosofia',           assunto:'Iluminismo e Razão Moderna',            habilidade:'Identificar princípios iluministas e seus desdobramentos históricos', diff:'Médio' },
+    { disc:'C. Humanas',    comp:'Sociologia',          assunto:'Trabalho e Desigualdade Social',        habilidade:'Interpretar relações de trabalho e desigualdade social', diff:'Médio' },
+    { disc:'C. Humanas',    comp:'História',            assunto:'Revoluções do Séc. XX',                 habilidade:'Analisar causas e consequências das revoluções do século XX', diff:'Médio' },
+  ],
+
+  /* ── SIM 5 — Balanceado ── */
+  sim5: [
+    /* idx 0–10 Física */
+    { disc:'Física',        comp:'Mecânica',            assunto:'Leis de Newton e Dinâmica',             habilidade:'Aplicar princípios de dinâmica em sistemas reais', diff:'Médio' },
+    { disc:'Física',        comp:'Mecânica',            assunto:'Trabalho e Energia Cinética',           habilidade:'Relacionar trabalho realizado e variação de energia cinética', diff:'Médio' },
+    { disc:'Física',        comp:'Termodinâmica',       assunto:'Gases Ideais — Equação de Clapeyron',   habilidade:'Aplicar a equação de estado dos gases ideais', diff:'Médio' },
+    { disc:'Física',        comp:'Eletromagnetismo',    assunto:'Circuitos Elétricos Mistos',            habilidade:'Calcular corrente e tensão em circuitos com resistores', diff:'Médio-alto' },
+    { disc:'Física',        comp:'Eletromagnetismo',    assunto:'Campo Magnético e Força de Lorentz',    habilidade:'Calcular força sobre cargas em campos magnéticos', diff:'Alto' },
+    { disc:'Física',        comp:'Ondulatória',         assunto:'Ondas Mecânicas — Período e Frequência', habilidade:'Analisar período, frequência e comprimento de onda', diff:'Médio' },
+    { disc:'Física',        comp:'Óptica',              assunto:'Reflexão e Refração da Luz',            habilidade:'Aplicar a lei de Snell-Descartes em meios distintos', diff:'Fácil' },
+    { disc:'Física',        comp:'Mecânica',            assunto:'Cinemática — Gráficos e Equações',      habilidade:'Interpretar gráficos de posição e velocidade em função do tempo', diff:'Médio' },
+    { disc:'Física',        comp:'Mecânica',            assunto:'Dinâmica — Plano Inclinado com Atrito', habilidade:'Decompor forças em planos inclinados com atrito', diff:'Médio-alto' },
+    { disc:'Física',        comp:'Eletromagnetismo',    assunto:'Indução Magnética — Lei de Faraday',    habilidade:'Analisar fluxo magnético variável e força eletromotriz induzida', diff:'Alto' },
+    { disc:'Física',        comp:'Física Moderna',      assunto:'Efeito Fotoelétrico',                   habilidade:'Relacionar energia do fóton ao limiar fotoelétrico', diff:'Alto' },
+    /* idx 11–17 Química */
+    { disc:'Química',       comp:'Estequiometria',      assunto:'Cálculo Estequiométrico',               habilidade:'Relacionar moles e proporções em equações reacionais', diff:'Médio' },
+    { disc:'Química',       comp:'Termoquímica',        assunto:'Entalpia de Reação — Diagrama',         habilidade:'Interpretar variação de entalpia em reações exo e endotérmicas', diff:'Alto' },
+    { disc:'Química',       comp:'Eletroquímica',       assunto:'Pilhas e Processos de Oxirredução',     habilidade:'Analisar reações em pilhas e calcular potencial padrão', diff:'Médio' },
+    { disc:'Química',       comp:'Orgânica',            assunto:'Isomeria Orgânica — Plana e Espacial',  habilidade:'Identificar isomeria constitucional e estereoisomeria', diff:'Alto' },
+    { disc:'Química',       comp:'Gases',               assunto:'Transformações Gasosas — Leis',         habilidade:'Aplicar as leis dos gases em problemas de transformação', diff:'Médio' },
+    { disc:'Química',       comp:'Soluções',            assunto:'Concentração Molar e Diluição',         habilidade:'Calcular concentração molar antes e após diluição', diff:'Fácil' },
+    { disc:'Química',       comp:'Cinética Química',    assunto:'Fatores de Velocidade de Reação',       habilidade:'Relacionar fatores ambientais com a velocidade de reação', diff:'Médio-alto' },
+    /* idx 18–25 Matemática */
+    { disc:'Matemática',    comp:'Funções',             assunto:'Função Quadrática — Parábola',          habilidade:'Identificar zeros, vértice e concavidade de parábolas', diff:'Médio' },
+    { disc:'Matemática',    comp:'Geometria Plana',     assunto:'Trigonometria — Lei dos Senos',         habilidade:'Resolver triângulos oblíquos usando a lei dos senos', diff:'Médio-alto' },
+    { disc:'Matemática',    comp:'Estatística',         assunto:'Probabilidade — Espaço Amostral',       habilidade:'Calcular probabilidade em experimentos equiprováveis', diff:'Médio-alto' },
+    { disc:'Matemática',    comp:'Geometria Esp.',      assunto:'Volumes de Sólidos — Cone e Esfera',    habilidade:'Calcular volumes de sólidos de revolução', diff:'Alto' },
+    { disc:'Matemática',    comp:'Progressões',         assunto:'PA e PG — Identificação e Cálculo',     habilidade:'Identificar tipo e calcular termos e soma de progressões', diff:'Fácil' },
+    { disc:'Matemática',    comp:'Álgebra',             assunto:'Sistemas de Equações Lineares',         habilidade:'Resolver sistemas lineares de duas equações', diff:'Médio' },
+    { disc:'Matemática',    comp:'Combinatória',        assunto:'Permutações e Combinações Simples',     habilidade:'Distinguir e calcular permutações e combinações', diff:'Alto' },
+    { disc:'Matemática',    comp:'Funções',             assunto:'Função Exponencial e Aplicações',       habilidade:'Modelar crescimento e decaimento exponencial', diff:'Médio' },
+    /* idx 26–31 Língua Inglesa */
+    { disc:'Língua Inglesa',comp:'Reading',             assunto:'Main Idea and Purpose',                 habilidade:'Identificar ideia central e propósito comunicativo do texto', diff:'Fácil' },
+    { disc:'Língua Inglesa',comp:'Reading',             assunto:'Inference and Implication',             habilidade:'Inferir informação não explicitada em textos', diff:'Médio' },
+    { disc:'Língua Inglesa',comp:'Vocabulary',          assunto:'Contextual Meaning',                    habilidade:'Interpretar vocabulário pelo contexto de leitura', diff:'Médio' },
+    { disc:'Língua Inglesa',comp:'Grammar',             assunto:'Modal Verbs and Conditionals',          habilidade:'Empregar modais em situações comunicativas reais', diff:'Médio-alto' },
+    { disc:'Língua Inglesa',comp:'Reading',             assunto:'Text Organization',                     habilidade:'Identificar estrutura e progressão de textos em inglês', diff:'Médio' },
+    { disc:'Língua Inglesa',comp:'Vocabulary',          assunto:'Synonyms and Antonyms',                 habilidade:'Reconhecer equivalências e antonímias lexicais', diff:'Fácil' },
+    /* idx 32–38 Linguagens */
+    { disc:'Linguagens',    comp:'Interpretação',       assunto:'Texto Argumentativo',                   habilidade:'Identificar estratégias de argumentação em textos', diff:'Médio' },
+    { disc:'Linguagens',    comp:'Literatura',          assunto:'Romantismo Brasileiro',                 habilidade:'Relacionar obra literária e contexto histórico-cultural', diff:'Alto' },
+    { disc:'Linguagens',    comp:'Gramática',           assunto:'Coerência e Coesão Textual',            habilidade:'Identificar mecanismos de coesão referencial', diff:'Médio' },
+    { disc:'Linguagens',    comp:'Interpretação',       assunto:'Charge e Linguagem Visual',             habilidade:'Interpretar linguagem não-verbal e ironia gráfica', diff:'Fácil' },
+    { disc:'Linguagens',    comp:'Literatura',          assunto:'Modernismo — 2ª Geração',               habilidade:'Reconhecer traços do modernismo em poemas e prosas', diff:'Alto' },
+    { disc:'Linguagens',    comp:'Gramática',           assunto:'Morfossintaxe e Análise Sintática',     habilidade:'Analisar função sintática de termos na oração', diff:'Médio' },
+    { disc:'Linguagens',    comp:'Interpretação',       assunto:'Publicidade e Persuasão',               habilidade:'Reconhecer intenções e recursos persuasivos em textos', diff:'Fácil' },
+    /* idx 39–47 C. Humanas */
+    { disc:'C. Humanas',    comp:'História',            assunto:'Revolução Industrial',                  habilidade:'Relacionar industrialização e transformações sociais e políticas', diff:'Médio' },
+    { disc:'C. Humanas',    comp:'Geografia',           assunto:'Geopolítica e Conflitos Regionais',     habilidade:'Analisar disputas territoriais e conflitos contemporâneos', diff:'Alto' },
+    { disc:'C. Humanas',    comp:'Filosofia',           assunto:'Contratualismo — Hobbes, Locke e Rousseau', habilidade:'Comparar concepções filosóficas do contrato social', diff:'Médio' },
+    { disc:'C. Humanas',    comp:'Sociologia',          assunto:'Estratificação e Mobilidade Social',    habilidade:'Identificar tipos de mobilidade e fatores determinantes', diff:'Médio' },
+    { disc:'C. Humanas',    comp:'História',            assunto:'Colonização Americana e Resistência',   habilidade:'Analisar o processo de colonização e formas de resistência', diff:'Médio-alto' },
+    { disc:'C. Humanas',    comp:'Geografia',           assunto:'Urbanização e Metropolização',          habilidade:'Analisar crescimento urbano e formação de metrópoles', diff:'Médio' },
+    { disc:'C. Humanas',    comp:'História',            assunto:'Revoluções do Séc. XIX e Liberalismo',  habilidade:'Relacionar revoluções oitocentistas e ideais liberais', diff:'Médio' },
+    { disc:'C. Humanas',    comp:'Filosofia',           assunto:'Ética, Moral e Fundamentos da Política', habilidade:'Distinguir ética, moral e princípios fundamentais da política', diff:'Fácil' },
+    { disc:'C. Humanas',    comp:'Sociologia',          assunto:'Cultura, Identidade e Diversidade',     habilidade:'Reconhecer diversidade cultural e identitária na sociedade', diff:'Fácil' },
+  ],
+};
+
 function getQuestoesForSim(simId) {
-  const f      = _SIM_FACTORS[simId] ?? 1.0;
-  const shifts = _GAB_SHIFT_PATTERNS[simId] || _GAB_SHIFT_PATTERNS.sim5;
+  const discFactors = _SIM_DISC_FACTORS[simId] || _SIM_DISC_FACTORS.sim5;
+  const shifts      = _GAB_SHIFT_PATTERNS[simId] || _GAB_SHIFT_PATTERNS.sim5;
+  const topicSet    = SIM_TOPIC_SETS[simId]      || SIM_TOPIC_SETS.sim5;
   return QUESTOES_RAW.map((q, i) => {
+    const topic         = topicSet[i] || {};
+    const f             = discFactors[topic.disc || q.disc] ?? 0.90;
     const off           = _SIM_Q_OFFSETS[i] * (1 - f) * 4;
     const acerto        = Math.min(95, Math.max(10, Math.round(q.acerto * f + off)));
     const discriminante = parseFloat(Math.min(0.60, Math.max(0.08, q.discriminante * (0.82 + f * 0.18))).toFixed(2));
     const distPct       = Math.min(45, Math.round(q.distPct * (1 + (1 - f) * 0.5)));
     const status        = acerto >= 65 ? 'above' : acerto >= 38 ? 'att' : 'crit';
-    // Deterministic gabarito rotation
+    // Deterministic gabarito rotation per simulado
     const shift   = shifts[i] || 0;
     const gabIdx  = _GAB_LETTERS.indexOf(q.gab);
     const distIdx = _GAB_LETTERS.indexOf(q.dist);
     const gab     = _GAB_LETTERS[(gabIdx + shift) % 5];
     let   dist    = _GAB_LETTERS[(distIdx + shift) % 5];
     if (dist === gab) dist = _GAB_LETTERS[(distIdx + shift + 1) % 5];
-    return { ...q, acerto, discriminante, distPct, status, gab, dist };
+    return { ...q, acerto, discriminante, distPct, status, gab, dist, ...topic };
   });
 }
 
@@ -355,46 +663,122 @@ const SIM_QUALIDADE = { sim1: 62, sim2: 66, sim3: 68, sim4: 71, sim5: 73 };
 /* ── EVOLUÇÃO POR TIPO DE GRÁFICO ──────────────────────────── */
 const SIM_EVO_LABELS = ['1º Sim.', '2º Sim.', '3º Sim.', '4º Sim.', '5º Sim.'];
 
+/* Cada tipo tem charts[] com traces[] por gráfico — permite múltiplas linhas comparativas */
 const SIM_EVO_TIPOS = {
   media: {
-    chartTitle: 'Média Geral',
     unit: '%',
-    series: [
-      { label: 'Alunos',  data: [43.5, 45.1, 47.8, 50.2, 53.6], color: '#E8521A' },
-      { label: 'Escolas', data: [42.8, 44.9, 47.1, 49.8, 52.9], color: '#1D4ED8' },
-      { label: 'Turmas',  data: [41.2, 43.8, 46.5, 49.1, 52.3], color: '#059669' },
+    insight: 'A média geral cresceu +10,1 p.p. ao longo dos 5 simulados. Escola A e D puxam a rede para cima; Turma 2 ainda cresce abaixo da meta. Identificar escolas com crescimento abaixo de +2 p.p./simulado e aplicar intervenções direcionadas.',
+    charts: [
+      {
+        title: 'Média Geral — Rede',
+        traces: [
+          { label: 'Média da rede', data: [43.5,45.1,47.8,50.2,53.6], color: '#E8521A' },
+        ],
+      },
+      {
+        title: 'Média Geral — Por Escola',
+        traces: [
+          { label: 'Escola A', data: [48.2,51.4,54.1,57.3,62.8], color: '#1D4ED8' },
+          { label: 'Escola B', data: [43.2,46.8,50.1,53.9,60.1], color: '#059669' },
+          { label: 'Escola C', data: [47.1,49.2,52.4,55.8,58.4], color: '#D97706' },
+          { label: 'Escola D', data: [50.1,51.4,53.7,55.9,57.2], color: '#7C3AED' },
+          { label: 'Rede',    data: [43.5,45.1,47.8,50.2,53.6], color: '#9CA3AF', dash: 'dot' },
+        ],
+      },
+      {
+        title: 'Média Geral — Por Turma',
+        traces: [
+          { label: 'Turma 1', data: [46.2,48.1,51.3,53.8,57.4], color: '#1D4ED8' },
+          { label: 'Turma 2', data: [41.8,44.2,47.1,49.8,53.1], color: '#059669' },
+          { label: 'Rede',    data: [43.5,45.1,47.8,50.2,53.6], color: '#9CA3AF', dash: 'dot' },
+        ],
+      },
     ],
-    insight: 'A média geral da rede cresceu +10,1 p.p. ao longo dos 5 simulados. Alunos e turmas apresentaram evolução consistente, com aceleração entre o 3º e 5º simulado. Manter as estratégias de preparação em curso e identificar escolas com crescimento abaixo da tendência.',
   },
   acerto: {
-    chartTitle: 'Índice de Acerto',
     unit: '%',
-    series: [
-      { label: 'Alunos',  data: [41, 45, 52, 58, 63], color: '#E8521A' },
-      { label: 'Escolas', data: [44, 48, 54, 60, 64], color: '#1D4ED8' },
-      { label: 'Turmas',  data: [39, 43, 50, 56, 61], color: '#059669' },
+    insight: 'O índice de acerto médio cresceu +22 p.p. ao longo dos simulados. Escola A lidera com 69% no 5º. O gap entre Turma 2 (61%) e Escola A (69%) indica disparidade de prática diagnóstica. Priorizar nivelamento entre turmas antes do ciclo seguinte.',
+    charts: [
+      {
+        title: 'Índice de Acerto — Rede',
+        traces: [
+          { label: 'Média da rede', data: [41,45,52,58,63], color: '#E8521A' },
+        ],
+      },
+      {
+        title: 'Índice de Acerto — Por Escola',
+        traces: [
+          { label: 'Escola A', data: [46,51,58,64,69], color: '#1D4ED8' },
+          { label: 'Escola B', data: [40,44,51,57,64], color: '#059669' },
+          { label: 'Escola C', data: [44,48,55,61,66], color: '#D97706' },
+          { label: 'Escola D', data: [47,51,57,63,67], color: '#7C3AED' },
+          { label: 'Rede',    data: [41,45,52,58,63], color: '#9CA3AF', dash: 'dot' },
+        ],
+      },
+      {
+        title: 'Índice de Acerto — Por Turma',
+        traces: [
+          { label: 'Turma 1', data: [43,47,54,60,65], color: '#1D4ED8' },
+          { label: 'Turma 2', data: [39,43,50,56,61], color: '#059669' },
+          { label: 'Rede',    data: [41,45,52,58,63], color: '#9CA3AF', dash: 'dot' },
+        ],
+      },
     ],
-    insight: 'O índice de acerto médio cresceu robustamente — maior salto entre o 2º e 3º simulado (+7 p.p. para alunos). Escolas mantiveram acerto 3–4 p.p. acima dos alunos em média. Monitorar turmas: crescimento proporcional, mas ainda abaixo do esperado para o ciclo.',
   },
   participacao: {
-    chartTitle: 'Participação',
     unit: '%',
-    series: [
-      { label: 'Alunos',  data: [78, 81, 83, 85, 87], color: '#E8521A' },
-      { label: 'Escolas', data: [89, 90, 91, 92, 93], color: '#1D4ED8' },
-      { label: 'Turmas',  data: [75, 78, 80, 82, 84], color: '#059669' },
+    insight: 'A participação cresceu de forma sustentada. Escola A atingiu 95% no 5º simulado — referência para a rede. Turma 2 permanece abaixo de 85%: necessário engajamento ativo das lideranças pedagógicas. Meta: atingir 90% de adesão dos alunos.',
+    charts: [
+      {
+        title: 'Participação — Rede',
+        traces: [
+          { label: 'Média da rede', data: [78,81,83,85,87], color: '#E8521A' },
+        ],
+      },
+      {
+        title: 'Participação — Por Escola',
+        traces: [
+          { label: 'Escola A', data: [91,92,93,94,95], color: '#1D4ED8' },
+          { label: 'Escola B', data: [87,89,91,92,93], color: '#059669' },
+          { label: 'Escola C', data: [85,88,90,91,92], color: '#D97706' },
+          { label: 'Escola D', data: [88,90,91,92,93], color: '#7C3AED' },
+          { label: 'Rede',    data: [78,81,83,85,87], color: '#9CA3AF', dash: 'dot' },
+        ],
+      },
+      {
+        title: 'Participação — Por Turma',
+        traces: [
+          { label: 'Turma 1', data: [79,82,84,86,88], color: '#1D4ED8' },
+          { label: 'Turma 2', data: [75,78,80,82,84], color: '#059669' },
+          { label: 'Rede',    data: [78,81,83,85,87], color: '#9CA3AF', dash: 'dot' },
+        ],
+      },
     ],
-    insight: 'A participação cresceu de forma gradual e sustentada. Escolas lideram com 93% no 5º simulado — resultado de gestão ativa do calendário. O crescimento entre alunos (+9 p.p.) indica maior engajamento com o programa ao longo do ano. Meta: atingir 90% de adesão dos alunos.',
   },
   qualidade: {
-    chartTitle: 'Índice de Qualidade',
     unit: '',
-    series: [
-      { label: 'Geral (rede)',  data: [62, 66, 68, 71, 73], color: '#E8521A' },
-      { label: 'Matemática',   data: [58, 63, 67, 70, 72], color: '#1D4ED8' },
-      { label: 'Física',       data: [60, 64, 66, 69, 71], color: '#059669' },
-      { label: 'Química',      data: [64, 68, 70, 73, 75], color: '#D97706' },
+    insight: 'O índice de qualidade mede discriminação média, equilíbrio de dificuldade e robustez dos distratores. Matemática lidera a evolução (+14 pontos). Física ainda apresenta capacidade diagnóstica abaixo do esperado — priorizar revisão dos distratores nessa disciplina.',
+    charts: [
+      {
+        title: 'Qualidade Geral',
+        traces: [{ label: 'Índice geral', data: [62,66,68,71,73], color: '#E8521A' }],
+      },
+      {
+        title: 'Qualidade — Matemática',
+        traces: [{ label: 'Matemática', data: [58,63,67,70,72], color: '#1D4ED8' }],
+      },
+      {
+        title: 'Qualidade — Física',
+        traces: [{ label: 'Física', data: [60,64,66,69,71], color: '#059669' }],
+      },
+      {
+        title: 'Qualidade — Química',
+        traces: [{ label: 'Química', data: [64,68,70,73,75], color: '#D97706' }],
+      },
+      {
+        title: 'Qualidade — Língua Inglesa',
+        traces: [{ label: 'Inglês', data: [66,69,71,73,75], color: '#7C3AED' }],
+      },
     ],
-    insight: 'O índice de qualidade do simulado — que combina discriminação média, equilíbrio de dificuldade e consistência das alternativas — cresceu em todas as disciplinas. Matemática mostrou a maior evolução (+14 pontos). Física ainda apresenta capacidade diagnóstica abaixo do esperado: priorizar revisão dos distratores.',
   },
 };

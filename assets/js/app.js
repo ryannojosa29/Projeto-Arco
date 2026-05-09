@@ -93,6 +93,7 @@ function switchSimTab(tab, tabEl) {
 function _buildSimKpiStrip() {
   const simIdx = _simIdx();
   const d      = DASH_SIM_DATA[S.simId];
+  const src    = _SIM_Q.length ? _SIM_Q : QUESTOES;
 
   _setKpi('sk-part',      d ? d.presencaNum  : '—');
   _setKpi('sk-part-note', d ? d.presencaNote : '—');
@@ -105,16 +106,16 @@ function _buildSimKpiStrip() {
   _setKpi('sk-var',      varPp !== null ? (varPp >= 0 ? '+' : '') + varPp.toFixed(1) + ' p.p.' : '—');
   _setKpi('sk-var-note', varPp !== null ? (varPp >= 0 ? 'Crescimento' : 'Queda') : 'Primeiro simulado');
 
-  const avgAcerto = QUESTOES.reduce((s, q) => s + q.acerto, 0) / QUESTOES.length;
+  const avgAcerto = src.reduce((s, q) => s + q.acerto, 0) / src.length;
   _setKpi('sk-diff',      avgAcerto.toFixed(1) + '%');
   _setKpi('sk-diff-note', avgAcerto < 44 ? 'Baixo — atenção' : avgAcerto > 65 ? 'Alto — consolidado' : 'Dentro do esperado');
 
-  const criticas = QUESTOES.filter(q => q.status === 'crit').length;
+  const criticas = src.filter(q => q.status === 'crit').length;
   _setKpi('sk-crit',      criticas);
   _setKpi('sk-crit-note', criticas > 10 ? 'Atenção prioritária' : criticas > 5 ? 'Monitorar' : 'Aceitável');
 
   const byDisc = {};
-  QUESTOES.forEach(q => {
+  src.forEach(q => {
     if (!byDisc[q.disc]) byDisc[q.disc] = [];
     byDisc[q.disc].push(q.acerto);
   });
@@ -990,39 +991,45 @@ function renderEvolucaoCharts(tipo) {
   const grid = el('evo-charts-grid');
   if (!grid) return;
 
-  const series = tipoData.series;
+  const charts = tipoData.charts || [];
   const labels = (typeof SIM_EVO_LABELS !== 'undefined') ? SIM_EVO_LABELS : ['1º','2º','3º','4º','5º'];
 
-  // Build one card per series
-  grid.innerHTML = series.map((s, i) =>
+  // Grid columns: max 3 per row
+  const cols = Math.min(charts.length, 3);
+  grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
+  grid.innerHTML = charts.map((c, i) =>
     `<div class="card">
-      <div class="card-title mb2">${tipoData.chartTitle} — ${s.label}</div>
-      <div id="evo-chart-${i}" style="height:165px"></div>
+      <div class="card-title mb2" style="font-size:11.5px;min-height:32px">${c.title}</div>
+      <div id="evo-chart-${i}" style="height:170px"></div>
     </div>`
   ).join('');
 
-  // Dynamic grid columns: 3 side-by-side or 2×2 for 4
-  grid.style.gridTemplateColumns = series.length === 4 ? '1fr 1fr' : `repeat(${series.length}, 1fr)`;
-
-  const baseLayout = {
-    margin: { t: 6, r: 8, b: 28, l: 38 },
-    paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
-    font: { family: 'Inter, sans-serif', size: 10, color: '#6B7280' },
-    xaxis: { gridcolor: '#F0EDE8', tickfont: { size: 9 }, fixedrange: true },
-    yaxis: { gridcolor: '#F0EDE8', tickfont: { size: 9 }, fixedrange: true, ticksuffix: tipoData.unit },
-    showlegend: false,
-  };
+  const baseMgn  = { t: 8, r: 10, b: 30, l: 36 };
+  const baseFont = { family: 'Inter, sans-serif', size: 9.5, color: '#6B7280' };
   const cfg = { displayModeBar: false, responsive: true };
 
-  series.forEach((s, i) => {
+  charts.forEach((c, i) => {
     const divEl = document.getElementById('evo-chart-' + i);
     if (!divEl || typeof Plotly === 'undefined') return;
-    Plotly.react(divEl, [{
-      x: labels, y: s.data, type: 'scatter', mode: 'lines+markers',
-      line: { color: s.color, width: 2.5 },
-      marker: { color: s.color, size: 6 },
-      hovertemplate: '%{y}' + tipoData.unit + '<extra></extra>',
-    }], baseLayout, cfg);
+    const multi  = c.traces.length > 1;
+    const traces = c.traces.map(t => ({
+      x: labels, y: t.data, type: 'scatter', mode: 'lines+markers',
+      name: t.label,
+      line:   { color: t.color, width: t.dash ? 1.5 : 2.5, dash: t.dash || 'solid' },
+      marker: { color: t.color, size: t.dash ? 4 : 5.5 },
+      hovertemplate: (multi ? t.label + ': ' : '') + '%{y}' + tipoData.unit + '<extra></extra>',
+    }));
+    const layout = {
+      margin: baseMgn,
+      paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
+      font: baseFont,
+      xaxis: { gridcolor: '#F0EDE8', tickfont: { size: 8.5 }, fixedrange: true },
+      yaxis: { gridcolor: '#F0EDE8', tickfont: { size: 8.5 }, fixedrange: true, ticksuffix: tipoData.unit },
+      showlegend: multi,
+      legend: { font: { size: 8.5 }, orientation: 'h', x: 0, y: 1.08, xanchor: 'left' },
+    };
+    Plotly.react(divEl, traces, layout, cfg);
   });
 
   const insight = typeof tipoData.insight === 'function' ? tipoData.insight() : tipoData.insight;
@@ -1031,8 +1038,9 @@ function renderEvolucaoCharts(tipo) {
 
 /* ── COMPONENTES TAB ───────────────────────────────────────── */
 function _buildComponentesContent() {
+  const src = _SIM_Q.length ? _SIM_Q : QUESTOES;
   const byDisc = {};
-  QUESTOES.forEach(q => {
+  src.forEach(q => {
     if (!byDisc[q.disc]) byDisc[q.disc] = { acertos: [], criticas: 0 };
     byDisc[q.disc].acertos.push(q.acerto);
     if (q.status === 'crit') byDisc[q.disc].criticas++;
@@ -1073,7 +1081,7 @@ function _buildComponentesContent() {
   // Critical list (acerto < 44, worst first, max 6)
   const critEl = el('sim-crit-list');
   if (critEl) {
-    const crits = QUESTOES.filter(q => q.acerto < 44).sort((a, b) => a.acerto - b.acerto).slice(0, 6);
+    const crits = src.filter(q => q.acerto < 44).sort((a, b) => a.acerto - b.acerto).slice(0, 6);
     critEl.innerHTML = crits.map(q =>
       `<div class="sim-crit-item">
         <div class="sim-crit-num">Q${String(q.num).padStart(2,'0')}</div>
@@ -1145,8 +1153,9 @@ function _buildEvolucaoContent() {
   // Discipline bars (same style as componentes)
   const discBarsEl = el('sim-evo-disc-bars');
   if (discBarsEl) {
+    const simSrc = _SIM_Q.length ? _SIM_Q : QUESTOES;
     const byDisc = {};
-    QUESTOES.forEach(q => {
+    simSrc.forEach(q => {
       if (!byDisc[q.disc]) byDisc[q.disc] = [];
       byDisc[q.disc].push(q.acerto);
     });
@@ -1168,9 +1177,10 @@ function _buildEvolucaoContent() {
   // Status distribution
   const statusDistEl = el('sim-evo-status-dist');
   if (statusDistEl) {
+    const simSrc2 = _SIM_Q.length ? _SIM_Q : QUESTOES;
     const counts = { above: 0, att: 0, crit: 0 };
-    QUESTOES.forEach(q => { if (q.status in counts) counts[q.status]++; });
-    const total = QUESTOES.length;
+    simSrc2.forEach(q => { if (q.status in counts) counts[q.status]++; });
+    const total = simSrc2.length;
     const rows = [
       { key: 'above', label: 'Consolidadas', fill: 'above' },
       { key: 'att',   label: 'Atenção',      fill: 'below' },

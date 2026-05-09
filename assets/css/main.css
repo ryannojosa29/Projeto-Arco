@@ -1233,7 +1233,7 @@ select.sel:hover { border-color: var(--orange); }
 /* ── ANATOMIA 2-COL LAYOUT ──────────────────────────────────── */
 .sim-anat-grid {
   display: grid;
-  grid-template-columns: minmax(280px, 1fr) minmax(0, 1.35fr);
+  grid-template-columns: minmax(320px, 1fr) minmax(0, 1.1fr);
   gap: 14px;
   flex: 1;
   overflow: hidden;
