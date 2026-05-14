@@ -141,9 +141,454 @@ function _buildSimSignals() {
 }
 
 function _initEscolas() {
-  _populateEscolaSelect();
-  refreshEscolas();
-  switchEscolaTab('desempenho');
+  switchEscolaTab('visao-geral', document.querySelector('.escola-atab[data-tab="visao-geral"]'));
+}
+
+/* ── ESCOLAS — CONSTRUTORES DE TAB ────────────────────────── */
+function _buildEscolasVisaoGeral() {
+  const filtro  = S.escolaVisaoFiltroSimulado;
+  const isAcum  = filtro === 'acumulado';
+  const si      = isAcum ? 4 : parseInt(filtro, 10);
+  const simLabel = isAcum ? 'Geral acumulado' : SIM_LABELS_CURTOS[si];
+
+  const getMedia = e => isAcum ? getEscola6MediaAcum(e.key) : e.media[si];
+  const getPres  = e => isAcum ? getEscola6PresAcum(e.key) : e.presenca[si];
+  const mediaRede = isAcum
+    ? parseFloat((REDE_6_MEDIA.reduce((s, v) => s + v, 0) / 5).toFixed(1))
+    : REDE_6_MEDIA[si];
+
+  const topMedia   = ESCOLAS_6.slice().sort((a, b) => getMedia(b) - getMedia(a))[0];
+  const topPres    = ESCOLAS_6.slice().sort((a, b) => getPres(b) - getPres(a))[0];
+  // Attention: below rede OR presence < 80 OR net decline in selected period
+  const attEscolas = ESCOLAS_6.filter(e => {
+    if (getMedia(e) < mediaRede) return true;
+    if (getPres(e) < 80)         return true;
+    if (isAcum && e.media[4] < e.media[0]) return true;
+    if (!isAcum && si > 0 && e.media[si] < e.media[si - 1]) return true;
+    return false;
+  });
+
+  const getEvo  = e => isAcum ? e.media[4] - e.media[0] : si > 0 ? e.media[si] - e.media[si - 1] : 0;
+  const maisEvoluiu = ESCOLAS_6.slice().sort((a, b) => getEvo(b) - getEvo(a))[0];
+  const evoVal      = getEvo(maisEvoluiu);
+
+  // Weakest discipline by average gap (escola avg - rede) across all schools
+  const discGaps = DISCIPLINAS_6.map(d => {
+    const arr     = REDE_6_DISC_SIM[d];
+    const redeVal = arr
+      ? (isAcum ? parseFloat((arr.reduce((s, v) => s + v, 0) / arr.length).toFixed(1)) : arr[si])
+      : 0;
+    const belowCount = ESCOLAS_6.filter(e => {
+      const v = isAcum ? (getEscola6DiscAcum(e.key, d) ?? redeVal) : (ESCOLA_6_DISCS[e.key]?.[d]?.[si] ?? redeVal);
+      return v < redeVal;
+    }).length;
+    const avgEscola = ESCOLAS_6.reduce((s, e) => {
+      const v = isAcum ? (getEscola6DiscAcum(e.key, d) ?? redeVal) : (ESCOLA_6_DISCS[e.key]?.[d]?.[si] ?? redeVal);
+      return s + v;
+    }, 0) / ESCOLAS_6.length;
+    return { disc: d, redeVal, avgGap: parseFloat((avgEscola - redeVal).toFixed(1)), belowCount };
+  });
+  const critDisc = discGaps.slice().sort((a, b) => a.avgGap - b.avgGap)[0];
+
+  _setKpi('vg-kpi-media',             mediaRede.toFixed(1) + '%');
+  _setKpi('vg-kpi-media-note',        simLabel);
+  _setKpi('vg-kpi-top-media',         topMedia.nome);
+  _setKpi('vg-kpi-top-media-note',    getMedia(topMedia).toFixed(1) + '%');
+  _setKpi('vg-kpi-top-presenca',      topPres.nome);
+  _setKpi('vg-kpi-top-presenca-note', getPres(topPres) + '% presença');
+  _setKpi('vg-kpi-evolucao',          maisEvoluiu.nome);
+  _setKpi('vg-kpi-evolucao-note',     '+' + evoVal.toFixed(1) + (isAcum ? ' p.p. (1º→5º)' : ' p.p. vs anterior'));
+  _setKpi('vg-kpi-atencao',           attEscolas.length);
+
+  const atencaoNote = attEscolas.length === 0
+    ? 'rede dentro do esperado'
+    : isAcum  ? 'abaixo da média ou presença crítica'
+    : si === 0 ? 'recorte inicial da rede'
+    : si === 4 ? 'queda ou presença baixa no ciclo atual'
+    :            'queda ou presença abaixo do esperado';
+  _setKpi('vg-kpi-atencao-note', atencaoNote);
+
+  // Shared SVG icons
+  const ICO_UP    = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>`;
+  const ICO_TREND = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`;
+  const ICO_ALERT = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`;
+  const ICO_DOWN  = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>`;
+  const ICO_INFO  = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
+
+  const acima  = ESCOLAS_6.filter(e => getMedia(e) >= mediaRede).length;
+  const abaixo = ESCOLAS_6.length - acima;
+
+  // Panorama accordion
+  const panorama = el('vg-panorama');
+  if (panorama) {
+    let redeVar;
+    if (isAcum) {
+      redeVar = '+' + (REDE_6_MEDIA[4] - REDE_6_MEDIA[0]).toFixed(1) + ' p.p. (1º→5º)';
+    } else if (si > 0) {
+      const rv = parseFloat((REDE_6_MEDIA[si] - REDE_6_MEDIA[si - 1]).toFixed(1));
+      redeVar = (rv >= 0 ? '+' : '') + rv.toFixed(1) + ' p.p.';
+    } else {
+      redeVar = 'Linha de base';
+    }
+    const periodoLabel = isAcum ? '1º → 5º simulado'
+      : si > 0 ? SIM_LABELS_CURTOS[si - 1] + ' → ' + SIM_LABELS_CURTOS[si]
+      : 'Linha de base';
+
+    panorama.innerHTML =
+      _buildVgAccordionItem('blue', ICO_INFO,
+        'Média da rede: ' + mediaRede.toFixed(1) + '%', null,
+        acima + ' escola' + (acima !== 1 ? 's' : '') + ' acima · ' + abaixo + ' abaixo · ' + simLabel,
+        [
+          { label: 'Recorte',          val: simLabel },
+          { label: 'Escolas acima',    val: acima + ' de ' + ESCOLAS_6.length, cls: 'pos' },
+          { label: 'Escolas abaixo',   val: abaixo + ' de ' + ESCOLAS_6.length, cls: abaixo > 2 ? 'neg' : 'warn' },
+          { label: 'Variação da rede', val: redeVar, cls: 'pos' },
+        ]
+      ) +
+      _buildVgAccordionItem('green', ICO_UP,
+        topMedia.nome + ' — Líder da rede', 'var(--green)',
+        getMedia(topMedia).toFixed(1) + '% · forte em ' + topMedia.forte,
+        [
+          { label: 'Média',         val: getMedia(topMedia).toFixed(1) + '%', cls: 'pos' },
+          { label: 'Vs. rede',      val: '+' + (getMedia(topMedia) - mediaRede).toFixed(1) + ' p.p.', cls: 'pos' },
+          { label: 'Presença',      val: getPres(topMedia) + '%' },
+          { label: 'Ponto forte',   val: topMedia.forte },
+        ]
+      ) +
+      _buildVgAccordionItem('blue', ICO_TREND,
+        'Maior crescimento' + (isAcum ? ' acumulado' : ' neste simulado'), null,
+        maisEvoluiu.nome + ': +' + evoVal.toFixed(1) + ' p.p.',
+        [
+          { label: 'Escola',        val: maisEvoluiu.nome },
+          { label: 'Crescimento',   val: '+' + evoVal.toFixed(1) + ' p.p.', cls: 'pos' },
+          { label: 'Período',       val: periodoLabel },
+          { label: 'Média atual',   val: getMedia(maisEvoluiu).toFixed(1) + '%' },
+        ]
+      ) +
+      _buildVgAccordionItem('amber', ICO_ALERT,
+        critDisc.disc + ' — disciplina mais crítica', null,
+        critDisc.belowCount + ' escola' + (critDisc.belowCount !== 1 ? 's' : '') + ' abaixo da rede',
+        [
+          { label: 'Média da rede',  val: critDisc.redeVal.toFixed(1) + '%' },
+          { label: 'Escolas abaixo', val: critDisc.belowCount + ' de ' + ESCOLAS_6.length, cls: critDisc.belowCount > 3 ? 'neg' : 'warn' },
+          { label: 'Desvio médio',   val: (critDisc.avgGap >= 0 ? '+' : '') + critDisc.avgGap + ' p.p.', cls: critDisc.avgGap < 0 ? 'neg' : 'pos' },
+        ]
+      );
+  }
+
+  // Prioridades accordion
+  const prioEl = el('vg-prioridades');
+  if (prioEl) {
+    const quedaEscola = (si > 0 || isAcum)
+      ? ESCOLAS_6.slice().sort((a, b) => getEvo(a) - getEvo(b))[0]
+      : null;
+    const quedaVal = quedaEscola ? getEvo(quedaEscola) : 0;
+    const attKeys  = new Set(attEscolas.map(e => e.key));
+
+    let html = attEscolas.slice(0, 3).map(e => {
+      const diff = parseFloat((getMedia(e) - mediaRede).toFixed(1));
+      return _buildVgAccordionItem('amber', ICO_ALERT,
+        e.nome + ' — atenção pedagógica', null,
+        getMedia(e).toFixed(1) + '% · ' + getPres(e) + '% presença · fraco em ' + e.fraco,
+        [
+          { label: 'Média',           val: getMedia(e).toFixed(1) + '%', cls: diff < 0 ? 'neg' : 'warn' },
+          { label: 'Vs. rede',        val: (diff >= 0 ? '+' : '') + diff.toFixed(1) + ' p.p.', cls: diff < 0 ? 'neg' : '' },
+          { label: 'Presença',        val: getPres(e) + '%', cls: getPres(e) < 80 ? 'warn' : '' },
+          { label: 'Alunos em risco', val: '' + e.alunosAtencao },
+          { label: 'Fragilidade',     val: e.fraco },
+        ]
+      );
+    }).join('');
+
+    if (quedaEscola && quedaVal < 0 && !attKeys.has(quedaEscola.key)) {
+      html += _buildVgAccordionItem('red', ICO_DOWN,
+        quedaEscola.nome + ' — queda detectada', null,
+        quedaVal.toFixed(1) + ' p.p. ' + (isAcum ? '(1º→5º)' : 'vs. simulado anterior'),
+        [
+          { label: 'Queda',       val: quedaVal.toFixed(1) + ' p.p.', cls: 'neg' },
+          { label: 'Média atual', val: getMedia(quedaEscola).toFixed(1) + '%' },
+          { label: 'Fragilidade', val: quedaEscola.fraco },
+        ]
+      );
+    }
+
+    html += _buildVgAccordionItem('green', ICO_UP,
+      topMedia.nome + ' — Referência da rede', 'var(--green)',
+      'Pode ser modelo compartilhado com a rede',
+      [
+        { label: 'Média',        val: getMedia(topMedia).toFixed(1) + '%', cls: 'pos' },
+        { label: 'Acima da rede',val: '+' + (getMedia(topMedia) - mediaRede).toFixed(1) + ' p.p.', cls: 'pos' },
+        { label: 'Ponto forte',  val: topMedia.forte },
+        { label: 'Presença',     val: getPres(topMedia) + '%' },
+      ]
+    );
+
+    prioEl.innerHTML = html;
+  }
+}
+
+function _buildEscolasRanking() {
+  const metric      = S.escolaRankingMetrica || 'geral';
+  const rank        = getEscola6RankData(metric);
+  const metricLabel = metric === 'geral' ? 'média geral' : metric === 'presenca' ? 'presença' : metric;
+  const liderData   = getEscola6LiderMetrica(metric);
+
+  const titleEl = el('rank6-title');
+  if (titleEl) titleEl.textContent = 'Ranking por ' + metricLabel;
+
+  const tbody = el('rank6-tbody');
+  if (tbody) {
+    tbody.innerHTML = rank.map(r => {
+      const varH  = r.variacao >= 0
+        ? `<span style="color:var(--green);font-weight:700">↑ +${r.variacao.toFixed(1)}</span>`
+        : `<span style="color:var(--red);font-weight:700">↓ ${r.variacao.toFixed(1)}</span>`;
+      const sc    = r.tagClass === 'above' ? 'badge-above' : r.tagClass === 'avg' ? 'badge-avg' : 'badge-att';
+      const val   = metric === 'presenca' ? r.valor + '%' : r.valor.toFixed(1) + '%';
+      const nota  = metric === 'geral' ? r.forte : metric === 'presenca' ? r.tag : r.forte;
+      return `<tr>
+        <td class="rpos">${r.pos}º</td>
+        <td class="bold">${r.nome}</td>
+        <td class="bold">${val}</td>
+        <td>${varH}</td>
+        <td><span class="badge ${sc}">${r.tag}</span></td>
+        <td style="font-size:11px;color:var(--t3)">${nota}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  const insEl = el('rank6-insights');
+  if (insEl) {
+    const leader     = rank[0];
+    const last       = rank[rank.length - 1];
+    const crescLabel = metric === 'presenca'
+      ? 'maior crescimento de presença'
+      : metric === 'geral'
+        ? 'maior crescimento acumulado'
+        : `maior crescimento em ${metric}`;
+    const leaderVal  = metric === 'presenca' ? leader.valor + '%' : leader.valor.toFixed(1) + '%';
+    const crescVal   = (liderData.crescimento >= 0 ? '+' : '') + liderData.crescimento.toFixed(1) + ' p.p.';
+    insEl.innerHTML =
+      `<div class="pi">
+        <div class="pi-ico green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg></div>
+        <div>
+          <div class="pi-name" style="color:var(--green)">${leader.nome} — 1º lugar em ${metricLabel}</div>
+          <div class="pi-sub">${leaderVal} · forte em ${leader.forte}</div>
+        </div>
+      </div>
+      <div class="pi">
+        <div class="pi-ico blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+        <div>
+          <div class="pi-name">${liderData.liderCrescimento.nome} — ${crescLabel}</div>
+          <div class="pi-sub">${crescVal} (1º → 5º simulado)</div>
+        </div>
+      </div>
+      <div class="pi">
+        <div class="pi-ico amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div>
+        <div>
+          <div class="pi-name">${last.nome} — Atenção prioritária em ${metricLabel}</div>
+          <div class="pi-sub">${metric === 'presenca' ? last.valor + '%' : last.valor.toFixed(1) + '%'} · ${last.alunosAtencao} alunos em risco</div>
+        </div>
+      </div>`;
+  }
+
+  const notaEl = el('rank6-nota');
+  if (notaEl) {
+    const acima = rank.filter(r => r.tagClass === 'above').length;
+    const att   = rank.filter(r => r.tagClass === 'att').length;
+    notaEl.textContent = `${acima} escola${acima !== 1 ? 's' : ''} acima da média da rede em ${metricLabel}.` +
+      (att > 0 ? ` ${att} escola${att !== 1 ? 's' : ''} requerem atenção.` : ' Demais escolas estão na média.');
+  }
+}
+
+function _buildEscolasDesempenho() {
+  const key    = S.escolaDesempenhoEscola   || 'a';
+  const sim    = S.escolaDesempenhoSimulado;
+  const isAcum = sim === 'acumulado';
+  const si     = isAcum ? null : parseInt(sim, 10);
+  const e      = getEscola6(key);
+
+  const media = isAcum ? getEscola6MediaAcum(key) : e.media[si];
+  const rede  = isAcum
+    ? parseFloat((REDE_6_MEDIA.reduce((s, v) => s + v, 0) / 5).toFixed(1))
+    : REDE_6_MEDIA[si];
+  const diff  = parseFloat((media - rede).toFixed(1));
+  const pres  = isAcum ? getEscola6PresAcum(key) : e.presenca[si];
+  const rank  = getEscola6RankPos(key, sim);
+
+  let mediaNote, presNote, rankNote;
+  if (isAcum) {
+    const varAcum    = parseFloat((e.media[4] - e.media[0]).toFixed(1));
+    const presVarAcum = e.presenca[4] - e.presenca[0];
+    mediaNote = (varAcum >= 0 ? '+' : '') + varAcum + ' p.p. (1º→5º sim.)';
+    presNote  = (presVarAcum >= 0 ? '+' : '') + presVarAcum + ' p.p. (1º→5º sim.)';
+    rankNote  = 'posição acumulada';
+  } else if (si > 0) {
+    const varSi = parseFloat((media - e.media[si - 1]).toFixed(1));
+    const pp    = pres - e.presenca[si - 1];
+    mediaNote = (varSi >= 0 ? '+' : '') + varSi + ' p.p. vs. ' + SIM_LABELS_CURTOS[si - 1];
+    presNote  = (pp >= 0 ? '+' : '') + pp + ' p.p. vs. anterior';
+    rankNote  = 'no ' + SIM_LABELS_CURTOS[si];
+  } else {
+    mediaNote = 'Linha de base';
+    presNote  = 'Linha de base';
+    rankNote  = 'no ' + SIM_LABELS_CURTOS[0];
+  }
+
+  _setKpi('desemp6-media',      media.toFixed(1) + '%');
+  _setKpi('desemp6-media-note', mediaNote);
+  _setKpi('desemp6-rede',       rede.toFixed(1) + '%');
+
+  const diffEl = el('desemp6-diff');
+  if (diffEl) {
+    diffEl.textContent = (diff >= 0 ? '+' : '') + diff.toFixed(1) + ' p.p.';
+    diffEl.style.color = diff >= 0 ? 'var(--green)' : 'var(--red)';
+  }
+
+  _setKpi('desemp6-rank',      rank + 'º / ' + ESCOLAS_6.length);
+  _setKpi('desemp6-rank-note', rankNote);
+  _setKpi('desemp6-part',      pres + '%');
+  _setKpi('desemp6-part-note', presNote);
+
+  const titleEl = el('desemp6-evo-title');
+  if (titleEl) titleEl.textContent = 'Evolução da média — ' + e.nome;
+
+  const subEl = el('desemp6-discs-sub');
+  if (subEl) subEl.textContent = isAcum
+    ? 'Média acumulada por disciplina (5 simulados)'
+    : 'Desempenho por disciplina — ' + SIM_LABELS_CURTOS[si];
+
+  if (typeof renderDesemp6EvoChart   === 'function') renderDesemp6EvoChart(key);
+  if (typeof renderDesemp6DiscsChart === 'function') renderDesemp6DiscsChart(key, si, isAcum);
+  if (typeof renderDesemp6FaixaChart === 'function') renderDesemp6FaixaChart(key, si, isAcum);
+
+  const notaEl = el('desemp6-nota');
+  if (notaEl) {
+    const simStr = isAcum ? 'em média ao longo dos 5 simulados' : 'no ' + SIM_LABELS_CURTOS[si];
+    notaEl.textContent = `${e.nome} teve ${media.toFixed(1)}% ${simStr}, ` +
+      `${diff >= 0 ? '+' : ''}${diff.toFixed(1)} p.p. vs. rede. ` +
+      `Presença: ${pres}%. Ranking: ${rank}º na rede.`;
+  }
+}
+
+function _buildEscolasComponentes() {
+  const key  = S.escolaComponentesEscola       || 'a';
+  const disc = S.escolaComponentesDisciplina   || 'Todas';
+  const e    = getEscola6(key);
+
+  const titleEl = el('comp6-title');
+  if (titleEl) titleEl.textContent = disc === 'Todas'
+    ? `Componentes — Visão geral · ${e.nome}`
+    : `Componentes — ${disc} · ${e.nome}`;
+
+  const subEl = el('comp6-sub');
+  if (subEl) subEl.textContent = disc === 'Todas'
+    ? 'Análise por disciplina — pontos fortes e fragilidades da escola'
+    : 'Análise detalhada dos componentes curriculares';
+
+  const contentEl = el('comp6-content');
+  if (contentEl) {
+    if (disc === 'Todas') {
+      contentEl.innerHTML =
+        `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;margin-bottom:4px">` +
+        DISCIPLINAS_6.map(d => {
+          const comps = ESCOLA_6_COMP[key]?.[d] ?? [];
+          if (!comps.length) return '';
+          const avg    = comps.reduce((s, c) => s + (c.acerto - c.rede), 0) / comps.length;
+          const sc     = avg > 3 ? 'badge-above' : avg < -3 ? 'badge-crit' : avg >= 0 ? 'badge-avg' : 'badge-att';
+          const st     = avg > 3 ? 'Acima' : avg < -3 ? 'Crítico' : avg >= 0 ? 'Na média' : 'Atenção';
+          const acu    = getEscola6DiscAcum(key, d);
+          const redeArr = REDE_6_DISC_SIM[d];
+          const redeAcu = redeArr
+            ? parseFloat((redeArr.reduce((s, v) => s + v, 0) / redeArr.length).toFixed(1))
+            : 0;
+          return `<div class="card" style="cursor:default;padding:14px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+              <div style="font-size:12.5px;font-weight:700;color:var(--t1)">${d}</div>
+              <span class="badge ${sc}">${st}</span>
+            </div>
+            <div style="font-size:22px;font-weight:800;color:var(--navy)">${acu !== null ? acu.toFixed(1) + '%' : '—'}</div>
+            <div style="font-size:10.5px;color:var(--t4)">rede: ${redeAcu.toFixed(1)}% · diff: <span style="color:${avg >= 0 ? 'var(--green)' : 'var(--red)'};font-weight:700">${avg >= 0 ? '+' : ''}${avg.toFixed(1)} p.p.</span></div>
+          </div>`;
+        }).join('') +
+        '</div>';
+    } else {
+      const comps = ESCOLA_6_COMP[key]?.[disc] ?? [];
+      contentEl.innerHTML = comps.length
+        ? `<table class="tbl" style="width:100%">
+            <thead><tr><th>Componente</th><th>Escola</th><th>Rede</th><th>Diff</th><th>Status</th></tr></thead>
+            <tbody>` +
+          comps.map(c => {
+            const diff  = c.acerto - c.rede;
+            const sign  = diff >= 0 ? '+' : '';
+            const sc    = diff > 5 ? 'badge-above' : diff < -5 ? 'badge-crit' : diff >= 0 ? 'badge-avg' : 'badge-att';
+            const st    = diff > 5 ? 'Acima' : diff < -5 ? 'Crítico' : diff >= 0 ? 'Na média' : 'Atenção';
+            const color = diff > 0 ? 'color:var(--green)' : diff < 0 ? 'color:var(--red)' : '';
+            return `<tr>
+              <td class="bold">${c.comp}</td>
+              <td>${c.acerto}%</td>
+              <td>${c.rede}%</td>
+              <td style="${color};font-weight:700">${sign}${diff}</td>
+              <td><span class="badge ${sc}">${st}</span></td>
+            </tr>`;
+          }).join('') +
+          '</tbody></table>'
+        : '<div style="font-size:12px;color:var(--t4);padding:8px">Sem dados de componentes para esta disciplina.</div>';
+    }
+  }
+
+  const fortesEl = el('comp6-fortes');
+  const fragEl   = el('comp6-frageis');
+
+  const allComps = disc === 'Todas'
+    ? DISCIPLINAS_6.flatMap(d => (ESCOLA_6_COMP[key]?.[d] ?? []).map(c => ({ ...c, _disc: d })))
+    : (ESCOLA_6_COMP[key]?.[disc] ?? []).map(c => ({ ...c, _disc: disc }));
+  const sortedAll = allComps.slice().sort((a, b) => (b.acerto - b.rede) - (a.acerto - a.rede));
+
+  if (fortesEl) {
+    const top = sortedAll.slice(0, 3).filter(c => c.acerto >= c.rede);
+    fortesEl.innerHTML = top.length
+      ? top.map(c => `<div class="pi">
+          <div class="pi-ico green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></div>
+          <div>
+            <div class="pi-name" style="color:var(--green)">${c.comp}</div>
+            <div class="pi-sub">${disc === 'Todas' ? c._disc + ' · ' : ''}${c.acerto}% vs. ${c.rede}% rede (+${c.acerto - c.rede} p.p.)</div>
+          </div>
+        </div>`).join('')
+      : '<div style="font-size:12px;color:var(--t4);padding:8px 0">Nenhum destaque identificado.</div>';
+  }
+
+  if (fragEl) {
+    const bottom = sortedAll.slice(-3).reverse().filter(c => c.acerto < c.rede);
+    fragEl.innerHTML = bottom.length
+      ? bottom.map(c => `<div class="pi">
+          <div class="pi-ico red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg></div>
+          <div>
+            <div class="pi-name" style="color:var(--red)">${c.comp}</div>
+            <div class="pi-sub">${disc === 'Todas' ? c._disc + ' · ' : ''}${c.acerto}% vs. ${c.rede}% rede (${c.acerto - c.rede} p.p.)</div>
+          </div>
+        </div>`).join('')
+      : '<div style="font-size:12px;color:var(--t4);padding:8px 0">Nenhuma fragilidade identificada.</div>';
+  }
+
+  const notaEl = el('comp6-nota');
+  if (notaEl) {
+    const frageis = allComps.filter(c => c.acerto < c.rede).length;
+    if (disc === 'Todas') {
+      notaEl.textContent = `${e.nome}: ${frageis} de ${allComps.length} componentes abaixo da média da rede. Forte: ${e.forte}; fraco: ${e.fraco}.`;
+    } else {
+      notaEl.textContent = `Em ${disc}, ${e.nome} tem ${frageis} de ${allComps.length} componentes abaixo da média. Forte geral: ${e.forte}; fraco geral: ${e.fraco}.`;
+    }
+  }
+
+  const evoTitleEl = el('comp6-evo-title');
+  const evoSubEl   = el('comp6-evo-sub');
+  if (evoTitleEl) evoTitleEl.textContent = disc === 'Todas'
+    ? `Evolução por disciplina — ${e.nome}`
+    : `Evolução de ${disc} — ${e.nome}`;
+  if (evoSubEl) evoSubEl.textContent = disc === 'Todas'
+    ? 'Comparativo de todas as disciplinas ao longo dos simulados'
+    : 'Comparativo da escola vs. média da rede';
+  if (typeof renderComp6EvoChart === 'function') renderComp6EvoChart(key, disc);
 }
 
 function _initAlunos() {
@@ -509,6 +954,30 @@ function togglePiExpand(wrap) {
   const isOpen = wrap.classList.contains('open');
   document.querySelectorAll('#page-dashboard .pi-wrap.open').forEach(w => w.classList.remove('open'));
   if (!isOpen) wrap.classList.add('open');
+}
+
+function toggleEscolaVgExpand(wrap) {
+  const isOpen = wrap.classList.contains('open');
+  document.querySelectorAll('#etab-visao-geral .pi-wrap.open').forEach(w => w.classList.remove('open'));
+  if (!isOpen) wrap.classList.add('open');
+}
+
+function _buildVgAccordionItem(icoColor, icoSvg, name, nameColor, sub, rows) {
+  const expandHtml = rows.map(r =>
+    `<div class="pi-expand-row"><span class="pi-expand-label">${r.label}</span><span class="pi-expand-val${r.cls ? ' ' + r.cls : ''}">${r.val}</span></div>`
+  ).join('');
+  return `<div class="pi-wrap">
+    <div class="pi pi-expandable" onclick="toggleEscolaVgExpand(this.parentElement)">
+      <div class="pi-ico ${icoColor}">${icoSvg}</div>
+      <div>
+        <div class="pi-name"${nameColor ? ` style="color:${nameColor}"` : ''}>${name}</div>
+        <div class="pi-sub">${sub}</div>
+        <div class="pi-hint">ver detalhes</div>
+      </div>
+      <svg class="pi-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 3 11 8 6 13"/></svg>
+    </div>
+    <div class="pi-expand"><div class="pi-expand-inner">${expandHtml}</div></div>
+  </div>`;
 }
 
 function switchDashSim(simId) {

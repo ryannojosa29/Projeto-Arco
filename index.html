@@ -426,111 +426,265 @@
 <div class="page hidden" id="page-escolas">
   <div class="ph">
     <div class="ph-top" style="margin-bottom:0">
-      <div><div class="ph-title">Escolas</div><div class="ph-sub">Acompanhe e compare o desempenho das escolas da rede.</div></div>
+      <div>
+        <div class="ph-title">Escolas</div>
+        <div class="ph-sub">Compare e monitore o desempenho das 6 escolas da rede Arco.</div>
+      </div>
+    </div>
+    <div class="tabs" style="margin-top:14px">
+      <div class="tab escola-atab active" data-tab="visao-geral" onclick="switchEscolaTab('visao-geral',this)">Visão Geral</div>
+      <div class="tab escola-atab" data-tab="ranking" onclick="switchEscolaTab('ranking',this)">Ranking</div>
+      <div class="tab escola-atab" data-tab="desempenho" onclick="switchEscolaTab('desempenho',this)">Desempenho</div>
+      <div class="tab escola-atab" data-tab="componentes" onclick="switchEscolaTab('componentes',this)">Componentes</div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB: VISÃO GERAL ═══ -->
+  <div class="escola-tab-content active" id="etab-visao-geral">
+    <div class="fbar">
       <div class="fsel">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
         <div>
-          <div class="f-label">Escola</div>
-          <select class="fsel-input" id="sel-escola" onchange="setEscola(this.value)">
-            <option value="A">Escola A</option>
+          <div class="f-label">Visualizar</div>
+          <select class="fsel-input" id="sel-vg-simulado" onchange="setEscolaVisaoSimulado(this.value)">
+            <option value="acumulado">Geral acumulado</option>
+            <option value="4">5º Simulado</option>
+            <option value="3">4º Simulado</option>
+            <option value="2">3º Simulado</option>
+            <option value="1">2º Simulado</option>
+            <option value="0">1º Simulado</option>
           </select>
         </div>
       </div>
     </div>
-    <div style="display:flex;gap:0;margin-top:14px">
-      <div class="tab escola-atab active" data-tab="desempenho" onclick="switchEscolaTab('desempenho')">Desempenho</div>
-      <div class="tab escola-atab" data-tab="evolucao" onclick="switchEscolaTab('evolucao')">Evolução</div>
-      <div class="tab escola-atab" data-tab="ranking" onclick="switchEscolaTab('ranking')">Ranking</div>
-      <div class="tab escola-atab" data-tab="componentes" onclick="switchEscolaTab('componentes')">Componentes</div>
+    <div class="pb">
+      <div class="g1 g5 mb12">
+        <div class="kpi">
+          <div class="kpi-label">Média da rede</div>
+          <div class="kpi-val" id="vg-kpi-media">—</div>
+          <div class="kpi-note" id="vg-kpi-media-note">—</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Maior média</div>
+          <div class="kpi-val" id="vg-kpi-top-media">—</div>
+          <div class="kpi-note" id="vg-kpi-top-media-note">—</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Maior presença</div>
+          <div class="kpi-val" id="vg-kpi-top-presenca">—</div>
+          <div class="kpi-note" id="vg-kpi-top-presenca-note">—</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Mais evoluiu</div>
+          <div class="kpi-val" id="vg-kpi-evolucao">—</div>
+          <div class="kpi-note" id="vg-kpi-evolucao-note">—</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Em atenção</div>
+          <div class="kpi-val" id="vg-kpi-atencao">—</div>
+          <div class="kpi-note" id="vg-kpi-atencao-note">—</div>
+        </div>
+      </div>
+      <div class="g1 g2">
+        <div class="card">
+          <div class="card-title mb8">Panorama da rede</div>
+          <div id="vg-panorama"></div>
+        </div>
+        <div class="card">
+          <div class="card-title mb8">Prioridades do momento</div>
+          <div id="vg-prioridades"></div>
+        </div>
+      </div>
     </div>
   </div>
-  <div class="pb" style="overflow-y:auto">
 
-    <!-- TAB: DESEMPENHO -->
-    <div class="escola-tab-content" id="etab-desempenho">
-      <div class="g1 g4 mb12">
-        <div class="kpi"><div class="kpi-label">Desempenho</div><div class="kpi-val" id="escola-kpi-media">—</div><div class="kpi-note">Média de acerto</div></div>
-        <div class="kpi"><div class="kpi-label">Posição no ranking</div><div class="kpi-val" id="escola-kpi-rank">—</div><div class="kpi-note">Entre as escolas</div></div>
-        <div class="kpi"><div class="kpi-label">Participação</div><div class="kpi-val" id="escola-kpi-part">—</div><div class="kpi-note">Taxa de presença</div></div>
-        <div class="kpi"><div class="kpi-label">Movimento</div><div class="kpi-val" id="escola-kpi-move">—</div><div class="kpi-note">No ranking</div></div>
-      </div>
-      <div class="g1 g2">
-        <div class="card"><div class="card-title">Desempenho ao longo do tempo</div><div class="card-sub">Escola vs. Média da rede</div><div id="chart-escola-evo" style="height:200px"></div></div>
-        <div class="card"><div class="card-title">Distribuição por nível de desempenho</div><div class="card-sub">% de alunos por faixa</div><div id="chart-escola-faixa" style="height:200px"></div></div>
-      </div>
-      <div class="pnote blue mt12">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-        <span class="pnote-text" id="escola-nota">Carregando análise…</span>
+  <!-- ═══ TAB: RANKING ═══ -->
+  <div class="escola-tab-content" id="etab-ranking">
+    <div class="fbar">
+      <div class="fsel">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <div>
+          <div class="f-label">Ranking por</div>
+          <select class="fsel-input" id="sel-rank6-metric" onchange="setEscolaRankingMetrica(this.value)">
+            <option value="geral">Média geral</option>
+            <option value="Matemática">Matemática</option>
+            <option value="Física">Física</option>
+            <option value="Química">Química</option>
+            <option value="Língua Inglesa">Língua Inglesa</option>
+            <option value="presenca">Presença</option>
+          </select>
+        </div>
       </div>
     </div>
-
-    <!-- TAB: EVOLUÇÃO -->
-    <div class="escola-tab-content hidden" id="etab-evolucao">
-      <div class="evo-cards">
-        <div class="evo-card"><div class="evo-label">Crescimento</div><div class="evo-val" style="color:var(--green)" id="evo-crescimento">—</div><div class="evo-note">Do 1º ao 5º simulado</div></div>
-        <div class="evo-card"><div class="evo-label">Variação no ranking</div><div class="evo-val" style="color:var(--blue)" id="evo-rank">—</div><div class="evo-note">Posições ganhas</div></div>
-        <div class="evo-card"><div class="evo-label">Tendência</div><div class="evo-val" style="color:var(--green)" id="evo-tend">—</div><div class="evo-note">Nos últimos simulados</div></div>
-      </div>
-      <div class="g1 g2">
-        <div class="card"><div class="card-title" id="evo-chart-title">Evolução da média geral</div><div class="card-sub">Escola vs. Média da rede</div><div id="chart-evo-geral" style="height:200px"></div></div>
-        <div class="card"><div class="card-title">Evolução no ranking</div><div class="card-sub">Posição ao longo dos simulados</div><div id="chart-evo-ranking" style="height:200px"></div></div>
-      </div>
-    </div>
-
-    <!-- TAB: RANKING -->
-    <div class="escola-tab-content hidden" id="etab-ranking">
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap">
-        <div style="font-size:12px;color:var(--t3)">Tipo de ranking:</div>
-        <select class="sel" onchange="setRankTipo(this.value)">
-          <option value="geral">Média geral</option>
-          <option value="Matemática">Matemática</option>
-          <option value="Física">Física</option>
-          <option value="Química">Química</option>
-          <option value="Língua Inglesa">Língua Inglesa</option>
-          <option value="Linguagens">Linguagens</option>
-          <option value="C. Humanas">C. Humanas</option>
-        </select>
-      </div>
-      <div class="g1 g21">
+    <div class="pb">
+      <div class="g1 g2 mb12">
         <div class="card">
-          <div class="card-title" id="rank-table-title">Ranking por média geral</div>
-          <div class="card-sub">Todos os simulados</div>
-          <table class="tbl" id="rank-table">
-            <thead><tr><th>Pos.</th><th>Escola</th><th>Média</th><th>Variação (p.p.)</th><th>Mudança</th><th>Participação</th></tr></thead>
-            <tbody id="rank-tbody"></tbody>
-          </table>
+          <div class="card-title mb8">Destaques</div>
+          <div id="rank6-insights">—</div>
+        </div>
+        <div class="pnote blue" style="align-self:flex-start">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span class="pnote-text" id="rank6-nota">—</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title" id="rank6-title">Ranking por média geral</div>
+        <div class="card-sub">5º Simulado — posição final · variação vs. simulado anterior</div>
+        <table class="tbl">
+          <thead><tr><th>Pos.</th><th>Escola</th><th>Valor</th><th>Variação</th><th>Status</th><th>Insight</th></tr></thead>
+          <tbody id="rank6-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB: DESEMPENHO ═══ -->
+  <div class="escola-tab-content" id="etab-desempenho">
+    <div class="fbar">
+      <div class="fsel">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        <div>
+          <div class="f-label">Escola</div>
+          <select class="fsel-input" id="sel-escola6-desemp" onchange="setEscolaDesempenhoEscola(this.value)">
+            <option value="a">Escola A</option>
+            <option value="b">Escola B</option>
+            <option value="c">Escola C</option>
+            <option value="d">Escola D</option>
+            <option value="e">Escola E</option>
+            <option value="f">Escola F</option>
+          </select>
+        </div>
+      </div>
+      <div class="fsel">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        <div>
+          <div class="f-label">Visualizar</div>
+          <select class="fsel-input" id="sel-desemp6-sim" onchange="setEscolaDesempenhoSimulado(this.value)">
+            <option value="acumulado">Geral acumulado</option>
+            <option value="4">5º Simulado</option>
+            <option value="3">4º Simulado</option>
+            <option value="2">3º Simulado</option>
+            <option value="1">2º Simulado</option>
+            <option value="0">1º Simulado</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="pb">
+      <div class="g1 g5 mb12">
+        <div class="kpi">
+          <div class="kpi-label">Média escola</div>
+          <div class="kpi-val" id="desemp6-media">—</div>
+          <div class="kpi-note" id="desemp6-media-note">—</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Média da rede</div>
+          <div class="kpi-val" id="desemp6-rede">—</div>
+          <div class="kpi-note">referência da rede</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Diferença vs. rede</div>
+          <div class="kpi-val" id="desemp6-diff">—</div>
+          <div class="kpi-note">pontos percentuais</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Posição no ranking</div>
+          <div class="kpi-val" id="desemp6-rank">—</div>
+          <div class="kpi-note" id="desemp6-rank-note">—</div>
+        </div>
+        <div class="kpi">
+          <div class="kpi-label">Presença</div>
+          <div class="kpi-val" id="desemp6-part">—</div>
+          <div class="kpi-note" id="desemp6-part-note">—</div>
+        </div>
+      </div>
+      <div class="card mb12">
+        <div class="card-title" id="desemp6-evo-title">Evolução da média</div>
+        <div class="card-sub">Escola vs. média da rede · todos os simulados</div>
+        <div id="chart-desemp6-evo" style="height:180px"></div>
+      </div>
+      <div class="g1 g2 mb12">
+        <div class="card">
+          <div class="card-title">Desempenho por disciplina</div>
+          <div class="card-sub" id="desemp6-discs-sub">Escola vs. média da rede</div>
+          <div id="chart-desemp6-discs" style="height:200px"></div>
+        </div>
+        <div class="card">
+          <div class="card-title">Distribuição por faixa</div>
+          <div class="card-sub">% de alunos por nível de desempenho</div>
+          <div id="chart-desemp6-faixa" style="height:200px"></div>
+        </div>
+      </div>
+      <div class="pnote blue">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span class="pnote-text" id="desemp6-nota">—</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB: COMPONENTES ═══ -->
+  <div class="escola-tab-content" id="etab-componentes">
+    <div class="fbar">
+      <div class="fsel">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+        <div>
+          <div class="f-label">Escola</div>
+          <select class="fsel-input" id="sel-escola6-comp" onchange="setEscolaComponentesEscola(this.value)">
+            <option value="a">Escola A</option>
+            <option value="b">Escola B</option>
+            <option value="c">Escola C</option>
+            <option value="d">Escola D</option>
+            <option value="e">Escola E</option>
+            <option value="f">Escola F</option>
+          </select>
+        </div>
+      </div>
+      <div class="fsel">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        <div>
+          <div class="f-label">Disciplina</div>
+          <select class="fsel-input" id="sel-comp6-disc" onchange="setEscolaComponentesDisciplina(this.value)">
+            <option value="Todas">Todas as disciplinas</option>
+            <option value="Matemática">Matemática</option>
+            <option value="Física">Física</option>
+            <option value="Química">Química</option>
+            <option value="Língua Inglesa">Língua Inglesa</option>
+            <option value="Linguagens">Linguagens</option>
+            <option value="C. Humanas">C. Humanas</option>
+          </select>
+        </div>
+      </div>
+    </div>
+    <div class="pb">
+      <div class="g1 g21 mb12">
+        <div class="card">
+          <div class="card-title" id="comp6-title">Sinais relevantes · Escola A</div>
+          <div class="card-sub" id="comp6-sub">Componentes com maior desvio em relação à rede</div>
+          <div id="comp6-content"></div>
         </div>
         <div>
           <div class="card mb12">
-            <div class="card-title mb8">Destaques</div>
-            <div class="pi"><div class="pi-ico green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg></div><div><div class="pi-name" style="color:var(--green)">Escola A</div><div class="pi-sub">Líder · 62,8% · subiu 2 posições</div></div></div>
-            <div class="pi"><div class="pi-ico orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div><div class="pi-name">Maior crescimento</div><div class="pi-sub">Escola B: +8,7 p.p.</div></div></div>
-            <div class="pi"><div class="pi-ico red"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></div><div><div class="pi-name" style="color:var(--red)">Maior queda</div><div class="pi-sub">Escola AB: −8,4 p.p.</div></div></div>
+            <div class="card-title mb8">Pontos fortes</div>
+            <div id="comp6-fortes">—</div>
           </div>
-          <div class="pnote orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span class="pnote-text">5 escolas avançaram no ranking; 6 apresentam queda neste simulado.</span></div>
+          <div class="card mb12">
+            <div class="card-title mb8">Fragilidades</div>
+            <div id="comp6-frageis">—</div>
+          </div>
+          <div class="pnote orange">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            <span class="pnote-text" id="comp6-nota">—</span>
+          </div>
         </div>
       </div>
-    </div>
-
-    <!-- TAB: COMPONENTES -->
-    <div class="escola-tab-content hidden" id="etab-componentes">
-      <div class="g1 g21">
-        <div class="card">
-          <div class="card-title">Desempenho por componente curricular</div>
-          <div class="card-sub" id="comp-escola-sub">Escola vs. média da rede</div>
-          <table class="tbl" id="comp-escola-tbl">
-            <thead><tr><th>Componente</th><th>Média escola</th><th>Média rede</th><th>Diferença</th><th>Situação</th></tr></thead>
-            <tbody id="comp-escola-tbody"></tbody>
-          </table>
-        </div>
-        <div>
-          <div class="card mb12"><div class="card-title mb8">Comparativo visual</div><div id="chart-comp-escola" style="height:240px"></div></div>
-          <div class="pnote orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg><span class="pnote-text" id="escola-comp-nota">Carregando análise de componentes…</span></div>
-        </div>
+      <div class="card">
+        <div class="card-title" id="comp6-evo-title">Evolução por disciplina</div>
+        <div class="card-sub" id="comp6-evo-sub">Escola vs. média da rede ao longo dos simulados</div>
+        <div id="chart-comp6-evo" style="height:180px"></div>
       </div>
     </div>
-
   </div>
+
   <div class="footer"><div class="footer-l"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Dados confidenciais.</div><div class="footer-r">© 2025 Arco Educação.</div></div>
 </div>
 

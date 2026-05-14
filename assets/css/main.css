@@ -624,10 +624,10 @@ select.sel:hover { border-color: var(--orange); }
 .modal-texto { font-size: 13px; line-height: 1.7; color: var(--t2); }
 
 /* ── ESCOLA / ALUNO / PROF tab content ────────────────────── */
-.escola-tab-content,
+.escola-tab-content { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+.escola-tab-content.active { display: flex; }
 .aluno-tab-content,
 .prof-tab-content { display: block; }
-.escola-tab-content.hidden,
 .aluno-tab-content.hidden,
 .prof-tab-content.hidden { display: none; }
 

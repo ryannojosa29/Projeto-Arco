@@ -782,3 +782,180 @@ const SIM_EVO_TIPOS = {
     ],
   },
 };
+
+/* ═══════════════════════════════════════════════════════════
+   ESCOLAS_6 — Sistema de dados das 6 escolas da rede Arco
+   Usado exclusivamente pela página Escolas. Determinístico.
+═══════════════════════════════════════════════════════════ */
+
+const REDE_6_DISC_SIM = {
+  'Física':         [37.2, 39.4, 41.1, 42.5, 43.8],
+  'Química':        [48.5, 50.8, 53.2, 55.4, 57.0],
+  'Matemática':     [49.8, 52.4, 54.7, 56.8, 58.6],
+  'Língua Inglesa': [53.8, 56.2, 58.9, 61.1, 63.3],
+  'Linguagens':     [47.6, 49.8, 52.1, 54.2, 56.1],
+  'C. Humanas':     [45.3, 47.4, 49.6, 51.5, 53.4],
+};
+
+const REDE_6_MEDIA   = [43.5, 45.1, 47.8, 50.2, 53.6];
+const DISCIPLINAS_6  = ['Matemática','Física','Química','Língua Inglesa','Linguagens','C. Humanas'];
+
+const ESCOLAS_6 = [
+  { key:'a', nome:'Escola A', media:[48.2,51.4,54.1,57.3,62.8], presenca:[88,90,91,93,94], forte:'Matemática',    fraco:'Física',     alunosAtencao:12, compsCriticos:1, tag:'Referência',         tagClass:'above', var:+5.5, rankEvo:[3,3,2,1,1] },
+  { key:'b', nome:'Escola B', media:[43.2,46.8,50.1,53.9,60.1], presenca:[84,86,88,89,91], forte:'Física',        fraco:'Linguagens', alunosAtencao:18, compsCriticos:1, tag:'Em crescimento',      tagClass:'above', var:+6.2, rankEvo:[6,5,4,3,2] },
+  { key:'c', nome:'Escola C', media:[47.1,49.2,52.4,55.8,58.4], presenca:[82,84,86,87,89], forte:'Língua Inglesa',fraco:'Química',    alunosAtencao:21, compsCriticos:2, tag:'Estável',             tagClass:'avg',   var:+2.6, rankEvo:[4,4,3,4,3] },
+  { key:'d', nome:'Escola D', media:[50.1,51.4,53.7,55.9,57.2], presenca:[81,82,83,84,88], forte:'Linguagens',   fraco:'Física',     alunosAtencao:16, compsCriticos:2, tag:'Estável',             tagClass:'avg',   var:+1.3, rankEvo:[2,2,1,2,4] },
+  { key:'e', nome:'Escola E', media:[45.3,47.8,50.2,53.4,55.6], presenca:[78,77,76,75,74], forte:'Matemática',   fraco:'C. Humanas', alunosAtencao:28, compsCriticos:2, tag:'Presença em queda',   tagClass:'att',   var:+2.2, rankEvo:[5,6,5,5,5] },
+  { key:'f', nome:'Escola F', media:[49.2,50.4,52.3,54.8,54.1], presenca:[80,79,78,76,74], forte:'Linguagens',   fraco:'Matemática', alunosAtencao:34, compsCriticos:3, tag:'Atenção',             tagClass:'att',   var:-0.7, rankEvo:[1,1,2,2,6] },
+];
+
+const ESCOLA_6_DISCS = {
+  a:{ 'Matemática':[62.1,65.3,68.7,71.2,75.4],'Física':[38.2,41.4,44.8,48.3,54.6],'Química':[55.4,58.2,61.1,63.8,66.2],'Língua Inglesa':[68.1,70.4,72.8,74.9,77.2],'Linguagens':[57.3,60.1,62.8,65.4,68.1],'C. Humanas':[44.2,47.8,51.2,54.3,58.9] },
+  b:{ 'Física':[50.2,54.1,58.4,62.7,68.3],'Química':[58.3,61.2,64.1,67.4,70.8],'Matemática':[55.4,58.1,61.2,64.3,68.1],'Língua Inglesa':[60.2,62.4,64.7,66.8,68.9],'Linguagens':[42.1,44.8,47.3,50.2,53.4],'C. Humanas':[38.4,40.7,43.2,46.1,50.3] },
+  c:{ 'Língua Inglesa':[72.1,74.3,76.8,78.9,80.4],'C. Humanas':[58.2,60.4,62.7,64.8,66.9],'Matemática':[52.3,54.7,57.1,60.2,63.4],'Física':[40.1,43.2,46.4,49.3,53.1],'Linguagens':[54.2,56.8,59.4,62.1,65.3],'Química':[48.3,50.4,52.1,53.8,55.9] },
+  d:{ 'Linguagens':[65.2,67.4,69.8,71.9,73.8],'C. Humanas':[60.1,62.3,64.7,66.8,68.9],'Língua Inglesa':[62.4,64.1,66.3,68.2,70.1],'Matemática':[56.2,58.4,60.7,62.9,64.8],'Química':[56.4,58.7,60.9,62.8,64.7],'Física':[34.2,36.4,38.7,40.8,43.4] },
+  e:{ 'Matemática':[58.4,61.2,64.3,67.1,70.8],'Física':[40.3,42.7,44.9,47.8,51.4],'Química':[52.1,54.4,56.8,58.9,61.2],'Linguagens':[55.2,57.8,60.4,63.1,66.3],'Língua Inglesa':[58.3,60.4,62.7,64.8,66.9],'C. Humanas':[42.1,44.3,46.8,48.7,50.9] },
+  f:{ 'Linguagens':[60.4,62.1,64.3,66.2,65.1],'Língua Inglesa':[64.2,66.4,68.1,70.3,69.2],'Química':[55.4,57.2,59.1,61.3,59.8],'C. Humanas':[50.2,52.4,54.7,56.8,54.9],'Matemática':[46.3,48.2,50.4,52.7,50.8],'Física':[36.1,38.4,40.2,42.6,40.4] },
+};
+
+const ESCOLA_6_COMP = {
+  a:{
+    'Matemática':    [{comp:'Funções',acerto:80,rede:64},{comp:'Álgebra',acerto:76,rede:61},{comp:'Geometria Plana',acerto:72,rede:58},{comp:'Estatística',acerto:74,rede:60},{comp:'Combinatória',acerto:68,rede:52},{comp:'Progressões',acerto:78,rede:64},{comp:'Geometria Esp.',acerto:66,rede:54}],
+    'Física':        [{comp:'Mecânica',acerto:58,rede:52},{comp:'Eletromagnetismo',acerto:42,rede:36},{comp:'Termodinâmica',acerto:60,rede:48},{comp:'Óptica',acerto:72,rede:60},{comp:'Ondulatória',acerto:54,rede:48},{comp:'Física Moderna',acerto:38,rede:30}],
+    'Química':       [{comp:'Estequiometria',acerto:68,rede:56},{comp:'Termoquímica',acerto:52,rede:38},{comp:'Eletroquímica',acerto:70,rede:60},{comp:'Orgânica',acerto:64,rede:52},{comp:'Cinética Química',acerto:62,rede:50},{comp:'Gases',acerto:72,rede:62}],
+    'Língua Inglesa':[{comp:'Reading',acerto:80,rede:70},{comp:'Vocabulary',acerto:76,rede:66},{comp:'Grammar',acerto:72,rede:60}],
+    'Linguagens':    [{comp:'Interpretação',acerto:72,rede:62},{comp:'Literatura',acerto:62,rede:52},{comp:'Gramática',acerto:70,rede:60}],
+    'C. Humanas':    [{comp:'História',acerto:62,rede:55},{comp:'Geografia',acerto:64,rede:58},{comp:'Filosofia',acerto:52,rede:46},{comp:'Sociologia',acerto:56,rede:48}],
+  },
+  b:{
+    'Física':        [{comp:'Mecânica',acerto:72,rede:52},{comp:'Eletromagnetismo',acerto:62,rede:36},{comp:'Termodinâmica',acerto:68,rede:48},{comp:'Óptica',acerto:74,rede:60},{comp:'Ondulatória',acerto:66,rede:48},{comp:'Física Moderna',acerto:58,rede:30}],
+    'Matemática':    [{comp:'Funções',acerto:70,rede:64},{comp:'Álgebra',acerto:66,rede:61},{comp:'Geometria Plana',acerto:64,rede:58},{comp:'Estatística',acerto:62,rede:60},{comp:'Combinatória',acerto:58,rede:52},{comp:'Progressões',acerto:68,rede:64}],
+    'Química':       [{comp:'Estequiometria',acerto:72,rede:56},{comp:'Termoquímica',acerto:66,rede:38},{comp:'Eletroquímica',acerto:74,rede:60},{comp:'Orgânica',acerto:68,rede:52},{comp:'Cinética Química',acerto:70,rede:50},{comp:'Gases',acerto:76,rede:62}],
+    'Língua Inglesa':[{comp:'Reading',acerto:72,rede:70},{comp:'Vocabulary',acerto:68,rede:66},{comp:'Grammar',acerto:60,rede:60}],
+    'Linguagens':    [{comp:'Interpretação',acerto:56,rede:62},{comp:'Literatura',acerto:46,rede:52},{comp:'Gramática',acerto:54,rede:60}],
+    'C. Humanas':    [{comp:'História',acerto:52,rede:55},{comp:'Geografia',acerto:54,rede:58},{comp:'Filosofia',acerto:44,rede:46},{comp:'Sociologia',acerto:48,rede:48}],
+  },
+  c:{
+    'Língua Inglesa':[{comp:'Reading',acerto:84,rede:70},{comp:'Vocabulary',acerto:80,rede:66},{comp:'Grammar',acerto:74,rede:60}],
+    'Química':       [{comp:'Estequiometria',acerto:58,rede:56},{comp:'Termoquímica',acerto:44,rede:38},{comp:'Eletroquímica',acerto:62,rede:60},{comp:'Orgânica',acerto:52,rede:52},{comp:'Cinética Química',acerto:48,rede:50},{comp:'Gases',acerto:60,rede:62}],
+    'C. Humanas':    [{comp:'História',acerto:68,rede:55},{comp:'Geografia',acerto:70,rede:58},{comp:'Filosofia',acerto:62,rede:46},{comp:'Sociologia',acerto:66,rede:48}],
+    'Matemática':    [{comp:'Funções',acerto:66,rede:64},{comp:'Álgebra',acerto:62,rede:61},{comp:'Geometria Plana',acerto:60,rede:58},{comp:'Estatística',acerto:58,rede:60},{comp:'Combinatória',acerto:54,rede:52},{comp:'Progressões',acerto:64,rede:64}],
+    'Física':        [{comp:'Mecânica',acerto:56,rede:52},{comp:'Eletromagnetismo',acerto:44,rede:36},{comp:'Termodinâmica',acerto:58,rede:48},{comp:'Óptica',acerto:66,rede:60},{comp:'Ondulatória',acerto:50,rede:48},{comp:'Física Moderna',acerto:34,rede:30}],
+    'Linguagens':    [{comp:'Interpretação',acerto:68,rede:62},{comp:'Literatura',acerto:58,rede:52},{comp:'Gramática',acerto:66,rede:60}],
+  },
+  d:{
+    'Linguagens':    [{comp:'Interpretação',acerto:76,rede:62},{comp:'Literatura',acerto:68,rede:52},{comp:'Gramática',acerto:74,rede:60}],
+    'C. Humanas':    [{comp:'História',acerto:70,rede:55},{comp:'Geografia',acerto:72,rede:58},{comp:'Filosofia',acerto:64,rede:46},{comp:'Sociologia',acerto:68,rede:48}],
+    'Física':        [{comp:'Mecânica',acerto:46,rede:52},{comp:'Eletromagnetismo',acerto:30,rede:36},{comp:'Termodinâmica',acerto:48,rede:48},{comp:'Óptica',acerto:56,rede:60},{comp:'Ondulatória',acerto:42,rede:48},{comp:'Física Moderna',acerto:28,rede:30}],
+    'Matemática':    [{comp:'Funções',acerto:66,rede:64},{comp:'Álgebra',acerto:64,rede:61},{comp:'Geometria Plana',acerto:62,rede:58},{comp:'Estatística',acerto:64,rede:60},{comp:'Combinatória',acerto:56,rede:52},{comp:'Progressões',acerto:68,rede:64}],
+    'Língua Inglesa':[{comp:'Reading',acerto:74,rede:70},{comp:'Vocabulary',acerto:70,rede:66},{comp:'Grammar',acerto:64,rede:60}],
+    'Química':       [{comp:'Estequiometria',acerto:66,rede:56},{comp:'Termoquímica',acerto:52,rede:38},{comp:'Eletroquímica',acerto:70,rede:60},{comp:'Orgânica',acerto:64,rede:52},{comp:'Cinética Química',acerto:62,rede:50},{comp:'Gases',acerto:68,rede:62}],
+  },
+  e:{
+    'Matemática':    [{comp:'Funções',acerto:74,rede:64},{comp:'Álgebra',acerto:70,rede:61},{comp:'Geometria Plana',acerto:68,rede:58},{comp:'Estatística',acerto:66,rede:60},{comp:'Combinatória',acerto:62,rede:52},{comp:'Progressões',acerto:72,rede:64}],
+    'Física':        [{comp:'Mecânica',acerto:54,rede:52},{comp:'Eletromagnetismo',acerto:40,rede:36},{comp:'Termodinâmica',acerto:56,rede:48},{comp:'Óptica',acerto:64,rede:60},{comp:'Ondulatória',acerto:50,rede:48},{comp:'Física Moderna',acerto:32,rede:30}],
+    'C. Humanas':    [{comp:'História',acerto:52,rede:55},{comp:'Geografia',acerto:54,rede:58},{comp:'Filosofia',acerto:44,rede:46},{comp:'Sociologia',acerto:48,rede:48}],
+    'Língua Inglesa':[{comp:'Reading',acerto:70,rede:70},{comp:'Vocabulary',acerto:66,rede:66},{comp:'Grammar',acerto:58,rede:60}],
+    'Linguagens':    [{comp:'Interpretação',acerto:68,rede:62},{comp:'Literatura',acerto:60,rede:52},{comp:'Gramática',acerto:66,rede:60}],
+    'Química':       [{comp:'Estequiometria',acerto:62,rede:56},{comp:'Termoquímica',acerto:50,rede:38},{comp:'Eletroquímica',acerto:64,rede:60},{comp:'Orgânica',acerto:58,rede:52},{comp:'Cinética Química',acerto:58,rede:50},{comp:'Gases',acerto:64,rede:62}],
+  },
+  f:{
+    'Linguagens':    [{comp:'Interpretação',acerto:68,rede:62},{comp:'Literatura',acerto:58,rede:52},{comp:'Gramática',acerto:66,rede:60}],
+    'Língua Inglesa':[{comp:'Reading',acerto:74,rede:70},{comp:'Vocabulary',acerto:70,rede:66},{comp:'Grammar',acerto:62,rede:60}],
+    'Química':       [{comp:'Estequiometria',acerto:60,rede:56},{comp:'Termoquímica',acerto:46,rede:38},{comp:'Eletroquímica',acerto:62,rede:60},{comp:'Orgânica',acerto:56,rede:52},{comp:'Cinética Química',acerto:54,rede:50},{comp:'Gases',acerto:60,rede:62}],
+    'C. Humanas':    [{comp:'História',acerto:56,rede:55},{comp:'Geografia',acerto:58,rede:58},{comp:'Filosofia',acerto:48,rede:46},{comp:'Sociologia',acerto:52,rede:48}],
+    'Matemática':    [{comp:'Funções',acerto:52,rede:64},{comp:'Álgebra',acerto:48,rede:61},{comp:'Geometria Plana',acerto:50,rede:58},{comp:'Estatística',acerto:48,rede:60},{comp:'Combinatória',acerto:42,rede:52},{comp:'Progressões',acerto:54,rede:64}],
+    'Física':        [{comp:'Mecânica',acerto:44,rede:52},{comp:'Eletromagnetismo',acerto:30,rede:36},{comp:'Termodinâmica',acerto:46,rede:48},{comp:'Óptica',acerto:54,rede:60},{comp:'Ondulatória',acerto:40,rede:48},{comp:'Física Moderna',acerto:26,rede:30}],
+  },
+};
+
+function getEscola6(key) {
+  return ESCOLAS_6.find(e => e.key === key) || ESCOLAS_6[0];
+}
+
+function getEscola6RankData(metric) {
+  return ESCOLAS_6.map(e => {
+    let valor, prev;
+    if (metric === 'geral')   { valor = e.media[4];    prev = e.media[3]; }
+    else if (metric === 'presenca') { valor = e.presenca[4]; prev = e.presenca[3]; }
+    else {
+      const d = ESCOLA_6_DISCS[e.key];
+      valor = d && d[metric] ? d[metric][4] : 0;
+      prev  = d && d[metric] ? d[metric][3] : 0;
+    }
+    return { ...e, valor, variacao: parseFloat((valor - prev).toFixed(1)) };
+  }).sort((a, b) => b.valor - a.valor).map((e, i) => ({ ...e, pos: i + 1 }));
+}
+
+function getEscola6Insight(key, si) {
+  si = si !== undefined ? si : 4;
+  const e    = getEscola6(key);
+  const rede = REDE_6_MEDIA[si];
+  const diff = parseFloat((e.media[si] - rede).toFixed(1));
+  const delta = si > 0 ? parseFloat((e.media[si] - e.media[si - 1]).toFixed(1)) : 0;
+  const pDelta = si > 0 ? e.presenca[si] - e.presenca[si - 1] : 0;
+  let t = diff > 5  ? `${e.nome} está ${diff.toFixed(1)} p.p. acima da média da rede` :
+          diff >= 0 ? `${e.nome} está próxima da média da rede (+${diff.toFixed(1)} p.p.)` :
+                      `${e.nome} está ${Math.abs(diff).toFixed(1)} p.p. abaixo da média da rede`;
+  if (si > 0) {
+    if (delta >= 2)    t += `. Evolução positiva: +${delta.toFixed(1)} p.p. no último simulado`;
+    else if (delta < -0.5) t += `. Queda de ${Math.abs(delta).toFixed(1)} p.p. no último simulado`;
+  }
+  if (pDelta < -2)        t += `. Presença em queda (${e.presenca[si]}%)`;
+  else if (e.presenca[si] < 80) t += `. Presença abaixo de 80%: ${e.presenca[si]}%`;
+  if (e.forte) t += `. Ponto forte: ${e.forte}`;
+  if (e.fraco) t += `. Fragilidade: ${e.fraco}`;
+  return t + '.';
+}
+
+/* ── ESCOLAS — HELPERS CALCULADOS ─────────────────────────── */
+function getEscola6MediaAcum(key) {
+  const e = getEscola6(key);
+  return parseFloat((e.media.reduce((s, v) => s + v, 0) / 5).toFixed(1));
+}
+
+function getEscola6PresAcum(key) {
+  const e = getEscola6(key);
+  return Math.round(e.presenca.reduce((s, v) => s + v, 0) / 5);
+}
+
+function getEscola6DiscAcum(key, disc) {
+  const arr = ESCOLA_6_DISCS[key]?.[disc];
+  if (!arr) return null;
+  return parseFloat((arr.reduce((s, v) => s + v, 0) / arr.length).toFixed(1));
+}
+
+function getEscola6LiderMetrica(metric) {
+  const v = (e, idx) => {
+    if (metric === 'geral')    return e.media[idx];
+    if (metric === 'presenca') return e.presenca[idx];
+    return ESCOLA_6_DISCS[e.key]?.[metric]?.[idx] ?? 0;
+  };
+  const byCresc = ESCOLAS_6.slice().sort((a, b) => (v(b,4)-v(b,0)) - (v(a,4)-v(a,0)));
+  const byQueda = ESCOLAS_6.slice().sort((a, b) => (v(a,4)-v(a,3)) - (v(b,4)-v(b,3)));
+  return {
+    liderCrescimento: byCresc[0],
+    crescimento:      parseFloat((v(byCresc[0],4) - v(byCresc[0],0)).toFixed(1)),
+    maiorQueda:       byQueda[0],
+    quedaVal:         parseFloat((v(byQueda[0],4) - v(byQueda[0],3)).toFixed(1)),
+  };
+}
+
+function calcEscola6FaixaDist(escolaMedia, redeMedia) {
+  const s   = (escolaMedia - redeMedia) / 10;
+  const raw = [4 + s*8, 18 + s*10, 38 - s*4, 28 - s*8, 12 - s*6];
+  const cl  = raw.map(v => Math.max(1, v));
+  const tot = cl.reduce((a, v) => a + v, 0);
+  const n   = cl.map(v => Math.round(v * 100 / tot));
+  n[2]     += 100 - n.reduce((a, v) => a + v, 0);
+  return n;
+}
+
+function getEscola6RankPos(key, sim) {
+  const sorted = ESCOLAS_6.slice().sort((a, b) => {
+    const ma = sim === 'acumulado' ? getEscola6MediaAcum(a.key) : a.media[sim];
+    const mb = sim === 'acumulado' ? getEscola6MediaAcum(b.key) : b.media[sim];
+    return mb - ma;
+  });
+  return sorted.findIndex(e => e.key === key) + 1;
+}

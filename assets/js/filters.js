@@ -16,10 +16,16 @@ const S = {
   simEvoTipo:    'media',
 
   /* Escolas */
-  escolaKey:     'A',
-  escolaTab:     'desempenho',
-  rankTipo:      'geral',
-  evoTipo:       'geral',
+  escolaKey:        'A',
+  escolaTab:        'visao-geral',
+  rankTipo:         'geral',
+  evoTipo:          'geral',
+  escolaVisaoFiltroSimulado:   'acumulado',
+  escolaRankingMetrica:        'geral',
+  escolaDesempenhoEscola:      'a',
+  escolaDesempenhoSimulado:    'acumulado',
+  escolaComponentesEscola:     'a',
+  escolaComponentesDisciplina: 'Todas',
 
   /* Alunos */
   alunoKey:      'ana',
@@ -81,6 +87,36 @@ function setProfessor(val) {
   refreshProfessores();
 }
 
+function setEscolaVisaoSimulado(val) {
+  S.escolaVisaoFiltroSimulado = val;
+  if (typeof _buildEscolasVisaoGeral === 'function') _buildEscolasVisaoGeral();
+}
+
+function setEscolaRankingMetrica(val) {
+  S.escolaRankingMetrica = val;
+  if (typeof _buildEscolasRanking === 'function') _buildEscolasRanking();
+}
+
+function setEscolaDesempenhoEscola(val) {
+  S.escolaDesempenhoEscola = val;
+  if (typeof _buildEscolasDesempenho === 'function') _buildEscolasDesempenho();
+}
+
+function setEscolaDesempenhoSimulado(val) {
+  S.escolaDesempenhoSimulado = val === 'acumulado' ? val : parseInt(val, 10);
+  if (typeof _buildEscolasDesempenho === 'function') _buildEscolasDesempenho();
+}
+
+function setEscolaComponentesEscola(val) {
+  S.escolaComponentesEscola = val;
+  if (typeof _buildEscolasComponentes === 'function') _buildEscolasComponentes();
+}
+
+function setEscolaComponentesDisciplina(val) {
+  S.escolaComponentesDisciplina = val;
+  if (typeof _buildEscolasComponentes === 'function') _buildEscolasComponentes();
+}
+
 /* ── REFRESH POR PÁGINA ────────────────────────────────────── */
 function refreshDashboard() {
   // KPIs e métricas do dashboard são estáticos (rede inteira)
@@ -93,16 +129,12 @@ function refreshSimulados() {
 }
 
 function refreshEscolas() {
-  if (typeof renderRankTableChart   === 'function') renderRankTableChart(S.rankTipo);
-  if (typeof renderEscolaEvoChart   === 'function') renderEscolaEvoChart(S.escolaKey);
-  if (typeof renderEscolaFaixaChart === 'function') renderEscolaFaixaChart(S.escolaKey);
-  if (typeof renderCompEscolaChart  === 'function') renderCompEscolaChart(S.escolaKey);
-  if (typeof renderEvoGeralChart    === 'function') renderEvoGeralChart(S.escolaKey);
-  if (typeof renderEvoRankingChart  === 'function') renderEvoRankingChart(S.escolaKey);
-  // Atualiza nota pedagógica da escola
-  _updateEscolaNota();
-  // Atualiza KPIs da escola
-  _updateEscolaKpis();
+  switch (S.escolaTab) {
+    case 'visao-geral':  if (typeof _buildEscolasVisaoGeral   === 'function') _buildEscolasVisaoGeral();   break;
+    case 'ranking':      if (typeof _buildEscolasRanking      === 'function') _buildEscolasRanking();      break;
+    case 'desempenho':   if (typeof _buildEscolasDesempenho   === 'function') _buildEscolasDesempenho();   break;
+    case 'componentes':  if (typeof _buildEscolasComponentes  === 'function') _buildEscolasComponentes();  break;
+  }
 }
 
 function refreshAlunos() {
@@ -201,33 +233,24 @@ function _updateProfKpis() {
 }
 
 /* ── TABS ─────────────────────────────────────────────────── */
-function switchEscolaTab(tab) {
+function switchEscolaTab(tab, tabEl) {
   S.escolaTab = tab;
-  document.querySelectorAll('.escola-tab-content').forEach(el => el.classList.add('hidden'));
-  document.querySelectorAll('.escola-atab').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.escola-tab-content').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.escola-atab').forEach(t => t.classList.remove('active'));
   const contentEl = document.getElementById('etab-' + tab);
-  if (contentEl) contentEl.classList.remove('hidden');
-  document.querySelectorAll('.escola-atab').forEach(el => {
-    if (el.dataset.tab === tab) el.classList.add('active');
-  });
-  // Renderiza charts do tab recém-ativado
+  if (contentEl) contentEl.classList.add('active');
+  if (tabEl) {
+    tabEl.classList.add('active');
+  } else {
+    document.querySelectorAll('.escola-atab').forEach(t => {
+      if (t.dataset && t.dataset.tab === tab) t.classList.add('active');
+    });
+  }
   switch (tab) {
-    case 'desempenho':
-      if (typeof renderEscolaEvoChart   === 'function') renderEscolaEvoChart(S.escolaKey);
-      if (typeof renderEscolaFaixaChart === 'function') renderEscolaFaixaChart(S.escolaKey);
-      if (typeof renderCompEscolaChart  === 'function') renderCompEscolaChart(S.escolaKey);
-      break;
-    case 'evolucao':
-      if (typeof renderEvoGeralChart   === 'function') renderEvoGeralChart(S.escolaKey);
-      if (typeof renderEvoRankingChart === 'function') renderEvoRankingChart(S.escolaKey);
-      break;
-    case 'ranking':
-      if (typeof renderRankTableChart === 'function') renderRankTableChart(S.rankTipo);
-      break;
-    case 'componentes':
-      if (typeof renderCompEscolaChart === 'function') renderCompEscolaChart(S.escolaKey);
-      if (typeof buildCompTable        === 'function') buildCompTable(S.escolaKey);
-      break;
+    case 'visao-geral':  if (typeof _buildEscolasVisaoGeral   === 'function') _buildEscolasVisaoGeral();   break;
+    case 'ranking':      if (typeof _buildEscolasRanking      === 'function') _buildEscolasRanking();      break;
+    case 'desempenho':   if (typeof _buildEscolasDesempenho   === 'function') _buildEscolasDesempenho();   break;
+    case 'componentes':  if (typeof _buildEscolasComponentes  === 'function') _buildEscolasComponentes();  break;
   }
 }
 

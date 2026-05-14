@@ -246,6 +246,119 @@ function renderEvoRankingChart(escolaKey) {
   );
 }
 
+/* ── ESCOLAS 6 ────────────────────────────────────────────── */
+function renderDesemp6DiscsChart(key, si, isAcum) {
+  if (!el('chart-desemp6-discs')) return;
+  const discs = DISCIPLINAS_6;
+  const e     = getEscola6(key);
+  const escolaVals = discs.map(d => {
+    if (isAcum) return getEscola6DiscAcum(key, d) ?? 0;
+    return ESCOLA_6_DISCS[key]?.[d]?.[si] ?? 0;
+  });
+  const redeVals = discs.map(d => {
+    const arr = REDE_6_DISC_SIM[d];
+    if (!arr) return 0;
+    if (isAcum) return parseFloat((arr.reduce((s, v) => s + v, 0) / arr.length).toFixed(1));
+    return arr[si];
+  });
+  Plotly.react('chart-desemp6-discs',
+    [{ type:'bar', name: e.nome,
+       y: discs, x: escolaVals, orientation:'h',
+       marker:{ color:C.orange, opacity:.85 },
+       text: escolaVals.map(v => v.toFixed(1) + '%'), textposition:'outside', textfont:{ size:9 },
+    },
+    { type:'bar', name:'Rede',
+       y: discs, x: redeVals, orientation:'h',
+       marker:{ color:C.slate, opacity:.55 },
+    }],
+    { ...CT, margin:{ t:20, r:48, b:16, l:100 }, barmode:'group',
+      xaxis:{ ticksuffix:'%', gridcolor:C.border, tickfont:{ size:9 }, range:[0,105] },
+      yaxis:{ tickfont:{ size:9.5 } },
+      legend:{ font:{ size:9 }, orientation:'h', y:1.12, x:0 } },
+    CFG
+  );
+}
+
+function renderDesemp6FaixaChart(key, si, isAcum) {
+  if (!el('chart-desemp6-faixa')) return;
+  const e         = getEscola6(key);
+  const escolaMed = isAcum ? getEscola6MediaAcum(key) : e.media[si];
+  const redeMed   = isAcum
+    ? parseFloat((REDE_6_MEDIA.reduce((s, v) => s + v, 0) / 5).toFixed(1))
+    : REDE_6_MEDIA[si];
+  const faixa     = calcEscola6FaixaDist(escolaMed, redeMed);
+  Plotly.react('chart-desemp6-faixa',
+    [{ type:'bar', orientation:'h', x: faixa, y: FAIXA_LABELS,
+       marker:{ color: FAIXA_COLORS, opacity:.85 },
+       text: faixa.map(v => v + '%'), textposition:'outside', textfont:{ size:10 },
+    }],
+    { ...CT, margin:{ t:4, r:40, b:16, l:90 },
+      xaxis:{ ticksuffix:'%', gridcolor:C.border, tickfont:{ size:9 } },
+      yaxis:{ tickfont:{ size:10 } },
+    }, CFG
+  );
+}
+
+function renderDesemp6EvoChart(key) {
+  if (!el('chart-desemp6-evo')) return;
+  const e = getEscola6(key);
+  Plotly.react('chart-desemp6-evo',
+    [{ type:'scatter', mode:'lines+markers', name: e.nome,
+       x: SIM_LABELS_CURTOS, y: e.media,
+       line:{ color:C.orange, width:2.5 }, marker:{ size:5 } },
+     { type:'scatter', mode:'lines', name:'Rede',
+       x: SIM_LABELS_CURTOS, y: REDE_6_MEDIA,
+       line:{ color:C.slate, width:1.5, dash:'dot' } }],
+    { ...CT, margin:M,
+      xaxis:{ tickfont:{ size:9 }, gridcolor:C.border },
+      yaxis:{ ticksuffix:'%', tickfont:{ size:9 }, gridcolor:C.border },
+      legend:{ font:{ size:9 } } },
+    CFG
+  );
+}
+
+function renderComp6EvoChart(key, disc) {
+  if (!el('chart-comp6-evo')) return;
+  const e = getEscola6(key);
+  if (disc === 'Todas') {
+    const DISC_COLORS = [C.orange, C.blue, C.green, C.amber, C.navy, C.red];
+    const traces = DISCIPLINAS_6.map((d, i) => ({
+      type:'scatter', mode:'lines+markers', name: d,
+      x: SIM_LABELS_CURTOS,
+      y: ESCOLA_6_DISCS[key]?.[d] ?? e.media,
+      line:{ color: DISC_COLORS[i % DISC_COLORS.length], width:2 }, marker:{ size:4 },
+    }));
+    traces.push({
+      type:'scatter', mode:'lines', name:'Rede média',
+      x: SIM_LABELS_CURTOS, y: REDE_6_MEDIA,
+      line:{ color:C.slate, width:2, dash:'dot' },
+    });
+    Plotly.react('chart-comp6-evo', traces,
+      { ...CT, margin:{ ...M, r:16 },
+        xaxis:{ tickfont:{ size:9 }, gridcolor:C.border },
+        yaxis:{ ticksuffix:'%', tickfont:{ size:9 }, gridcolor:C.border },
+        legend:{ font:{ size:9 } } },
+      CFG
+    );
+  } else {
+    const discData = ESCOLA_6_DISCS[key]?.[disc] ?? e.media;
+    const redeData = REDE_6_DISC_SIM[disc] ?? REDE_6_MEDIA;
+    Plotly.react('chart-comp6-evo',
+      [{ type:'scatter', mode:'lines+markers', name: e.nome,
+         x: SIM_LABELS_CURTOS, y: discData,
+         line:{ color:C.orange, width:2.5 }, marker:{ size:5 } },
+       { type:'scatter', mode:'lines', name:'Rede',
+         x: SIM_LABELS_CURTOS, y: redeData,
+         line:{ color:C.slate, width:1.5, dash:'dot' } }],
+      { ...CT, margin:M,
+        xaxis:{ tickfont:{ size:9 }, gridcolor:C.border },
+        yaxis:{ ticksuffix:'%', tickfont:{ size:9 }, gridcolor:C.border },
+        legend:{ font:{ size:9 } } },
+      CFG
+    );
+  }
+}
+
 /* ── ALUNOS ───────────────────────────────────────────────── */
 function renderAlunoAreaChart() {
   if (!el('chart-aluno-area')) return;
