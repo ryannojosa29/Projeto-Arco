@@ -278,6 +278,234 @@ function getProfessor(key) {
   return PROFESSORES[key] || PROFESSORES.silva;
 }
 
+/* ══════════════════════════════════════════════════════════
+   PROF_DADOS — 6 professores para a nova página Professores
+   150 questões: 6 profs × 5 sims × 5 questões
+══════════════════════════════════════════════════════════ */
+const PROF_DADOS = [
+  { key:'silva',    nome:'Prof. Carlos Silva',     disc:'Física',         escola:'Escola A', turma:'T1', av:'CS', iqTend:'up'     },
+  { key:'santos',   nome:'Profa. Ana Santos',      disc:'Matemática',     escola:'Escola B', turma:'T1', av:'AS', iqTend:'stable' },
+  { key:'oliveira', nome:'Prof. Ricardo Oliveira', disc:'Química',        escola:'Escola C', turma:'T1', av:'RO', iqTend:'down'   },
+  { key:'lima',     nome:'Profa. Beatriz Lima',    disc:'Língua Inglesa', escola:'Escola A', turma:'T2', av:'BL', iqTend:'up'     },
+  { key:'pereira',  nome:'Prof. Marcos Pereira',   disc:'Linguagens',     escola:'Escola B', turma:'T2', av:'MP', iqTend:'up'     },
+  { key:'costa',    nome:'Profa. Juliana Costa',   disc:'C. Humanas',     escola:'Escola D', turma:'T1', av:'JC', iqTend:'stable' },
+];
+
+function _calcProfQI(disc, acerto, distPct, pbis, diff) {
+  const ds = Math.min(100, Math.max(0, (disc - 0.08) / 0.52 * 100));
+  const as = acerto >= 30 && acerto <= 70 ? 100 : acerto > 70 ? Math.max(0, 100 - (acerto - 70) * 2.5) : Math.max(0, 100 - (30 - acerto) * 2);
+  const rs = distPct >= 15 && distPct <= 35 ? 100 : distPct > 35 ? Math.max(0, 100 - (distPct - 35) * 3) : Math.max(0, 100 - (15 - distPct) * 4);
+  const ps = Math.min(100, Math.max(0, (pbis - 0.10) / 0.45 * 100));
+  const fs = diff === 'Médio' ? 100 : diff === 'Médio-alto' ? 85 : diff === 'Alto' ? 70 : 60;
+  return Math.round(0.30 * ds + 0.20 * as + 0.20 * rs + 0.15 * ps + 0.15 * fs);
+}
+
+function _mkPQ(profKey, sim, num, comp, assunto, diff, acerto, disc, distPct, pbis) {
+  const qi = _calcProfQI(disc, acerto, distPct, pbis, diff);
+  const status = qi >= 80 ? 'excelente' : qi >= 65 ? 'boa' : qi >= 50 ? 'atencao' : 'critica';
+  return { id: profKey+'-'+sim+'-'+num, profKey, sim, num, comp, assunto, diff, acerto, discriminante: disc, distPct, pbis, qualIdx: qi, status };
+}
+
+const PROF_QUESTOES_DADOS = [
+  /* SILVA — Física (melhora progressiva) */
+  _mkPQ('silva',1,1,'Mecânica',         'Cinemática — MRU e MRUV',              'Médio',      58,0.35,22,0.32),
+  _mkPQ('silva',1,2,'Mecânica',         'Dinâmica — Leis de Newton',            'Médio-alto', 45,0.38,28,0.35),
+  _mkPQ('silva',1,3,'Termodinâmica',    'Leis da Termodinâmica',                'Alto',       38,0.28,32,0.26),
+  _mkPQ('silva',1,4,'Eletromagnetismo', 'Campos Elétricos',                     'Alto',       32,0.18,38,0.16),
+  _mkPQ('silva',1,5,'Óptica',           'Reflexão e Refração',                  'Fácil',      82,0.16,11,0.14),
+  _mkPQ('silva',2,1,'Mecânica',         'Trabalho e Energia',                   'Médio',      60,0.40,25,0.37),
+  _mkPQ('silva',2,2,'Mecânica',         'Impulso e Quantidade de Movimento',    'Médio-alto', 46,0.38,27,0.35),
+  _mkPQ('silva',2,3,'Termodinâmica',    'Máquinas Térmicas e Rendimento',       'Médio',      55,0.34,26,0.31),
+  _mkPQ('silva',2,4,'Eletromagnetismo', 'Corrente Elétrica e Resistência',      'Alto',       35,0.22,34,0.20),
+  _mkPQ('silva',2,5,'Óptica',           'Lentes e Espelhos Esféricos',          'Médio',      72,0.24,17,0.22),
+  _mkPQ('silva',3,1,'Mecânica',         'Gravitação Universal',                 'Médio',      60,0.43,25,0.40),
+  _mkPQ('silva',3,2,'Ondulatória',      'Ondas Mecânicas — Propriedades',       'Médio-alto', 50,0.44,25,0.41),
+  _mkPQ('silva',3,3,'Termodinâmica',    'Calor, Temperatura e Dilatação',       'Médio',      65,0.38,23,0.35),
+  _mkPQ('silva',3,4,'Eletromagnetismo', 'Indução Eletromagnética',              'Alto',       38,0.30,30,0.28),
+  _mkPQ('silva',3,5,'Física Moderna',   'Efeito Fotoelétrico',                  'Alto',       30,0.25,35,0.22),
+  _mkPQ('silva',4,1,'Mecânica',         'Estática — Equilíbrio de Corpos',      'Médio',      63,0.45,24,0.42),
+  _mkPQ('silva',4,2,'Ondulatória',      'Som e Acústica',                       'Médio-alto', 52,0.46,25,0.43),
+  _mkPQ('silva',4,3,'Termodinâmica',    'Ciclo de Carnot',                      'Médio-alto', 46,0.43,26,0.40),
+  _mkPQ('silva',4,4,'Eletromagnetismo', 'Força Magnética e Campo Magnético',    'Médio-alto', 44,0.40,27,0.37),
+  _mkPQ('silva',4,5,'Física Moderna',   'Teoria da Relatividade Especial',      'Alto',       32,0.30,32,0.27),
+  _mkPQ('silva',5,1,'Mecânica',         'Dinâmica Rotacional',                  'Médio',      61,0.48,23,0.45),
+  _mkPQ('silva',5,2,'Ondulatória',      'Óptica Física — Interferência',        'Médio-alto', 50,0.47,25,0.44),
+  _mkPQ('silva',5,3,'Termodinâmica',    'Entropia e 2ª Lei',                    'Médio-alto', 48,0.44,26,0.41),
+  _mkPQ('silva',5,4,'Eletromagnetismo', 'Equações de Maxwell (Conceitual)',     'Alto',       40,0.40,28,0.37),
+  _mkPQ('silva',5,5,'Óptica',           'Interferência e Difração da Luz',      'Médio',      65,0.42,22,0.39),
+
+  /* SANTOS — Matemática (alta qualidade, consistente) */
+  _mkPQ('santos',1,1,'Funções',         'Domínio, Imagem e Gráficos',           'Médio',      65,0.50,23,0.46),
+  _mkPQ('santos',1,2,'Álgebra',         'Equações do 2º Grau',                  'Médio',      58,0.48,25,0.44),
+  _mkPQ('santos',1,3,'Geometria Plana', 'Triângulos — Congruência',             'Médio-alto', 50,0.45,26,0.42),
+  _mkPQ('santos',1,4,'Combinatória',    'Princípio Fundamental da Contagem',    'Médio-alto', 45,0.42,28,0.39),
+  _mkPQ('santos',1,5,'Estatística',     'Média, Mediana e Moda',                'Fácil',      75,0.36,18,0.32),
+  _mkPQ('santos',2,1,'Funções',         'Função do 2º Grau e Gráficos',         'Médio',      62,0.52,22,0.48),
+  _mkPQ('santos',2,2,'Álgebra',         'Sistemas Lineares',                    'Médio-alto', 52,0.47,25,0.44),
+  _mkPQ('santos',2,3,'Geometria Plana', 'Círculo, Circunferência e Arco',       'Médio',      60,0.48,24,0.44),
+  _mkPQ('santos',2,4,'Combinatória',    'Permutações e Arranjos',               'Alto',       40,0.44,27,0.41),
+  _mkPQ('santos',2,5,'Progressões',     'PA — Termo Geral e Soma',              'Médio',      68,0.42,20,0.38),
+  _mkPQ('santos',3,1,'Funções',         'Funções Exponenciais',                 'Médio',      60,0.52,22,0.48),
+  _mkPQ('santos',3,2,'Álgebra',         'Polinômios e Fatoração',               'Médio-alto', 50,0.50,24,0.46),
+  _mkPQ('santos',3,3,'Geometria Plana', 'Áreas e Perímetros',                   'Médio',      65,0.48,23,0.44),
+  _mkPQ('santos',3,4,'Estatística',     'Probabilidade Básica',                 'Médio',      58,0.46,25,0.42),
+  _mkPQ('santos',3,5,'Combinatória',    'Combinações Simples',                  'Médio-alto', 47,0.44,26,0.40),
+  _mkPQ('santos',4,1,'Funções',         'Funções Logarítmicas',                 'Médio-alto', 52,0.54,22,0.50),
+  _mkPQ('santos',4,2,'Geometria Plana', 'Semelhança de Triângulos',             'Médio',      62,0.50,22,0.46),
+  _mkPQ('santos',4,3,'Álgebra',         'Matrizes e Determinantes',             'Alto',       42,0.48,24,0.44),
+  _mkPQ('santos',4,4,'Progressões',     'PG — Soma e Produto',                  'Médio',      65,0.47,22,0.43),
+  _mkPQ('santos',4,5,'Geometria Esp.',  'Prismas, Pirâmides e Volumes',         'Médio-alto', 50,0.46,24,0.42),
+  _mkPQ('santos',5,1,'Funções',         'Trigonometria — Sen, Cos e Tan',       'Médio',      60,0.55,21,0.51),
+  _mkPQ('santos',5,2,'Geometria Plana', 'Trigonometria no Triângulo Retângulo', 'Médio-alto', 52,0.52,22,0.48),
+  _mkPQ('santos',5,3,'Álgebra',         'Números Complexos',                    'Alto',       40,0.50,24,0.46),
+  _mkPQ('santos',5,4,'Estatística',     'Probabilidade Condicional',            'Médio-alto', 48,0.48,24,0.44),
+  _mkPQ('santos',5,5,'Geometria Esp.',  'Sólidos de Revolução e Secções',       'Alto',       38,0.46,26,0.42),
+
+  /* OLIVEIRA — Química (queda progressiva) */
+  _mkPQ('oliveira',1,1,'Estequiometria','Balanceamento de Equações Químicas',   'Médio',      60,0.40,25,0.36),
+  _mkPQ('oliveira',1,2,'Termoquímica',  'Entalpia — Reações Exo e Endotérm.',  'Médio-alto', 48,0.38,27,0.34),
+  _mkPQ('oliveira',1,3,'Eletroquímica', 'Pilhas Galvânicas e fem',              'Médio',      58,0.36,26,0.32),
+  _mkPQ('oliveira',1,4,'Orgânica',      'Hidrocarbonetos — Nomenclatura',       'Fácil',      76,0.28,16,0.24),
+  _mkPQ('oliveira',1,5,'Cinética',      'Velocidade de Reação e Fatores',       'Médio',      55,0.34,26,0.30),
+  _mkPQ('oliveira',2,1,'Estequiometria','Rendimento de Reação',                 'Médio',      55,0.34,28,0.30),
+  _mkPQ('oliveira',2,2,'Termoquímica',  'Lei de Hess e Diagramas',              'Médio-alto', 44,0.32,30,0.28),
+  _mkPQ('oliveira',2,3,'Orgânica',      'Funções Oxigenadas',                   'Médio',      62,0.30,24,0.26),
+  _mkPQ('oliveira',2,4,'Cinética',      'Catálise e Equilíbrio Químico',        'Médio-alto', 48,0.28,30,0.24),
+  _mkPQ('oliveira',2,5,'Gases',         'Leis dos Gases Ideais',                'Fácil',      80,0.20,13,0.16),
+  _mkPQ('oliveira',3,1,'Estequiometria','Concentração de Soluções',             'Médio',      58,0.28,29,0.24),
+  _mkPQ('oliveira',3,2,'Eletroquímica', 'Eletrólise Aquosa',                    'Médio-alto', 44,0.26,32,0.22),
+  _mkPQ('oliveira',3,3,'Orgânica',      'Funções Nitrogenadas',                 'Alto',       34,0.24,36,0.20),
+  _mkPQ('oliveira',3,4,'Cinética',      'Fatores que Alteram a Velocidade',     'Fácil',      85,0.15,10,0.12),
+  _mkPQ('oliveira',3,5,'Gases',         'Transformações Gasosas (P, V, T)',      'Médio',      65,0.22,26,0.18),
+  _mkPQ('oliveira',4,1,'Termoquímica',  'Energia de Ligação',                   'Médio-alto', 42,0.24,32,0.20),
+  _mkPQ('oliveira',4,2,'Estequiometria','Titulação Ácido-Base',                 'Médio',      55,0.22,31,0.18),
+  _mkPQ('oliveira',4,3,'Orgânica',      'Reações Orgânicas — Adição e Subs.',   'Alto',       35,0.20,39,0.16),
+  _mkPQ('oliveira',4,4,'Eletroquímica', 'Corrosão e Proteção de Metais',        'Médio',      62,0.20,27,0.16),
+  _mkPQ('oliveira',4,5,'Cinética',      'Equilíbrio Dinâmico — Kc e Kp',       'Médio-alto', 46,0.18,34,0.14),
+  _mkPQ('oliveira',5,1,'Estequiometria','Pureza, Rendimento e Misturas',        'Médio-alto', 44,0.18,36,0.14),
+  _mkPQ('oliveira',5,2,'Termoquímica',  'Calor de Neutralização',               'Alto',       30,0.14,44,0.10),
+  _mkPQ('oliveira',5,3,'Orgânica',      'Polímeros e Plásticos',                'Médio',      84,0.13,12,0.10),
+  _mkPQ('oliveira',5,4,'Eletroquímica', 'Eletrólise Ígnea — Lei de Faraday',   'Alto',       26,0.12,46,0.08),
+  _mkPQ('oliveira',5,5,'Cinética',      'Catalisadores Industriais',            'Médio',      88,0.12,13,0.08),
+
+  /* LIMA — Língua Inglesa (consistente, qualidade crescente) */
+  _mkPQ('lima',1,1,'Reading',           'Interpretação de Texto Jornalístico',  'Médio',      65,0.44,22,0.40),
+  _mkPQ('lima',1,2,'Vocabulary',        'Vocabulário em Contexto',              'Médio',      62,0.42,24,0.38),
+  _mkPQ('lima',1,3,'Grammar',           'Present Perfect vs. Past Simple',      'Médio-alto', 52,0.40,26,0.36),
+  _mkPQ('lima',1,4,'Reading',           'Inferência e Subtexto',                'Alto',       42,0.38,28,0.34),
+  _mkPQ('lima',1,5,'Vocabulary',        'False Friends e Polissemia',           'Fácil',      76,0.26,17,0.22),
+  _mkPQ('lima',2,1,'Reading',           'Gêneros Textuais em Inglês',           'Médio',      64,0.46,22,0.42),
+  _mkPQ('lima',2,2,'Grammar',           'Reported Speech',                      'Médio',      60,0.44,24,0.40),
+  _mkPQ('lima',2,3,'Vocabulary',        'Phrasal Verbs em Contexto',            'Médio-alto', 50,0.42,26,0.38),
+  _mkPQ('lima',2,4,'Reading',           'Texto Publicitário e Propaganda',      'Médio',      66,0.40,22,0.36),
+  _mkPQ('lima',2,5,'Grammar',           'Conditional Sentences (I, II, III)',   'Médio-alto', 48,0.38,26,0.34),
+  _mkPQ('lima',3,1,'Reading',           'Intertextualidade e Referências',      'Médio-alto', 55,0.48,23,0.44),
+  _mkPQ('lima',3,2,'Grammar',           'Passive Voice e Estruturas Formais',   'Médio',      62,0.46,22,0.42),
+  _mkPQ('lima',3,3,'Vocabulary',        'Expressões Idiomáticas',               'Médio',      60,0.44,24,0.40),
+  _mkPQ('lima',3,4,'Reading',           'Notícia e Artigo Jornalístico',        'Médio',      65,0.42,22,0.38),
+  _mkPQ('lima',3,5,'Grammar',           'Modal Verbs e Nuances',                'Médio-alto', 50,0.40,25,0.36),
+  _mkPQ('lima',4,1,'Reading',           'Análise Crítica de Texto Argumentat.', 'Médio-alto', 54,0.50,22,0.46),
+  _mkPQ('lima',4,2,'Grammar',           'Subjunctive Mood e Inversões',         'Alto',       42,0.48,25,0.44),
+  _mkPQ('lima',4,3,'Vocabulary',        'Collocations e Fixed Expressions',     'Médio',      62,0.46,22,0.42),
+  _mkPQ('lima',4,4,'Reading',           'Argumentação e Persuasão',             'Médio',      64,0.44,22,0.40),
+  _mkPQ('lima',4,5,'Grammar',           'Inversão e Estruturas de Ênfase',      'Alto',       40,0.42,26,0.38),
+  _mkPQ('lima',5,1,'Reading',           'Análise Literária em Inglês',          'Médio-alto', 56,0.52,21,0.48),
+  _mkPQ('lima',5,2,'Grammar',           'Perfect Tenses — Uso e Contraste',    'Médio',      62,0.50,22,0.46),
+  _mkPQ('lima',5,3,'Vocabulary',        'Academic Word List em Contexto',       'Médio',      60,0.48,23,0.44),
+  _mkPQ('lima',5,4,'Reading',           'Comparação Entre Textos',              'Médio-alto', 54,0.46,23,0.42),
+  _mkPQ('lima',5,5,'Grammar',           'Discourse Markers e Coesão Textual',   'Médio',      65,0.44,22,0.40),
+
+  /* PEREIRA — Linguagens (em desenvolvimento) */
+  _mkPQ('pereira',1,1,'Interpretação',  'Leitura e Inferência Textual',         'Médio',      62,0.30,27,0.26),
+  _mkPQ('pereira',1,2,'Literatura',     'Modernismo Brasileiro — 1ª Fase',      'Médio',      58,0.28,29,0.24),
+  _mkPQ('pereira',1,3,'Gramática',      'Concordância Verbal',                  'Fácil',      78,0.20,15,0.16),
+  _mkPQ('pereira',1,4,'Interpretação',  'Texto Argumentativo — Estrutura',      'Médio-alto', 48,0.26,31,0.22),
+  _mkPQ('pereira',1,5,'Literatura',     'Romantismo e Realismo Brasileiro',     'Alto',       36,0.22,35,0.18),
+  _mkPQ('pereira',2,1,'Interpretação',  'Texto Instrucional e Técnico',         'Médio',      64,0.32,26,0.28),
+  _mkPQ('pereira',2,2,'Gramática',      'Regência Verbal e Nominal',            'Médio',      60,0.30,27,0.26),
+  _mkPQ('pereira',2,3,'Literatura',     'Pré-Modernismo — Contexto e Obras',    'Médio',      56,0.28,28,0.24),
+  _mkPQ('pereira',2,4,'Produção Textual','Estrutura da Dissertação',            'Médio-alto', 50,0.26,29,0.22),
+  _mkPQ('pereira',2,5,'Semântica',      'Polissemia e Conotação',               'Alto',       38,0.24,33,0.20),
+  _mkPQ('pereira',3,1,'Interpretação',  'Crônica e Conto — Análise',            'Médio',      62,0.36,25,0.32),
+  _mkPQ('pereira',3,2,'Literatura',     'Barroco Brasileiro — Gregório de Matos','Médio-alto',50,0.34,26,0.30),
+  _mkPQ('pereira',3,3,'Gramática',      'Crase e Regras de Uso',                'Médio',      58,0.32,26,0.28),
+  _mkPQ('pereira',3,4,'Semântica',      'Figuras de Linguagem',                 'Médio',      60,0.30,27,0.26),
+  _mkPQ('pereira',3,5,'Produção Textual','Argumentação e Contra-Argumentação',  'Médio-alto', 46,0.28,30,0.24),
+  _mkPQ('pereira',4,1,'Interpretação',  'Texto Multimodal e Infográfico',       'Médio',      63,0.38,24,0.34),
+  _mkPQ('pereira',4,2,'Literatura',     'Realismo e Naturalismo',               'Médio',      58,0.36,26,0.32),
+  _mkPQ('pereira',4,3,'Gramática',      'Pontuação e Estilística',              'Médio',      60,0.34,26,0.30),
+  _mkPQ('pereira',4,4,'Produção Textual','Coesão e Coerência Textual',          'Médio-alto', 50,0.32,27,0.28),
+  _mkPQ('pereira',4,5,'Semântica',      'Intertextualidade e Paródia',          'Médio-alto', 48,0.30,28,0.26),
+  _mkPQ('pereira',5,1,'Interpretação',  'Análise Discursiva e Argumentação',    'Médio',      62,0.42,23,0.38),
+  _mkPQ('pereira',5,2,'Literatura',     'Modernismo — 2ª e 3ª Fase',            'Médio-alto', 52,0.40,24,0.36),
+  _mkPQ('pereira',5,3,'Gramática',      'Período Composto — Subordinação',      'Médio',      60,0.38,25,0.34),
+  _mkPQ('pereira',5,4,'Produção Textual','Tipos Textuais e Gêneros',            'Médio',      64,0.36,24,0.32),
+  _mkPQ('pereira',5,5,'Semântica',      'Sentido Figurado e Implícito',         'Médio-alto', 50,0.34,26,0.30),
+
+  /* COSTA — C. Humanas (sólido, crescimento estável) */
+  _mkPQ('costa',1,1,'História',         'Independência do Brasil — Contexto',   'Médio',      62,0.40,24,0.36),
+  _mkPQ('costa',1,2,'Geografia',        'Urbanização Brasileira',               'Médio',      60,0.38,25,0.34),
+  _mkPQ('costa',1,3,'Filosofia',        'Iluminismo e Razão',                   'Médio-alto', 50,0.36,26,0.32),
+  _mkPQ('costa',1,4,'Sociologia',       'Trabalho, Alienação e Capitalismo',    'Médio',      58,0.34,26,0.30),
+  _mkPQ('costa',1,5,'História',         'Revoluções Liberais do Séc. XIX',      'Alto',       38,0.30,30,0.26),
+  _mkPQ('costa',2,1,'História',         'Era Vargas — Populismo',               'Médio',      63,0.42,23,0.38),
+  _mkPQ('costa',2,2,'Geografia',        'Geopolítica Mundial Contemporânea',    'Médio-alto', 52,0.40,25,0.36),
+  _mkPQ('costa',2,3,'Filosofia',        'Contratualismo — Hobbes, Locke, Rousseau','Médio',   60,0.38,25,0.34),
+  _mkPQ('costa',2,4,'Sociologia',       'Estratificação e Mobilidade Social',   'Médio',      62,0.36,25,0.32),
+  _mkPQ('costa',2,5,'Política',         'Democracia e Estado de Direito',       'Médio-alto', 48,0.34,26,0.30),
+  _mkPQ('costa',3,1,'História',         'Guerra Fria — Bipolaridade',           'Médio',      64,0.44,23,0.40),
+  _mkPQ('costa',3,2,'Filosofia',        'Existencialismo — Sartre e Heidegger', 'Médio-alto', 52,0.42,24,0.38),
+  _mkPQ('costa',3,3,'Geografia',        'Meio Ambiente e Sustentabilidade',     'Médio',      62,0.40,24,0.36),
+  _mkPQ('costa',3,4,'Sociologia',       'Cultura, Identidade e Globalização',   'Médio',      60,0.38,25,0.34),
+  _mkPQ('costa',3,5,'História',         'Descolonização da África e Ásia',      'Médio-alto', 48,0.36,26,0.32),
+  _mkPQ('costa',4,1,'História',         'Regime Militar Brasileiro (1964–1985)','Médio',      63,0.46,22,0.42),
+  _mkPQ('costa',4,2,'Filosofia',        'Ética e Bioética Contemporânea',       'Médio',      64,0.44,22,0.40),
+  _mkPQ('costa',4,3,'Geografia',        'Globalização Econômica',               'Médio-alto', 52,0.42,24,0.38),
+  _mkPQ('costa',4,4,'Sociologia',       'Movimentos Sociais e Cidadania',       'Médio',      62,0.40,24,0.36),
+  _mkPQ('costa',4,5,'Política',         'Sistemas Eleitorais e Partidos',       'Médio-alto', 48,0.38,25,0.34),
+  _mkPQ('costa',5,1,'História',         'Brasil República — Era Contemporânea', 'Médio',      64,0.47,22,0.43),
+  _mkPQ('costa',5,2,'Filosofia',        'Filosofia da Ciência e Epistemologia', 'Médio-alto', 54,0.45,23,0.41),
+  _mkPQ('costa',5,3,'Geografia',        'Energia, Recursos e Matriz Energética','Médio',      62,0.43,23,0.39),
+  _mkPQ('costa',5,4,'Sociologia',       'Desigualdade Social e Pobreza',        'Médio',      60,0.41,24,0.37),
+  _mkPQ('costa',5,5,'Política',         'Direitos Humanos e Cidadania Global',  'Médio',      65,0.40,22,0.36),
+];
+
+function getProfDados(key) {
+  return PROF_DADOS.find(p => p.key === key) || PROF_DADOS[0];
+}
+
+function getProfQuestoesFiltradas(key, sim, comp) {
+  return PROF_QUESTOES_DADOS.filter(q =>
+    q.profKey === key &&
+    (sim  === 'acumulado' || q.sim === parseInt(sim, 10)) &&
+    (comp === 'todas'     || q.comp === comp)
+  );
+}
+
+function getProfResumo(key, sim, comp) {
+  const qs = getProfQuestoesFiltradas(key, sim, comp);
+  if (!qs.length) return { nqs: 0, iqMedio: 0, acertoMedio: 0, discMedio: 0, comps: 0 };
+  const iqMedio     = Math.round(qs.reduce((s, q) => s + q.qualIdx, 0)    / qs.length);
+  const acertoMedio = Math.round(qs.reduce((s, q) => s + q.acerto, 0)     / qs.length);
+  const discMedio   = parseFloat((qs.reduce((s, q) => s + q.discriminante, 0) / qs.length).toFixed(2));
+  const comps       = new Set(qs.map(q => q.comp)).size;
+  return { nqs: qs.length, iqMedio, acertoMedio, discMedio, comps };
+}
+
+function getProfEvoQI(key, comp) {
+  return [1,2,3,4,5].map(sim => {
+    const qs = PROF_QUESTOES_DADOS.filter(q =>
+      q.profKey === key && q.sim === sim && (comp === 'todas' || q.comp === comp)
+    );
+    return qs.length ? Math.round(qs.reduce((s, q) => s + q.qualIdx, 0) / qs.length) : 0;
+  });
+}
+
+function getProfComps(key) {
+  const qs = PROF_QUESTOES_DADOS.filter(q => q.profKey === key);
+  return [...new Set(qs.map(q => q.comp))].sort();
+}
+
 /* ── ETIQUETAS PARA SIMULADO NAS OPÇÕES ───────────────────── */
 const SIM_LABELS = SIMULADOS.map(s => s.label);
 const SIM_LABELS_CURTOS = SIMULADOS.map(s => s.labelCurto);

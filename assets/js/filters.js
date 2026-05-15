@@ -38,8 +38,11 @@ const S = {
   alunoPerfilSimulado:  'acumulado',
 
   /* Professores */
-  profKey:       'silva',
-  profTab:       'questoes',
+  profKey:             'silva',
+  profTab:             'visao-geral',
+  profSim:             'acumulado',
+  profComp:            'todas',
+  profQuestaoSelecionada: null,
 
   /* Navegação */
   currentPage:   'dashboard',
@@ -90,9 +93,28 @@ function setAlunoPerfilAluno(val)      { S.alunoPerfilAluno     = val;  if (type
 function setAlunoPerfilSimulado(val)   { S.alunoPerfilSimulado  = val;  if (typeof _buildAlunoPerfil   === 'function') _buildAlunoPerfil();   }
 
 function setProfessor(val) {
-  S.profKey = val;
-  if (typeof loadProfessor === 'function') loadProfessor(val);
+  S.profKey  = val;
+  S.profComp = 'todas';
+  S.profQuestaoSelecionada = null;
+  if (typeof _buildProfCompSelect === 'function') _buildProfCompSelect();
   refreshProfessores();
+}
+
+function setProfSim(val) {
+  S.profSim = val;
+  S.profQuestaoSelecionada = null;
+  refreshProfessores();
+}
+
+function setProfComp(val) {
+  S.profComp = val;
+  S.profQuestaoSelecionada = null;
+  refreshProfessores();
+}
+
+function setProfQuestao(id) {
+  S.profQuestaoSelecionada = id;
+  if (typeof _renderProfQuestaoDetalhe === 'function') _renderProfQuestaoDetalhe(id);
 }
 
 function setEscolaVisaoSimulado(val) {
@@ -155,12 +177,10 @@ function _buildAlunosCurrentTab() {
 }
 
 function refreshProfessores() {
-  if (typeof renderProfDifChart      === 'function') renderProfDifChart(S.profKey);
-  if (typeof renderProfEvoChart      === 'function') renderProfEvoChart(S.profKey);
-  if (typeof renderProfAlunosCharts  === 'function') renderProfAlunosCharts(S.profKey);
-  if (typeof renderProfEvoQualCharts === 'function') renderProfEvoQualCharts(S.profKey);
-  _updateProfNotas();
-  _updateProfKpis();
+  switch (S.profTab) {
+    case 'visao-geral': if (typeof _buildProfVisaoGeral === 'function') _buildProfVisaoGeral(); break;
+    case 'questoes':    if (typeof _buildProfQuestoes   === 'function') _buildProfQuestoes();   break;
+  }
 }
 
 function refreshCurrentPage() {
@@ -279,16 +299,5 @@ function switchProfTab(tab) {
   document.querySelectorAll('.prof-atab').forEach(el => {
     if (el.dataset.tab === tab) el.classList.add('active');
   });
-  switch (tab) {
-    case 'questoes':
-      if (typeof renderProfDifChart === 'function') renderProfDifChart(S.profKey);
-      break;
-    case 'alunos':
-      if (typeof renderProfAlunosCharts === 'function') renderProfAlunosCharts(S.profKey);
-      break;
-    case 'evolucao':
-      if (typeof renderProfEvoChart      === 'function') renderProfEvoChart(S.profKey);
-      if (typeof renderProfEvoQualCharts === 'function') renderProfEvoQualCharts(S.profKey);
-      break;
-  }
+  refreshProfessores();
 }

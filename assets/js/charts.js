@@ -475,7 +475,63 @@ function renderAlunoPartChart() {
     );
 }
 
-/* ── PROFESSORES ──────────────────────────────────────────── */
+/* ── PROFESSORES — novos gráficos ─────────────────────────── */
+function renderProfEvoIqChart(evoQI, tend) {
+  if (!el('chart-prof-evo-iq')) return;
+  const lineColor = tend === 'up' ? C.green : tend === 'down' ? C.red : C.orange;
+  const fillColor = tend === 'up' ? 'rgba(21,128,61,0.07)' : tend === 'down' ? 'rgba(185,28,28,0.07)' : 'rgba(232,82,26,0.07)';
+  Plotly.react('chart-prof-evo-iq',
+    [{ type:'scatter', mode:'lines+markers',
+       x: SIM_LABELS_CURTOS, y: evoQI,
+       line:{ color: lineColor, width: 2.5 }, marker:{ size: 5 },
+       fill:'tozeroy', fillcolor: fillColor,
+    }],
+    { ...CT, margin: M,
+      xaxis:{ tickfont:{size:9} },
+      yaxis:{ range:[0,100], tickfont:{size:9}, gridcolor: C.border },
+    }, CFG
+  );
+}
+
+function renderProfDifDistChart(qs) {
+  if (!el('chart-prof-dif-dist')) return;
+  const diffs  = ['Fácil','Médio','Médio-alto','Alto'];
+  const counts = diffs.map(d => qs.filter(q => q.diff === d).length);
+  const colors = [C.slate, C.blue, C.orange, C.red];
+  Plotly.react('chart-prof-dif-dist',
+    [{ type:'bar', x: counts, y: diffs, orientation:'h',
+       marker:{ color: colors, opacity: 0.85 },
+       text: counts.map(c => c > 0 ? c : ''), textposition:'outside',
+    }],
+    { ...CT, margin:{ t:6, r:28, b:28, l:80 },
+      xaxis:{ tickfont:{size:9}, gridcolor: C.border, dtick:1 },
+      yaxis:{ tickfont:{size:9} },
+    }, CFG
+  );
+}
+
+function renderProfAcertoQsChart(qs) {
+  if (!el('chart-prof-acerto-qs')) return;
+  if (!qs.length) { Plotly.purge('chart-prof-acerto-qs'); return; }
+  const labels  = qs.map(q => `S${q.sim}·Q${q.num}`);
+  const vals    = qs.map(q => q.acerto);
+  const colors  = vals.map(v => v >= 30 && v <= 70 ? C.green : v > 80 ? C.slate : C.red);
+  Plotly.react('chart-prof-acerto-qs',
+    [{ type:'bar', x: labels, y: vals,
+       marker:{ color: colors, opacity: 0.85 },
+    }],
+    { ...CT, margin:{ t:6, r:8, b:36, l:38 },
+      xaxis:{ tickfont:{size:7.5}, tickangle:-45 },
+      yaxis:{ ticksuffix:'%', range:[0,100], tickfont:{size:9}, gridcolor: C.border },
+      shapes:[
+        { type:'rect', x0:-0.5, x1:vals.length-0.5, y0:30, y1:70,
+          fillcolor:'rgba(16,185,129,0.06)', line:{width:0} },
+      ],
+    }, CFG
+  );
+}
+
+/* ── PROFESSORES — gráficos legados (mantidos para compatibilidade) ── */
 function renderProfDifChart(profKey) {
   if (!el('chart-prof-dif')) return;
   const qs = getProfessor(profKey).questoes.map(i => QUESTOES[i]).filter(Boolean);

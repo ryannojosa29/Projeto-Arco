@@ -624,6 +624,116 @@ select.sel:hover { border-color: var(--orange); }
 .modal-body { padding: 20px 22px 22px; }
 .modal-texto { font-size: 13px; line-height: 1.7; color: var(--t2); }
 
+/* ── PROFESSORES — nova página ───────────────────────────── */
+.prof-filtros-wrap { display:flex; gap:8px; align-items:flex-start; flex-wrap:wrap; }
+
+/* Hero */
+.prof-hero { display:flex; align-items:flex-start; gap:18px; }
+.prof-av {
+  width:56px; height:56px; border-radius:50%;
+  background: linear-gradient(135deg, var(--navy), var(--navy3));
+  color:#fff; display:flex; align-items:center; justify-content:center;
+  font-size:18px; font-weight:800; flex-shrink:0; letter-spacing:-0.5px;
+}
+.prof-hero-body { flex:1; min-width:0; }
+.prof-nome { font-size:18px; font-weight:800; color:var(--t1); line-height:1.2; }
+.prof-chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:7px; }
+.prof-chip {
+  display:inline-flex; align-items:center; padding:3px 10px; border-radius:99px;
+  font-size:10.5px; font-weight:600; background:var(--surface2); color:var(--t2); border:1px solid var(--border);
+}
+.prof-chip-sim { background:var(--navy); color:#fff; border-color:transparent; }
+.prof-hero-foot { display:flex; align-items:center; gap:10px; margin-top:9px; flex-wrap:wrap; }
+.prof-tend-tag { font-size:11px; color:var(--t3); font-weight:600; }
+
+/* Qualidade badge */
+.prof-qual-badge {
+  display:inline-block; padding:4px 12px; border-radius:99px;
+  font-size:11px; font-weight:800; white-space:nowrap;
+}
+.pq-excelente { background:#DCFCE7; color:#15803D; }
+.pq-boa       { background:#DBEAFE; color:#1D4ED8; }
+.pq-atencao   { background:#FEF9C3; color:#A16207; }
+.pq-critica   { background:#FEE2E2; color:#B91C1C; }
+.pq-excelente-txt { color:#15803D; font-size:11px; font-weight:700; }
+.pq-boa-txt       { color:#1D4ED8; font-size:11px; font-weight:700; }
+.pq-atencao-txt   { color:#A16207; font-size:11px; font-weight:700; }
+.pq-critica-txt   { color:#B91C1C; font-size:11px; font-weight:700; }
+
+/* Diagnóstico */
+.prof-diag-grid { display:flex; gap:0; }
+.prof-diag-sep { width:1px; background:var(--border); margin:0 16px; flex-shrink:0; }
+.prof-diag-mini { flex:1; }
+.prof-dm-label { font-size:10px; font-weight:700; color:var(--t3); text-transform:uppercase; letter-spacing:.06em; margin-bottom:10px; }
+.prof-dm-big { font-size:28px; font-weight:800; color:var(--t1); line-height:1; }
+.prof-dm-status { font-size:11px; font-weight:700; margin-top:4px; }
+.prof-dm-micro { font-size:10.5px; color:var(--t3); margin-top:6px; line-height:1.5; }
+.prof-dm-bars { display:flex; flex-direction:column; gap:6px; }
+.prof-dm-bar-row { display:flex; align-items:center; gap:8px; }
+.prof-dm-bar-lbl { flex:0 0 62px; font-size:10.5px; color:var(--t2); font-weight:600; }
+.prof-dm-bar-wrap { flex:1; height:6px; background:var(--border); border-radius:99px; overflow:hidden; }
+.prof-dm-bar { height:100%; border-radius:99px; min-width:2px; transition:width .5s ease; }
+.prof-dm-bar.pq-excelente { background:#16a34a; }
+.prof-dm-bar.pq-boa       { background:#2563eb; }
+.prof-dm-bar.pq-atencao   { background:#ca8a04; }
+.prof-dm-bar.pq-critica   { background:#dc2626; }
+.prof-dm-bar-val { flex:0 0 20px; font-size:10.5px; font-weight:700; color:var(--t2); text-align:right; }
+
+/* Sinais */
+.prof-sinais-list { display:flex; flex-direction:column; gap:8px; }
+.prof-sinal { display:flex; align-items:flex-start; gap:8px; font-size:11.5px; color:var(--t2); padding:8px 10px; border-radius:7px; }
+.prof-sinal-ok   { background:rgba(22,163,74,.06); }
+.prof-sinal-warn { background:rgba(202,138,4,.06); }
+.prof-sinal-info { background:rgba(37,99,235,.06); }
+.prof-sinal-ico { flex-shrink:0; font-size:12px; }
+
+/* Recomendação */
+.prof-rec-body { display:flex; flex-direction:column; gap:0; }
+.prof-rec-row { display:flex; flex-direction:column; padding:8px 0; border-bottom:1px solid var(--border); }
+.prof-rec-row:last-of-type { border-bottom:none; }
+.prof-rec-lbl { font-size:9.5px; color:var(--t3); font-weight:700; text-transform:uppercase; letter-spacing:.06em; }
+.prof-rec-val { font-size:13px; font-weight:700; color:var(--t1); margin-top:3px; }
+.prof-rec-obs { font-size:11px; color:var(--t3); margin-top:10px; font-style:italic; line-height:1.5; }
+
+/* Layout questões */
+.prof-q-layout { display:grid; grid-template-columns:320px 1fr; gap:12px; }
+.prof-q-lista { display:flex; flex-direction:column; gap:8px; }
+.prof-q-item {
+  background:var(--surface); border:1.5px solid var(--border); border-radius:10px;
+  padding:12px 14px; cursor:pointer; transition:border-color var(--dur) var(--ease), background var(--dur) var(--ease);
+}
+.prof-q-item:hover { background:var(--bg); border-color:var(--border2); }
+.prof-q-item-sel { background:var(--bg); border-color:var(--navy); }
+.prof-q-item-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:5px; }
+.prof-q-num { font-size:10px; font-weight:700; color:var(--t3); text-transform:uppercase; letter-spacing:.05em; }
+.prof-q-badge { display:inline-block; padding:2px 8px; border-radius:99px; font-size:9.5px; font-weight:700; }
+.prof-q-comp { font-size:11.5px; font-weight:700; color:var(--t1); }
+.prof-q-assunto { font-size:11px; color:var(--t2); margin-top:2px; line-height:1.45; }
+.prof-q-meta { font-size:10.5px; color:var(--t4); margin-top:5px; }
+.prof-q-empty { font-size:13px; color:var(--t3); padding:24px; text-align:center; }
+
+/* Detalhe questão */
+.prof-q-detalhe { overflow-y:auto; }
+.prof-q-detalhe-empty { font-size:13px; color:var(--t3); padding:48px 24px; text-align:center; }
+.prof-det-head { display:flex; align-items:flex-start; justify-content:space-between; margin-bottom:10px; }
+.prof-det-num { font-size:10px; font-weight:700; color:var(--t3); text-transform:uppercase; letter-spacing:.06em; }
+.prof-det-comp { font-size:16px; font-weight:800; color:var(--t1); margin-top:2px; }
+.prof-det-assunto { font-size:12.5px; color:var(--t2); line-height:1.5; margin-bottom:10px; }
+.prof-det-meta { margin-bottom:14px; }
+.prof-det-diff {
+  display:inline-block; padding:3px 10px; border-radius:99px;
+  font-size:10.5px; font-weight:700; background:var(--surface2); color:var(--t2); border:1px solid var(--border);
+}
+.prof-det-kpis { display:flex; gap:0; margin-bottom:16px; background:var(--surface2); border-radius:10px; overflow:hidden; }
+.prof-det-kpi { flex:1; padding:12px 10px; text-align:center; border-right:1px solid var(--border); }
+.prof-det-kpi:last-child { border-right:none; }
+.prof-det-kpi-val { font-size:17px; font-weight:800; color:var(--t1); }
+.prof-det-kpi-lbl { font-size:9.5px; color:var(--t3); font-weight:600; margin-top:3px; text-transform:uppercase; letter-spacing:.04em; }
+.prof-det-section-lbl { font-size:10px; font-weight:700; color:var(--t3); text-transform:uppercase; letter-spacing:.08em; margin-bottom:8px; }
+.prof-det-checklist { display:flex; flex-direction:column; gap:7px; }
+.prof-det-check { display:flex; align-items:flex-start; gap:8px; font-size:11.5px; color:var(--t2); }
+.prof-det-check-ico { flex-shrink:0; font-size:12px; }
+
 /* ── ESCOLA / ALUNO / PROF tab content ────────────────────── */
 .escola-tab-content { display: none; flex: 1; flex-direction: column; overflow: hidden; }
 .escola-tab-content.active { display: flex; }

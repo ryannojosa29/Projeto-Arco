@@ -604,8 +604,8 @@ function _initAlunos() {
 
 function _initProfessores() {
   _populateProfSelect();
-  loadProfessor(S.profKey);
-  switchProfTab('questoes');
+  _buildProfCompSelect();
+  switchProfTab('visao-geral');
 }
 
 /* ── ALUNOS — HELPERS ──────────────────────────────────────── */
@@ -2295,11 +2295,271 @@ function _populateAlunoSelect() {
 
 function _populateProfSelect() {
   const sel = el('sel-professor');
-  if (!sel || sel.options.length > 1) return;
-  const keys = Object.keys(PROFESSORES);
-  sel.innerHTML = keys.map(k =>
-    `<option value="${k}"${k === S.profKey ? ' selected' : ''}>${PROFESSORES[k].nome}</option>`
+  if (!sel) return;
+  sel.innerHTML = PROF_DADOS.map(p =>
+    `<option value="${p.key}"${p.key === S.profKey ? ' selected' : ''}>${p.nome} — ${p.disc}</option>`
   ).join('');
+}
+
+function _buildProfCompSelect() {
+  const sel = el('sel-prof-comp');
+  if (!sel) return;
+  const comps = getProfComps(S.profKey);
+  sel.innerHTML = '<option value="todas">Todos os componentes</option>' +
+    comps.map(c => `<option value="${c}"${c === S.profComp ? ' selected' : ''}>${c}</option>`).join('');
+}
+
+function _profQualClass(qi) {
+  return qi >= 80 ? 'excelente' : qi >= 65 ? 'boa' : qi >= 50 ? 'atencao' : 'critica';
+}
+function _profQualLabel(qi) {
+  return qi >= 80 ? 'Excelente' : qi >= 65 ? 'Boa' : qi >= 50 ? 'Atenção' : 'Crítica';
+}
+function _profTendLabel(tend) {
+  return tend === 'up' ? 'Em crescimento' : tend === 'down' ? 'Em queda' : 'Estável';
+}
+function _profTendIcon(tend) {
+  return tend === 'up' ? '↑' : tend === 'down' ? '↓' : '→';
+}
+
+function _buildProfVisaoGeral() {
+  const pDados = getProfDados(S.profKey);
+  const resumo = getProfResumo(S.profKey, S.profSim, S.profComp);
+  const qs     = getProfQuestoesFiltradas(S.profKey, S.profSim, S.profComp);
+  const evoQI  = getProfEvoQI(S.profKey, S.profComp);
+  const qi     = resumo.iqMedio;
+  const qiCls  = _profQualClass(qi);
+  const qiLbl  = _profQualLabel(qi);
+  const simTxt = S.profSim === 'acumulado' ? 'Acumulado (1–5)' : S.profSim + 'º Simulado';
+
+  // Hero card
+  const heroEl = el('prof-hero-card');
+  if (heroEl) {
+    const iqDelta = evoQI[4] - evoQI[0];
+    const deltaTxt = (iqDelta >= 0 ? '+' : '') + iqDelta + ' pts';
+    heroEl.innerHTML =
+      `<div class="prof-hero">` +
+        `<div class="prof-av">${pDados.av}</div>` +
+        `<div class="prof-hero-body">` +
+          `<div class="prof-nome">${pDados.nome}</div>` +
+          `<div class="prof-chips">` +
+            `<span class="prof-chip">${pDados.disc}</span>` +
+            `<span class="prof-chip">${pDados.escola}</span>` +
+            `<span class="prof-chip">${pDados.turma}</span>` +
+            `<span class="prof-chip prof-chip-sim">${simTxt}</span>` +
+          `</div>` +
+          `<div class="prof-hero-foot">` +
+            `<span class="prof-qual-badge prof-qual-${qiCls}">${qiLbl}</span>` +
+            `<span class="prof-tend-tag">${_profTendIcon(pDados.iqTend)} ${_profTendLabel(pDados.iqTend)} — variação de ${deltaTxt} (sim1→sim5)</span>` +
+          `</div>` +
+        `</div>` +
+      `</div>`;
+  }
+
+  // KPIs
+  _setKpi('prof-kpi-iq',       qi);
+  _setKpi('prof-kpi-acerto',   resumo.acertoMedio + '%');
+  _setKpi('prof-kpi-nqs',      resumo.nqs);
+  _setKpi('prof-kpi-disc',     resumo.discMedio.toFixed(2));
+  _setKpi('prof-kpi-cobertura', resumo.comps);
+  const iqNoteEl = el('prof-kpi-iq-note');
+  if (iqNoteEl) iqNoteEl.textContent = qiLbl;
+  const nqsNoteEl = el('prof-kpi-nqs-note');
+  if (nqsNoteEl) nqsNoteEl.textContent = S.profSim === 'acumulado' ? 'Total elaboradas' : 'Neste simulado';
+
+  // Contagens de qualidade (usadas em diagnóstico e sinais)
+  const excelentes = qs.filter(q => q.status === 'excelente').length;
+  const boas       = qs.filter(q => q.status === 'boa').length;
+  const atencao    = qs.filter(q => q.status === 'atencao').length;
+  const criticas   = qs.filter(q => q.status === 'critica').length;
+
+  // Diagnóstico card
+  const diagEl = el('prof-diag-card');
+  if (diagEl && qs.length) {
+    const discMedioFmt= resumo.discMedio.toFixed(2);
+    const discStatus  = resumo.discMedio >= 0.40 ? 'Alto' : resumo.discMedio >= 0.28 ? 'Médio' : 'Baixo';
+    const acertoStatus= resumo.acertoMedio >= 30 && resumo.acertoMedio <= 70 ? 'Ideal' : resumo.acertoMedio > 70 ? 'Muito fácil' : 'Muito difícil';
+    diagEl.innerHTML =
+      `<div class="card-title mb12">Diagnóstico pedagógico</div>` +
+      `<div class="prof-diag-grid">` +
+        `<div class="prof-diag-mini">` +
+          `<div class="prof-dm-label">Distribuição de qualidade</div>` +
+          `<div class="prof-dm-bars">` +
+            `<div class="prof-dm-bar-row"><span class="prof-dm-bar-lbl">Excelente</span><div class="prof-dm-bar-wrap"><div class="prof-dm-bar pq-excelente" style="width:${Math.round(excelentes/qs.length*100)}%"></div></div><span class="prof-dm-bar-val">${excelentes}</span></div>` +
+            `<div class="prof-dm-bar-row"><span class="prof-dm-bar-lbl">Boa</span><div class="prof-dm-bar-wrap"><div class="prof-dm-bar pq-boa" style="width:${Math.round(boas/qs.length*100)}%"></div></div><span class="prof-dm-bar-val">${boas}</span></div>` +
+            `<div class="prof-dm-bar-row"><span class="prof-dm-bar-lbl">Atenção</span><div class="prof-dm-bar-wrap"><div class="prof-dm-bar pq-atencao" style="width:${Math.round(atencao/qs.length*100)}%"></div></div><span class="prof-dm-bar-val">${atencao}</span></div>` +
+            `<div class="prof-dm-bar-row"><span class="prof-dm-bar-lbl">Crítica</span><div class="prof-dm-bar-wrap"><div class="prof-dm-bar pq-critica" style="width:${Math.round(criticas/qs.length*100)}%"></div></div><span class="prof-dm-bar-val">${criticas}</span></div>` +
+          `</div>` +
+        `</div>` +
+        `<div class="prof-diag-sep"></div>` +
+        `<div class="prof-diag-mini">` +
+          `<div class="prof-dm-label">Discriminante</div>` +
+          `<div class="prof-dm-big">${discMedioFmt}</div>` +
+          `<div class="prof-dm-status ${resumo.discMedio >= 0.40 ? 'pq-excelente-txt' : resumo.discMedio >= 0.28 ? 'pq-boa-txt' : 'pq-critica-txt'}">${discStatus}</div>` +
+          `<div class="prof-dm-micro">Capacidade diagnóstica das questões<br>Ideal: ≥ 0,30</div>` +
+        `</div>` +
+        `<div class="prof-diag-sep"></div>` +
+        `<div class="prof-diag-mini">` +
+          `<div class="prof-dm-label">Acerto médio</div>` +
+          `<div class="prof-dm-big">${resumo.acertoMedio}%</div>` +
+          `<div class="prof-dm-status ${acertoStatus === 'Ideal' ? 'pq-excelente-txt' : 'pq-atencao-txt'}">${acertoStatus}</div>` +
+          `<div class="prof-dm-micro">Zona ideal: 30% – 70%<br>Garante discriminação adequada</div>` +
+        `</div>` +
+      `</div>`;
+  }
+
+  // Charts
+  if (typeof renderProfEvoIqChart   === 'function') renderProfEvoIqChart(evoQI, pDados.iqTend);
+  if (typeof renderProfDifDistChart === 'function') renderProfDifDistChart(qs);
+  if (typeof renderProfAcertoQsChart=== 'function') renderProfAcertoQsChart(qs);
+
+  // Sinais pedagógicos
+  const sinaisEl = el('prof-sinais-card');
+  if (sinaisEl && qs.length) {
+    const critList = qs.filter(q => q.status === 'critica' || q.status === 'atencao');
+    const destList = qs.filter(q => q.status === 'excelente');
+    const highAcerto = qs.filter(q => q.acerto > 80);
+    const lowAcerto  = qs.filter(q => q.acerto < 28);
+    const signals = [];
+    if (criticas > 0)       signals.push({ icon:'⚠️', cls:'warn', txt: `${criticas} questão(ões) em nível Crítico — revisão urgente necessária` });
+    if (highAcerto.length)  signals.push({ icon:'🔵', cls:'info', txt: `${highAcerto.length} questão(ões) com acerto > 80% — baixo poder discriminativo` });
+    if (lowAcerto.length)   signals.push({ icon:'🔵', cls:'info', txt: `${lowAcerto.length} questão(ões) com acerto < 28% — pode estar além do nível da turma` });
+    if (resumo.discMedio < 0.25) signals.push({ icon:'⚠️', cls:'warn', txt: `Discriminante médio abaixo de 0,25 — questões com baixa capacidade diagnóstica` });
+    if (destList.length >= 3)signals.push({ icon:'✅', cls:'ok', txt: `${destList.length} questões classificadas como Excelente — referência para a rede` });
+    if (!signals.length)    signals.push({ icon:'✅', cls:'ok', txt: 'Nenhum sinal crítico identificado neste período' });
+    sinaisEl.innerHTML =
+      `<div class="card-title mb12">Sinais pedagógicos</div>` +
+      `<div class="prof-sinais-list">` +
+      signals.map(s => `<div class="prof-sinal prof-sinal-${s.cls}"><span class="prof-sinal-ico">${s.icon}</span><span>${s.txt}</span></div>`).join('') +
+      `</div>`;
+  }
+
+  // Recomendação
+  const recEl = el('prof-rec-card');
+  if (recEl) {
+    const rec = _getProfRecomendacao(pDados, resumo, qs);
+    recEl.innerHTML =
+      `<div class="card-title mb12">Recomendação de devolutiva</div>` +
+      `<div class="prof-rec-body">` +
+        `<div class="prof-rec-row"><div class="prof-rec-lbl">Prioridade</div><div class="prof-rec-val">${rec.prioridade}</div></div>` +
+        `<div class="prof-rec-row"><div class="prof-rec-lbl">Ação imediata</div><div class="prof-rec-val">${rec.acao}</div></div>` +
+        `<div class="prof-rec-row"><div class="prof-rec-lbl">Referência</div><div class="prof-rec-val">${rec.referencia}</div></div>` +
+        `<div class="prof-rec-obs">${rec.obs}</div>` +
+      `</div>`;
+  }
+}
+
+function _getProfRecomendacao(pDados, resumo, qs) {
+  const qi = resumo.iqMedio;
+  if (qi >= 80) return {
+    prioridade: 'Compartilhar metodologia',
+    acao: 'Conduzir oficina para outros professores da rede',
+    referencia: 'Questões Excelente como modelo pedagógico',
+    obs: `${pDados.nome} demonstra domínio técnico na elaboração. Indicar como referência para capacitação interna.`,
+  };
+  if (qi >= 65) return {
+    prioridade: 'Refinamento dos distratores',
+    acao: 'Revisar questões em nível Atenção — ajustar distratores e calibração',
+    referencia: `Disciplina: ${pDados.disc} — componentes com acerto fora de 30–70%`,
+    obs: `Qualidade geral satisfatória. Foco na calibração das questões Atenção para elevar o poder diagnóstico.`,
+  };
+  const critComp = qs.filter(q => q.status === 'critica').map(q => q.comp);
+  const compMaisCrit = critComp.length ? critComp.sort((a,b) => critComp.filter(c=>c===b).length - critComp.filter(c=>c===a).length)[0] : pDados.disc;
+  return {
+    prioridade: 'Devolutiva prioritária',
+    acao: `Revisão urgente das questões críticas — iniciar por ${compMaisCrit}`,
+    referencia: `${qs.filter(q=>q.status==='critica').length} questão(ões) classificadas como Crítica`,
+    obs: `Índice de qualidade abaixo do esperado. Recomendar revisão técnica e participação em formação de item pedagógico.`,
+  };
+}
+
+function _buildProfQuestoes() {
+  const qs = getProfQuestoesFiltradas(S.profKey, S.profSim, S.profComp);
+  const listaEl = el('prof-q-lista');
+  if (!listaEl) return;
+
+  if (!qs.length) {
+    listaEl.innerHTML = '<div class="prof-q-empty">Nenhuma questão para os filtros selecionados.</div>';
+    return;
+  }
+
+  listaEl.innerHTML = qs.map(q => {
+    const cls = _profQualClass(q.qualIdx);
+    const sel = S.profQuestaoSelecionada === q.id ? ' prof-q-item-sel' : '';
+    return `<div class="prof-q-item${sel}" onclick="setProfQuestao('${q.id}')">` +
+      `<div class="prof-q-item-head">` +
+        `<span class="prof-q-num">Sim ${q.sim} · Q${q.num}</span>` +
+        `<span class="prof-q-badge pq-${cls}">${_profQualLabel(q.qualIdx)}</span>` +
+      `</div>` +
+      `<div class="prof-q-comp">${q.comp}</div>` +
+      `<div class="prof-q-assunto">${q.assunto}</div>` +
+      `<div class="prof-q-meta">${q.diff} · Acerto: ${q.acerto}% · IQ: ${q.qualIdx}</div>` +
+    `</div>`;
+  }).join('');
+
+  if (S.profQuestaoSelecionada) {
+    _renderProfQuestaoDetalhe(S.profQuestaoSelecionada);
+  } else if (qs.length) {
+    setProfQuestao(qs[0].id);
+  }
+}
+
+function _renderProfQuestaoDetalhe(id) {
+  const detEl = el('prof-q-detalhe');
+  if (!detEl) return;
+  const q = PROF_QUESTOES_DADOS.find(x => x.id === id);
+  if (!q) { detEl.innerHTML = '<div class="prof-q-detalhe-empty">Questão não encontrada.</div>'; return; }
+
+  // Update selection state in list
+  document.querySelectorAll('.prof-q-item').forEach(el => el.classList.remove('prof-q-item-sel'));
+  const selEl = document.querySelector(`.prof-q-item[onclick="setProfQuestao('${id}')"]`);
+  if (selEl) selEl.classList.add('prof-q-item-sel');
+
+  const qi      = q.qualIdx;
+  const qiCls   = _profQualClass(qi);
+  const qiLbl   = _profQualLabel(qi);
+  const discFmt = q.discriminante.toFixed(2);
+  const discStatus = q.discriminante >= 0.40 ? 'Alto' : q.discriminante >= 0.28 ? 'Médio' : 'Baixo';
+  const acertoFmt  = q.acerto + '%';
+  const acertoOk   = q.acerto >= 30 && q.acerto <= 70;
+  const distOk     = q.distPct >= 15 && q.distPct <= 35;
+
+  const pontos = [];
+  if (qi >= 80) pontos.push({ ok:true,  txt: 'Alta capacidade diagnóstica — questão de referência' });
+  else if (qi >= 65) pontos.push({ ok:true, txt: 'Boa qualidade — pequenas melhorias podem elevar o impacto' });
+  else if (qi >= 50) pontos.push({ ok:null, txt: 'Qualidade abaixo do esperado — priorizar revisão' });
+  else pontos.push({ ok:false, txt: 'Questão crítica — requer reelaboração' });
+  if (!acertoOk && q.acerto > 70) pontos.push({ ok:false, txt: `Acerto muito alto (${q.acerto}%) — questão com baixo valor diagnóstico` });
+  if (!acertoOk && q.acerto < 28) pontos.push({ ok:false, txt: `Acerto muito baixo (${q.acerto}%) — verifique calibração de dificuldade` });
+  if (acertoOk)   pontos.push({ ok:true,  txt: `Acerto dentro da zona ideal (${q.acerto}%) — 30–70%` });
+  if (!distOk && q.distPct > 35) pontos.push({ ok:null, txt: `Distrator com alta aderência (${q.distPct}%) — revisar formulação` });
+  if (!distOk && q.distPct < 15) pontos.push({ ok:null, txt: `Distrator pouco atraente (${q.distPct}%) — revisar alternativas` });
+  if (q.discriminante >= 0.35) pontos.push({ ok:true, txt: `Discriminante ${discFmt} — separa bem alunos acima e abaixo da média` });
+  else if (q.discriminante < 0.25) pontos.push({ ok:false, txt: `Discriminante ${discFmt} — baixa capacidade de separação` });
+
+  detEl.innerHTML =
+    `<div class="prof-det-head">` +
+      `<div>` +
+        `<div class="prof-det-num">Simulado ${q.sim} · Questão ${q.num}</div>` +
+        `<div class="prof-det-comp">${q.comp}</div>` +
+      `</div>` +
+      `<span class="prof-qual-badge pq-${qiCls}">${qiLbl}</span>` +
+    `</div>` +
+    `<div class="prof-det-assunto">${q.assunto}</div>` +
+    `<div class="prof-det-meta">` +
+      `<span class="prof-det-diff">${q.diff}</span>` +
+    `</div>` +
+    `<div class="prof-det-kpis">` +
+      `<div class="prof-det-kpi"><div class="prof-det-kpi-val">${qi}</div><div class="prof-det-kpi-lbl">Índice qualidade</div></div>` +
+      `<div class="prof-det-kpi"><div class="prof-det-kpi-val">${acertoFmt}</div><div class="prof-det-kpi-lbl">Acerto médio</div></div>` +
+      `<div class="prof-det-kpi"><div class="prof-det-kpi-val">${discFmt}</div><div class="prof-det-kpi-lbl">Discriminante</div></div>` +
+      `<div class="prof-det-kpi"><div class="prof-det-kpi-val">${q.distPct}%</div><div class="prof-det-kpi-lbl">Distrator (%)</div></div>` +
+      `<div class="prof-det-kpi"><div class="prof-det-kpi-val">${q.pbis.toFixed(2)}</div><div class="prof-det-kpi-lbl">PBIS</div></div>` +
+    `</div>` +
+    `<div class="prof-det-section-lbl">Análise técnica</div>` +
+    `<div class="prof-det-checklist">` +
+    pontos.map(p => `<div class="prof-det-check"><span class="prof-det-check-ico">${p.ok === true ? '✅' : p.ok === false ? '❌' : '⚠️'}</span><span>${p.txt}</span></div>`).join('') +
+    `</div>`;
 }
 
 /* ── LOADERS DE ENTIDADE ───────────────────────────────────── */
@@ -2345,17 +2605,6 @@ function loadAluno(key) {
 
 function loadProfessor(key) {
   S.profKey = key;
-  const p = getProfessor(key);
-  if (!p) return;
-
-  _setKpi('prof-nome',       p.nome);
-  _setKpi('prof-disciplina', p.disc);
-  _setKpi('prof-kpi-iq',     p.evo_iq.at(-1).toFixed(1));
-  _setKpi('prof-kpi-acerto', p.evo_acerto.at(-1) + '%');
-  _setKpi('prof-kpi-questoes', p.questoes.length);
-
-  // Notas pedagógicas
-  _updateProfNotas();
 }
 
 /* ── DEVOLUTIVA NARRATIVA ──────────────────────────────────── */

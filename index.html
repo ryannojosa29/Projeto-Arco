@@ -897,72 +897,72 @@
 <div class="page hidden" id="page-professores">
   <div class="ph">
     <div class="ph-top" style="margin-bottom:0">
-      <div><div class="ph-title">Professores</div><div class="ph-sub">Qualidade das questões produzidas e impacto no aprendizado dos alunos.</div></div>
-      <div class="fsel">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-        <div>
-          <div class="f-label">Professor</div>
-          <select class="fsel-input" id="sel-professor" onchange="setProfessor(this.value)">
-            <option value="silva">Prof. Carlos Silva — Física</option>
-          </select>
+      <div><div class="ph-title">Professores</div><div class="ph-sub">Auditoria pedagógica das questões produzidas e impacto no aprendizado dos alunos.</div></div>
+      <div class="prof-filtros-wrap">
+        <div class="fsel">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          <div><div class="f-label">Professor</div><select class="fsel-input" id="sel-professor" onchange="setProfessor(this.value)"></select></div>
+        </div>
+        <div class="fsel">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <div><div class="f-label">Simulado</div>
+            <select class="fsel-input" id="sel-prof-sim" onchange="setProfSim(this.value)">
+              <option value="acumulado">Acumulado (1–5)</option>
+              <option value="1">1º Simulado</option><option value="2">2º Simulado</option>
+              <option value="3">3º Simulado</option><option value="4">4º Simulado</option><option value="5">5º Simulado</option>
+            </select></div>
+        </div>
+        <div class="fsel">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+          <div><div class="f-label">Componente</div><select class="fsel-input" id="sel-prof-comp" onchange="setProfComp(this.value)"><option value="todas">Todos</option></select></div>
         </div>
       </div>
     </div>
     <div style="display:flex;gap:0;margin-top:14px">
-      <div class="tab prof-atab active" data-tab="questoes" onclick="switchProfTab('questoes')">Questões</div>
-      <div class="tab prof-atab" data-tab="alunos" onclick="switchProfTab('alunos')">Desempenho dos alunos</div>
-      <div class="tab prof-atab" data-tab="evolucao" onclick="switchProfTab('evolucao')">Evolução</div>
+      <div class="tab prof-atab active" data-tab="visao-geral" onclick="switchProfTab('visao-geral')">Visão geral</div>
+      <div class="tab prof-atab" data-tab="questoes" onclick="switchProfTab('questoes')">Questões</div>
     </div>
   </div>
   <div class="pb" style="overflow-y:auto">
 
-    <!-- KPIs do professor -->
-    <div class="g1 g4 mb12">
-      <div class="kpi"><div class="kpi-label">Índice de qualidade</div><div class="kpi-val ig" id="prof-kpi-iq">—</div><div class="kpi-note g">Escala 0–10</div></div>
-      <div class="kpi"><div class="kpi-label">Acerto médio</div><div class="kpi-val" id="prof-kpi-acerto">—</div><div class="kpi-note">Nas suas questões</div></div>
-      <div class="kpi"><div class="kpi-label">Questões elaboradas</div><div class="kpi-val" id="prof-kpi-questoes">—</div><div class="kpi-note">Neste simulado</div></div>
-      <div class="kpi"><div class="kpi-label">Disciplina</div><div class="kpi-val" id="prof-disciplina">—</div><div class="kpi-note">Área de atuação</div></div>
-    </div>
+    <!-- TAB: VISÃO GERAL -->
+    <div class="prof-tab-content" id="ptab-visao-geral">
 
-    <!-- Notas pedagógicas -->
-    <div class="insight-hero mb12">
-      <div class="ih-label">Síntese pedagógica</div>
-      <ul class="ih-text" id="prof-notas" style="padding-left:16px;margin:0"></ul>
+      <!-- Hero do professor -->
+      <div class="card mb12" id="prof-hero-card"></div>
+
+      <!-- 5 KPIs -->
+      <div class="g1 g5 mb12">
+        <div class="kpi"><div class="kpi-label">Índice de qualidade</div><div class="kpi-val" id="prof-kpi-iq">—</div><div class="kpi-note" id="prof-kpi-iq-note">Escala 0–100</div></div>
+        <div class="kpi"><div class="kpi-label">Acerto médio</div><div class="kpi-val" id="prof-kpi-acerto">—</div><div class="kpi-note">Nas questões</div></div>
+        <div class="kpi"><div class="kpi-label">Questões</div><div class="kpi-val" id="prof-kpi-nqs">—</div><div class="kpi-note" id="prof-kpi-nqs-note">Neste período</div></div>
+        <div class="kpi"><div class="kpi-label">Discriminante</div><div class="kpi-val" id="prof-kpi-disc">—</div><div class="kpi-note">Médio</div></div>
+        <div class="kpi"><div class="kpi-label">Cobertura</div><div class="kpi-val" id="prof-kpi-cobertura">—</div><div class="kpi-note">Componentes cobertos</div></div>
+      </div>
+
+      <!-- Diagnóstico -->
+      <div class="card mb12" id="prof-diag-card"></div>
+
+      <!-- Gráficos -->
+      <div class="g1 g3 mb12">
+        <div class="card"><div class="card-title mb8">Evolução do índice de qualidade</div><div id="chart-prof-evo-iq" style="height:180px"></div></div>
+        <div class="card"><div class="card-title mb8">Distribuição por dificuldade</div><div id="chart-prof-dif-dist" style="height:180px"></div></div>
+        <div class="card"><div class="card-title mb8">Acerto por questão</div><div id="chart-prof-acerto-qs" style="height:180px"></div></div>
+      </div>
+
+      <!-- Sinais + Recomendação -->
+      <div class="g1 g2 mb12">
+        <div class="card" id="prof-sinais-card"></div>
+        <div class="card" id="prof-rec-card"></div>
+      </div>
+
     </div>
 
     <!-- TAB: QUESTÕES -->
-    <div class="prof-tab-content" id="ptab-questoes">
-      <div class="g1 g21">
-        <div class="card mb12">
-          <div class="card-title mb8">Distribuição por dificuldade das questões</div>
-          <div id="chart-prof-dif" style="height:180px"></div>
-        </div>
-        <div class="card mb12">
-          <div class="card-title mb8">Questões do professor</div>
-          <div class="card-sub mb12">Selecione uma questão para análise individual</div>
-          <div id="prof-q-list"></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- TAB: ALUNOS -->
-    <div class="prof-tab-content hidden" id="ptab-alunos">
-      <div class="g1 g2">
-        <div class="card"><div class="card-title mb8">Distribuição dos alunos por faixa</div><div id="chart-prof-alunos" style="height:200px"></div></div>
-        <div class="card"><div class="card-title mb8">Correlação questão → desempenho</div><div id="chart-prof-corr" style="height:200px"></div></div>
-      </div>
-    </div>
-
-    <!-- TAB: EVOLUÇÃO -->
-    <div class="prof-tab-content hidden" id="ptab-evolucao">
-      <div class="evo-cards">
-        <div class="evo-card"><div class="evo-label">Evolução do índice de qualidade</div><div class="evo-val" style="color:var(--green)" id="prof-evo-iq">—</div><div class="evo-note">Últimos 3 simulados</div></div>
-        <div class="evo-card"><div class="evo-label">Tendência do acerto médio</div><div class="evo-val" style="color:var(--blue)" id="prof-evo-acerto">—</div><div class="evo-note">Acumulado</div></div>
-        <div class="evo-card"><div class="evo-label">Impacto nos alunos</div><div class="evo-val" style="color:var(--green)">Positivo</div><div class="evo-note">Crescimento consistente</div></div>
-      </div>
-      <div class="g1 g2">
-        <div class="card"><div class="card-title mb8">Evolução do índice de qualidade</div><div id="chart-prof-iq-evo" style="height:200px"></div></div>
-        <div class="card"><div class="card-title mb8">Evolução do acerto médio</div><div id="chart-prof-acerto-evo" style="height:200px"></div></div>
+    <div class="prof-tab-content hidden" id="ptab-questoes">
+      <div class="prof-q-layout">
+        <div class="prof-q-lista" id="prof-q-lista"></div>
+        <div class="prof-q-detalhe card" id="prof-q-detalhe"><div class="prof-q-detalhe-empty">Selecione uma questão para ver a análise detalhada</div></div>
       </div>
     </div>
 
