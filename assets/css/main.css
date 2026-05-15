@@ -468,6 +468,7 @@ select.sel:hover { border-color: var(--orange); }
 .diff-pos { color: var(--green); font-weight: 700; }
 .diff-neg { color: var(--red);   font-weight: 700; }
 .diff-neu { color: var(--t3); }
+.tag-att  { color: var(--amber); font-weight: 700; }
 
 /* ── RANK ─────────────────────────────────────────────────── */
 .rpos { font-size: 13px; font-weight: 800; color: var(--navy); }
@@ -627,9 +628,66 @@ select.sel:hover { border-color: var(--orange); }
 .escola-tab-content { display: none; flex: 1; flex-direction: column; overflow: hidden; }
 .escola-tab-content.active { display: flex; }
 .aluno-tab-content,
+.av-tab-content,
+.al-tab-content,
 .prof-tab-content { display: block; }
 .aluno-tab-content.hidden,
+.av-tab-content.hidden,
+.al-tab-content.hidden,
 .prof-tab-content.hidden { display: none; }
+
+/* ── ALUNOS 2-TAB PAGE ───────────────────────────────────── */
+.al-hero { display: flex; align-items: center; gap: 18px; }
+.al-av {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--navy), var(--navy3));
+  color: #fff; display: flex; align-items: center; justify-content: center;
+  font-size: 20px; font-weight: 800; flex-shrink: 0;
+}
+.al-nome { font-size: 18px; font-weight: 800; color: var(--t1); line-height: 1.2; }
+.al-meta { font-size: 11.5px; color: var(--t3); margin-top: 3px; }
+
+/* Status badges */
+.al-badge {
+  display: inline-block; padding: 3px 10px; border-radius: 20px;
+  font-size: 10px; font-weight: 700; letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+.al-badge-dest    { background: #DCFCE7; color: #15803D; }
+.al-badge-cresc   { background: #DBEAFE; color: #1D4ED8; }
+.al-badge-est     { background: #F1F5F9; color: #64748B; }
+.al-badge-att     { background: #FEF9C3; color: #A16207; }
+.al-badge-queda   { background: #FEE2E2; color: #B91C1C; }
+.al-badge-part    { background: #FFF7ED; color: #C2410C; }
+.al-status-badge  { font-size: 11px; font-weight: 700; padding: 4px 12px; border-radius: 20px; }
+
+/* Table hover */
+#al-rank-tbody tr:hover { background: var(--surface2); transition: background .12s; }
+
+/* Pontos fortes / fracos */
+.al-ponto {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.al-ponto:last-child { border-bottom: none; }
+
+/* Histórico por simulado */
+.al-hist-list { display: flex; flex-direction: column; gap: 0; }
+.al-hist-item {
+  display: flex; gap: 16px; padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+.al-hist-item:last-child { border-bottom: none; }
+.al-hist-num {
+  width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--navy), var(--navy3));
+  color: #fff; font-size: 13px; font-weight: 800;
+  display: flex; align-items: center; justify-content: center;
+}
+.al-hist-body { flex: 1; min-width: 0; }
+.al-hist-row { display: flex; gap: 24px; flex-wrap: wrap; }
+.al-hist-label { font-size: 10px; color: var(--t3); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 2px; }
+.al-hist-val { font-size: 13px; font-weight: 700; color: var(--t1); }
 
 /* ── ALUNO EVO NOTA ─────────────────────────────────────── */
 .aluno-evo-nota { font-size: 11px; font-weight: 600; margin-top: 8px; display: block; }

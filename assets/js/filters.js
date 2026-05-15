@@ -28,8 +28,14 @@ const S = {
   escolaComponentesDisciplina: 'Todas',
 
   /* Alunos */
-  alunoKey:      'ana',
-  alunoTab:      'desempenho',
+  alunoTab:             'ranking',
+  alunoRankingSimulado: 'acumulado',
+  alunoRankingTurma:    'todas',
+  alunoRankingEscola:   'todas',
+  alunoRankingOrdenar:  'geral',
+  alunoRankingBusca:    '',
+  alunoPerfilAluno:     'a01',
+  alunoPerfilSimulado:  'acumulado',
 
   /* Professores */
   profKey:       'silva',
@@ -75,11 +81,13 @@ function setEvoTipo(val) {
   if (typeof renderEvoGeralChart === 'function') renderEvoGeralChart(S.escolaKey);
 }
 
-function setAluno(val) {
-  S.alunoKey = val;
-  if (typeof loadAluno === 'function') loadAluno(val);
-  refreshAlunos();
-}
+function setAlunoRankingSimulado(val)  { S.alunoRankingSimulado = val;  if (typeof _buildAlunosRanking === 'function') _buildAlunosRanking(); }
+function setAlunoRankingTurma(val)     { S.alunoRankingTurma    = val;  if (typeof _buildAlunosRanking === 'function') _buildAlunosRanking(); }
+function setAlunoRankingEscola(val)    { S.alunoRankingEscola   = val;  if (typeof _buildAlunosRanking === 'function') _buildAlunosRanking(); }
+function setAlunoRankingOrdenar(val)   { S.alunoRankingOrdenar  = val;  if (typeof _buildAlunosRanking === 'function') _buildAlunosRanking(); }
+function setAlunoRankingBusca(val)     { S.alunoRankingBusca    = val;  if (typeof _buildAlunosRanking === 'function') _buildAlunosRanking(); }
+function setAlunoPerfilAluno(val)      { S.alunoPerfilAluno     = val;  if (typeof _buildAlunoPerfil   === 'function') _buildAlunoPerfil();   }
+function setAlunoPerfilSimulado(val)   { S.alunoPerfilSimulado  = val;  if (typeof _buildAlunoPerfil   === 'function') _buildAlunoPerfil();   }
 
 function setProfessor(val) {
   S.profKey = val;
@@ -137,16 +145,13 @@ function refreshEscolas() {
   }
 }
 
-function refreshAlunos() {
-  if (typeof renderAlunoAreaChart       === 'function') renderAlunoAreaChart();
-  if (typeof renderAlunoFaixaChart      === 'function') renderAlunoFaixaChart();
-  if (typeof renderAlunoEvoChart        === 'function') renderAlunoEvoChart(S.alunoKey);
-  if (typeof renderAlunoDesempenhoCharts=== 'function') renderAlunoDesempenhoCharts();
-  if (typeof renderAlunoEvoRedeChart    === 'function') renderAlunoEvoRedeChart();
-  if (typeof renderAlunoPartChart       === 'function') renderAlunoPartChart();
-  if (typeof renderPartEvoChart         === 'function') renderPartEvoChart();
-  if (typeof renderPartDistChart        === 'function') renderPartDistChart();
-  _updateAlunoKpis();
+function refreshAlunos() { _buildAlunosCurrentTab(); }
+
+function _buildAlunosCurrentTab() {
+  switch (S.alunoTab) {
+    case 'ranking': if (typeof _buildAlunosRanking === 'function') _buildAlunosRanking(); break;
+    case 'perfil':  if (typeof _buildAlunoPerfil   === 'function') _buildAlunoPerfil();  break;
+  }
 }
 
 function refreshProfessores() {
@@ -254,31 +259,15 @@ function switchEscolaTab(tab, tabEl) {
   }
 }
 
-function switchAlunoTab(tab) {
+function switchAlunoTab(tab, tabEl) {
   S.alunoTab = tab;
-  document.querySelectorAll('.aluno-tab-content').forEach(el => el.classList.add('hidden'));
-  document.querySelectorAll('.aluno-atab').forEach(el => el.classList.remove('active'));
-  const contentEl = document.getElementById('atab-' + tab);
+  document.querySelectorAll('.al-tab-content').forEach(c => c.classList.add('hidden'));
+  document.querySelectorAll('.al-atab').forEach(t => t.classList.remove('active'));
+  const contentEl = document.getElementById('altab-' + tab);
   if (contentEl) contentEl.classList.remove('hidden');
-  document.querySelectorAll('.aluno-atab').forEach(el => {
-    if (el.dataset.tab === tab) el.classList.add('active');
-  });
-  switch (tab) {
-    case 'desempenho':
-      if (typeof renderAlunoAreaChart        === 'function') renderAlunoAreaChart();
-      if (typeof renderAlunoFaixaChart       === 'function') renderAlunoFaixaChart();
-      if (typeof renderAlunoDesempenhoCharts === 'function') renderAlunoDesempenhoCharts();
-      break;
-    case 'evolucao':
-      if (typeof renderAlunoEvoChart     === 'function') renderAlunoEvoChart(S.alunoKey);
-      if (typeof renderAlunoEvoRedeChart === 'function') renderAlunoEvoRedeChart();
-      break;
-    case 'participacao':
-      if (typeof renderPartEvoChart  === 'function') renderPartEvoChart();
-      if (typeof renderPartDistChart === 'function') renderPartDistChart();
-      if (typeof renderAlunoPartChart=== 'function') renderAlunoPartChart();
-      break;
-  }
+  if (tabEl) tabEl.classList.add('active');
+  else document.querySelectorAll('.al-atab').forEach(t => { if (t.dataset && t.dataset.tab === tab) t.classList.add('active'); });
+  _buildAlunosCurrentTab();
 }
 
 function switchProfTab(tab) {

@@ -959,3 +959,267 @@ function getEscola6RankPos(key, sim) {
   });
   return sorted.findIndex(e => e.key === key) + 1;
 }
+
+/* ══════════════════════════════════════════════════════════
+   ALUNOS_REDE — 80 alunos distribuídos em 6 escolas
+   Gerado deterministicamente: sem Math.random().
+══════════════════════════════════════════════════════════ */
+
+const _AR_NAMES = {
+  a: [
+    ['Ana Clara','Mendes'],['Bruno','Oliveira'],['Camila','Santos'],
+    ['Diego','Ferreira'],['Elena','Costa'],['Felipe','Lima'],
+    ['Gabriela','Ramos'],['Henrique','Pereira'],['Isabela','Alves'],
+    ['João Victor','Silva'],['Karina','Rodrigues'],['Lucas','Carvalho'],
+    ['Marina','Gomes'],['Nicolas','Martins'],
+  ],
+  b: [
+    ['Amanda','Vieira'],['Carlos Eduardo','Castro'],['Diana','Barbosa'],
+    ['Eduardo','Nascimento'],['Fernanda','Melo'],['Gabriel','Torres'],
+    ['Helena','Freitas'],['Igor','Monteiro'],['Júlia','Cardoso'],
+    ['Kevin','Azevedo'],['Larissa','Pinto'],['Marcos','Cunha'],['Natália','Ribeiro'],
+  ],
+  c: [
+    ['André','Moreira'],['Beatriz','Correia'],['César','Figueiredo'],
+    ['Daniela','Teixeira'],['Eduardo','Lopes'],['Flávia','Araújo'],
+    ['Gustavo','Nunes'],['Heloísa','Campos'],['Ivan','Sousa'],
+    ['Joana','Cerqueira'],['Kleber','Dias'],['Letícia','Borges'],['Murilo','Cavalcanti'],
+  ],
+  d: [
+    ['Alessandro','Braga'],['Bianca','Esteves'],['Claudio','Vasconcelos'],
+    ['Débora','Machado'],['Edson','Queiroz'],['Fabiana','Lacerda'],
+    ['Guilherme','Tavares'],['Humberto','Leite'],['Ingrid','Siqueira'],
+    ['Jonas','Medeiros'],['Karen','Paiva'],['Leonardo','Fonseca'],['Mônica','Bernardes'],
+  ],
+  e: [
+    ['Adriana','Coelho'],['Bernardo','Pires'],['Cristiane','Assunção'],
+    ['Denis','Matos'],['Eliane','Guimarães'],['Fabio','Bastos'],
+    ['Gisele','Andrade'],['Hugo','Pacheco'],['Iara','Drummond'],
+    ['Jeremias','Santana'],['Katia','Rezende'],['Leandro','Baptista'],
+    ['Marcia','Evangelista'],['Nelson','Brito'],
+  ],
+  f: [
+    ['Augusto','Magalhães'],['Brenda','Cavalcante'],['Celso','Duarte'],
+    ['Daianny','Mourão'],['Everton','Rocha'],['Fernanda','Nogueira'],
+    ['Gilson','Zambon'],['Helene','Ferraz'],['Ivan','Cordeiro'],
+    ['Josiane','Valentin'],['Klaudia','Mesquita'],['Luciano','Bonfim'],['Miriam','Peixoto'],
+  ],
+};
+
+const _AR_ESCOLA_CONF = {
+  a: { nome: 'Escola A', mean5: 62.8, partThr: 9, idx: 0 },
+  b: { nome: 'Escola B', mean5: 60.1, partThr: 9, idx: 1 },
+  c: { nome: 'Escola C', mean5: 58.4, partThr: 9, idx: 2 },
+  d: { nome: 'Escola D', mean5: 57.2, partThr: 9, idx: 3 },
+  e: { nome: 'Escola E', mean5: 55.6, partThr: 8, idx: 4 },
+  f: { nome: 'Escola F', mean5: 54.1, partThr: 7, idx: 5 },
+};
+
+const _AR_CUM_GROWTH = [0, 1.6, 4.3, 6.7, 10.1];
+const _AR_DISCS = ['Matemática','Física','Química','Língua Inglesa','Linguagens','C. Humanas'];
+
+const _AR_ASSUNTOS = {
+  'Matemática':     ['Funções','Geometria Plana','Probabilidade','Álgebra','Trigonometria'],
+  'Física':         ['Mecânica','Cinemática','Termodinâmica','Óptica','Eletromagnetismo'],
+  'Química':        ['Estequiometria','Equilíbrio Químico','Cinética Química','Eletroquímica','Orgânica'],
+  'Língua Inglesa': ['Reading','Grammar','Vocabulary','Writing','Listening'],
+  'Linguagens':     ['Interpretação','Literatura','Gramática','Produção Textual','Coesão'],
+  'C. Humanas':     ['História','Geografia','Filosofia','Sociologia','Atualidades'],
+};
+
+function _gerarAlunosRede() {
+  const result = [];
+  let gi = 0;
+
+  ['a','b','c','d','e','f'].forEach(eKey => {
+    const conf   = _AR_ESCOLA_CONF[eKey];
+    const names  = _AR_NAMES[eKey];
+    const n      = names.length;
+    const discsE = ESCOLA_6_DISCS[eKey];
+    const t3N    = Math.ceil(n / 3);
+    const t2N    = Math.ceil((n - t3N) / 2);
+
+    names.forEach(([prim, sob], rank) => {
+      const i = gi++;
+
+      // Série e turma por rank dentro da escola
+      let serie, turma;
+      if (rank < t3N) {
+        serie = '3º EM'; turma = 'T1';
+      } else if (rank < t3N + t2N) {
+        serie = '2º EM';
+        turma = (rank - t3N) < Math.ceil(t2N / 2) ? 'T1' : 'T2';
+      } else {
+        serie = '1º EM'; turma = 'T2';
+      }
+
+      const words = prim.split(' ');
+      const av    = (words[0][0] + (words[1] ? words[1][0] : sob[0])).toUpperCase();
+      const baseF = conf.mean5 + (n / 2 - rank - 0.5) * (22 / n);
+
+      const sims = _AR_CUM_GROWTH.map((cg, s) => {
+        const noise = ((i * 7 + s * 13) % 9 - 4) * 0.15;
+        return parseFloat(Math.max(20, Math.min(98, baseF - 10.1 + cg + noise)).toFixed(1));
+      });
+
+      const media = parseFloat((sims.reduce((a, v) => a + v, 0) / 5).toFixed(1));
+
+      const discs = {};
+      _AR_DISCS.forEach((d, di) => {
+        const escMean = (discsE && discsE[d]) ? discsE[d][4] : conf.mean5;
+        const dNoise  = ((i * 11 + di * 7) % 7 - 3) * 0.8;
+        discs[d] = parseFloat(Math.max(20, Math.min(98,
+          escMean + (baseF - conf.mean5) * 0.7 + dNoise
+        )).toFixed(1));
+      });
+
+      // Notas por disciplina por simulado (para o perfil histórico)
+      const simDiscs = _AR_CUM_GROWTH.map((cg, s) => {
+        const sd = {};
+        _AR_DISCS.forEach((d, di) => {
+          const off = ((i * 5 + s * 11 + di * 7) % 9 - 4) * 0.8;
+          sd[d] = parseFloat(Math.max(20, Math.min(98, discs[d] - 8 + cg * 0.4 + off)).toFixed(1));
+        });
+        return sd;
+      });
+
+      const part     = sims.map((_, s) => ((i * 3 + s * 7 + conf.idx * 11) % 10) < conf.partThr ? 1 : 0);
+      const partRate = Math.round(part.reduce((a, v) => a + v, 0) * 20);
+      const faixa    = media >= 70 ? 'Acima da Meta' : media >= 50 ? 'Na Meta' : media >= 35 ? 'Em Atenção' : 'Crítico';
+      const evolucao = parseFloat((sims[4] - sims[0]).toFixed(1));
+
+      result.push({
+        key: eKey + String(rank + 1).padStart(2, '0'),
+        nome: prim + ' ' + sob, av,
+        escola: eKey, escolaNome: conf.nome, turma, serie,
+        sims, simDiscs, media, discs, part, partRate, faixa, evolucao,
+        rankEscola: rank + 1, rankRede: 0, status: '',
+      });
+    });
+  });
+
+  result.sort((a, b) => b.media - a.media);
+  result.forEach((al, idx) => {
+    al.rankRede = idx + 1;
+    if      (al.media >= 70)                      al.status = 'Destaque';
+    else if (al.sims[4] < al.sims[3] - 5)         al.status = 'Queda recente';
+    else if (al.partRate < 75)                    al.status = 'Baixa participação';
+    else if (al.sims[4] - al.sims[0] >= 5)        al.status = 'Em crescimento';
+    else if (al.media < 45)                       al.status = 'Atenção';
+    else                                          al.status = 'Estável';
+  });
+  result.sort((a, b) => a.escola.localeCompare(b.escola) || a.rankEscola - b.rankEscola);
+  return result;
+}
+
+const ALUNOS_REDE = _gerarAlunosRede();
+
+/* ── HELPERS DE ALUNOS ─────────────────────────────────────── */
+function getAlunosFiltered({ escola = 'todas', turma = 'todas' } = {}) {
+  return ALUNOS_REDE.filter(a =>
+    (escola === 'todas' || a.escola === escola) &&
+    (turma  === 'todas' || a.turma  === turma)
+  );
+}
+
+function calcGrupoMedia(alunos) {
+  if (!alunos.length) return 0;
+  return parseFloat((alunos.reduce((s, a) => s + a.media, 0) / alunos.length).toFixed(1));
+}
+
+function calcGrupoMediaDisc(alunos, disc) {
+  if (!alunos.length) return 0;
+  return parseFloat((alunos.reduce((s, a) => s + (a.discs[disc] || 0), 0) / alunos.length).toFixed(1));
+}
+
+function calcGrupoPart(alunos) {
+  if (!alunos.length) return 0;
+  return Math.round(alunos.reduce((s, a) => s + a.partRate, 0) / alunos.length);
+}
+
+function calcFaixaDist(alunos) {
+  const labels = ['Acima da Meta', 'Na Meta', 'Em Atenção', 'Crítico'];
+  return labels.map(f => alunos.filter(a => a.faixa === f).length);
+}
+
+function getAlunoStatus(aluno) {
+  const delta = aluno.sims[4] - aluno.sims[3];
+  if (aluno.faixa === 'Crítico')      return { label: 'Crítico',   cls: 'diff-neg' };
+  if (aluno.faixa === 'Em Atenção')   return { label: 'Em Atenção', cls: 'tag-att' };
+  if (delta >= 3)  return { label: 'Em alta',  cls: 'diff-pos' };
+  if (delta < -2)  return { label: 'Em queda', cls: 'diff-neg' };
+  return { label: 'Estável', cls: 'diff-neu' };
+}
+
+function buildAlunoRanking(alunos) {
+  return alunos.slice().sort((a, b) => b.media - a.media).map((a, i) => ({ ...a, pos: i + 1 }));
+}
+
+function getAlunoEvoGrupo(alunos) {
+  return _AR_CUM_GROWTH.map((_, s) => {
+    if (!alunos.length) return 0;
+    return parseFloat((alunos.reduce((sum, a) => sum + a.sims[s], 0) / alunos.length).toFixed(1));
+  });
+}
+
+function getAlunoValSim(aluno, simKey) {
+  if (!simKey || simKey === 'acumulado') return aluno.media;
+  const idx = parseInt(simKey, 10) - 1;
+  return (idx >= 0 && idx < 5) ? aluno.sims[idx] : aluno.media;
+}
+
+function calcGrupoValSim(alunos, simKey) {
+  if (!alunos.length) return 0;
+  return parseFloat((alunos.reduce((s, a) => s + getAlunoValSim(a, simKey), 0) / alunos.length).toFixed(1));
+}
+
+function getRedeValSim(simKey) {
+  if (!simKey || simKey === 'acumulado')
+    return parseFloat((REDE_6_MEDIA.reduce((s, v) => s + v, 0) / REDE_6_MEDIA.length).toFixed(1));
+  const idx = parseInt(simKey, 10) - 1;
+  return (idx >= 0 && idx < 5) ? REDE_6_MEDIA[idx] : REDE_6_MEDIA[4];
+}
+
+function calcFaixaDistSim(alunos, simKey) {
+  const getVal = a => getAlunoValSim(a, simKey);
+  return [
+    alunos.filter(a => getVal(a) >= 70).length,
+    alunos.filter(a => getVal(a) >= 50 && getVal(a) < 70).length,
+    alunos.filter(a => getVal(a) >= 35 && getVal(a) < 50).length,
+    alunos.filter(a => getVal(a) < 35).length,
+  ];
+}
+
+function getAlunoMetricaVal(aluno, metrica) {
+  if (metrica === 'geral')        return aluno.media;
+  if (metrica === 'participacao') return aluno.partRate;
+  return aluno.discs[metrica] || 0;
+}
+
+function buildAlunoRankingMetrica(alunos, metrica) {
+  return alunos.slice()
+    .sort((a, b) => getAlunoMetricaVal(b, metrica) - getAlunoMetricaVal(a, metrica))
+    .map((a, i) => ({ ...a, pos: i + 1 }));
+}
+
+const SIM_OPTS_HTML =
+  '<option value="acumulado">Acumulado (1–5)</option>' +
+  '<option value="1">1º Simulado</option>' +
+  '<option value="2">2º Simulado</option>' +
+  '<option value="3">3º Simulado</option>' +
+  '<option value="4">4º Simulado</option>' +
+  '<option value="5">5º Simulado</option>';
+
+function sortAlunosPor(alunos, simKey, ordenar) {
+  return alunos.slice().sort((a, b) => {
+    switch (ordenar) {
+      case 'mat':  return (b.discs['Matemática']    || 0) - (a.discs['Matemática']    || 0);
+      case 'fis':  return (b.discs['Física']        || 0) - (a.discs['Física']        || 0);
+      case 'qui':  return (b.discs['Química']       || 0) - (a.discs['Química']       || 0);
+      case 'ing':  return (b.discs['Língua Inglesa']|| 0) - (a.discs['Língua Inglesa']|| 0);
+      case 'evo':  return b.evolucao - a.evolucao;
+      case 'part': return b.partRate - a.partRate;
+      default:     return getAlunoValSim(b, simKey) - getAlunoValSim(a, simKey);
+    }
+  });
+}

@@ -692,84 +692,187 @@
 <div class="page hidden" id="page-alunos">
   <div class="ph">
     <div class="ph-top" style="margin-bottom:0">
-      <div><div class="ph-title">Alunos</div><div class="ph-sub">Acompanhe o desempenho e a evolução dos alunos da rede.</div></div>
-      <div class="fsel">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-        <div>
-          <div class="f-label">Aluno</div>
-          <select class="fsel-input" id="sel-aluno" onchange="setAluno(this.value)">
-            <option value="ana">Ana Clara Mendes</option>
-          </select>
-        </div>
+      <div>
+        <div class="ph-title">Alunos</div>
+        <div class="ph-sub">80 alunos · 6 escolas · 5 simulados</div>
       </div>
     </div>
     <div style="display:flex;gap:0;margin-top:14px">
-      <div class="tab aluno-atab active" data-tab="desempenho" onclick="switchAlunoTab('desempenho')">Desempenho</div>
-      <div class="tab aluno-atab" data-tab="evolucao" onclick="switchAlunoTab('evolucao')">Evolução</div>
-      <div class="tab aluno-atab" data-tab="participacao" onclick="switchAlunoTab('participacao')">Participação</div>
+      <div class="tab al-atab active" data-tab="ranking" onclick="switchAlunoTab('ranking',this)">Ranking dos alunos</div>
+      <div class="tab al-atab" data-tab="perfil" onclick="switchAlunoTab('perfil',this)">Perfil do aluno</div>
     </div>
   </div>
+
   <div class="pb" style="overflow-y:auto">
 
-    <!-- Hero do aluno -->
-    <div class="aluno-hero mb12">
-      <div class="aluno-av" id="aluno-av">AC</div>
-      <div>
-        <div class="aluno-name" id="aluno-nome">—</div>
-        <div class="aluno-meta" id="aluno-meta">—</div>
+    <!-- TAB: RANKING -->
+    <div class="al-tab-content" id="altab-ranking">
+      <div class="fbar" style="flex-wrap:wrap;gap:10px;margin-bottom:14px">
+        <div class="fsel">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <div>
+            <div class="f-label">Simulado</div>
+            <select class="fsel-input" id="al-rank-sim" onchange="setAlunoRankingSimulado(this.value)">
+              <option value="acumulado">Acumulado (1–5)</option>
+              <option value="1">1º Simulado</option>
+              <option value="2">2º Simulado</option>
+              <option value="3">3º Simulado</option>
+              <option value="4">4º Simulado</option>
+              <option value="5">5º Simulado</option>
+            </select>
+          </div>
+        </div>
+        <div class="fsel">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+          <div>
+            <div class="f-label">Turma</div>
+            <select class="fsel-input" id="al-rank-turma" onchange="setAlunoRankingTurma(this.value)">
+              <option value="todas">Todas</option>
+              <option value="T1">Turma 1</option>
+              <option value="T2">Turma 2</option>
+            </select>
+          </div>
+        </div>
+        <div class="fsel">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>
+          <div>
+            <div class="f-label">Escola</div>
+            <select class="fsel-input" id="al-rank-escola" onchange="setAlunoRankingEscola(this.value)">
+              <option value="todas">Todas</option>
+              <option value="a">Escola A</option>
+              <option value="b">Escola B</option>
+              <option value="c">Escola C</option>
+              <option value="d">Escola D</option>
+              <option value="e">Escola E</option>
+              <option value="f">Escola F</option>
+            </select>
+          </div>
+        </div>
+        <div class="fsel">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          <div>
+            <div class="f-label">Ordenar por</div>
+            <select class="fsel-input" id="al-rank-ordenar" onchange="setAlunoRankingOrdenar(this.value)">
+              <option value="geral">Média geral</option>
+              <option value="mat">Matemática</option>
+              <option value="fis">Física</option>
+              <option value="qui">Química</option>
+              <option value="ing">Inglês</option>
+              <option value="evo">Evolução</option>
+              <option value="part">Participação</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex;align-items:flex-end">
+          <input type="text" id="al-rank-busca" placeholder="Buscar aluno…" oninput="setAlunoRankingBusca(this.value)"
+            style="border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-size:11px;color:var(--t1);background:var(--bg);width:170px;outline:none;height:32px">
+        </div>
       </div>
-      <div class="aluno-kpis">
-        <div style="text-align:right"><div class="aluno-kpi-val" id="aluno-kpi-media">—</div><div class="aluno-kpi-lbl">Média</div></div>
-        <div style="text-align:right"><div class="aluno-kpi-val" id="aluno-kpi-rank">—</div><div class="aluno-kpi-lbl">Posição</div></div>
-        <div style="text-align:right"><div class="aluno-kpi-val" id="aluno-kpi-faixa">—</div><div class="aluno-kpi-lbl">Faixa</div></div>
-        <div style="text-align:right"><div class="aluno-kpi-val" id="aluno-kpi-part">—</div><div class="aluno-kpi-lbl">Participação</div></div>
+
+      <div class="g1 g5 mb12">
+        <div class="kpi"><div class="kpi-label">Média geral</div><div class="kpi-val" id="al-kpi-media">—</div><div class="kpi-note" id="al-kpi-media-note">Acumulada</div></div>
+        <div class="kpi"><div class="kpi-label">Em destaque</div><div class="kpi-val ig" id="al-kpi-dest">—</div><div class="kpi-note">acima de 70%</div></div>
+        <div class="kpi"><div class="kpi-label">Em atenção</div><div class="kpi-val" id="al-kpi-atencao">—</div><div class="kpi-note">atenção ou queda</div></div>
+        <div class="kpi"><div class="kpi-label">Maior evolução</div><div class="kpi-val ig" id="al-kpi-evo">—</div><div class="kpi-note">1º→5º simulado</div></div>
+        <div class="kpi"><div class="kpi-label">Participação</div><div class="kpi-val" id="al-kpi-part">—</div><div class="kpi-note">média do grupo</div></div>
+      </div>
+
+      <div class="card mb12">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;flex-wrap:wrap;gap:6px">
+          <div class="card-title" id="al-rank-title">Ranking — Rede completa</div>
+          <div class="card-sub" id="al-rank-sub">80 alunos · Ordenado por média geral</div>
+        </div>
+        <div style="overflow-x:auto">
+          <table class="tbl" style="min-width:860px">
+            <thead><tr>
+              <th>Pos.</th><th>Aluno</th><th>Escola</th><th>Turma</th><th>Série</th>
+              <th id="al-rank-col-media">Média</th>
+              <th>Mat.</th><th>Fís.</th><th>Qui.</th><th>Ing.</th>
+              <th>Part.</th><th>Evo.</th><th>Status</th>
+            </tr></thead>
+            <tbody id="al-rank-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="insight-hero">
+        <div class="ih-label">Leitura do ranking</div>
+        <div class="ih-text" id="al-rank-leitura">—</div>
       </div>
     </div>
 
-    <!-- TAB: DESEMPENHO -->
-    <div class="aluno-tab-content" id="atab-desempenho">
+    <!-- TAB: PERFIL -->
+    <div class="al-tab-content hidden" id="altab-perfil">
+      <div class="fbar" style="margin-bottom:14px">
+        <div class="fsel">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <div>
+            <div class="f-label">Aluno</div>
+            <select class="fsel-input" id="al-perf-aluno" onchange="setAlunoPerfilAluno(this.value)" style="max-width:220px"></select>
+          </div>
+        </div>
+        <div class="fsel">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <div>
+            <div class="f-label">Simulado</div>
+            <select class="fsel-input" id="al-perf-sim" onchange="setAlunoPerfilSimulado(this.value)">
+              <option value="acumulado">Acumulado (1–5)</option>
+              <option value="1">1º Simulado</option>
+              <option value="2">2º Simulado</option>
+              <option value="3">3º Simulado</option>
+              <option value="4">4º Simulado</option>
+              <option value="5">5º Simulado</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mb14">
+        <div class="al-hero">
+          <div class="al-av" id="al-perf-av">—</div>
+          <div>
+            <div class="al-nome" id="al-perf-nome">—</div>
+            <div class="al-meta" id="al-perf-meta">—</div>
+            <div style="margin-top:8px"><span class="al-status-badge" id="al-perf-status">—</span></div>
+          </div>
+        </div>
+        <div class="g1 g5 mt14">
+          <div class="kpi"><div class="kpi-label">Média</div><div class="kpi-val" id="al-perf-kpi-media">—</div><div class="kpi-note" id="al-perf-kpi-media-note">Acumulada</div></div>
+          <div class="kpi"><div class="kpi-label">Participação</div><div class="kpi-val" id="al-perf-kpi-part">—</div><div class="kpi-note">dos simulados</div></div>
+          <div class="kpi"><div class="kpi-label">Ranking</div><div class="kpi-val" id="al-perf-kpi-rank">—</div><div class="kpi-note">posição na rede</div></div>
+          <div class="kpi"><div class="kpi-label">Ponto forte</div><div class="kpi-val" id="al-perf-kpi-forte" style="font-size:13px">—</div><div class="kpi-note">melhor disciplina</div></div>
+          <div class="kpi"><div class="kpi-label">Atenção</div><div class="kpi-val" id="al-perf-kpi-fraca" style="font-size:13px">—</div><div class="kpi-note">disciplina crítica</div></div>
+        </div>
+      </div>
+
       <div class="g1 g2 mb12">
-        <div class="card"><div class="card-title">Desempenho por área</div><div class="card-sub">Aluno vs. média da rede</div><div id="chart-aluno-area" style="height:220px"></div></div>
-        <div class="card"><div class="card-title">Distribuição por faixa</div><div id="chart-aluno-faixa" style="height:220px"></div></div>
+        <div class="card"><div class="card-title mb8">Desempenho por disciplina</div><div id="chart-al-discs" style="height:230px"></div></div>
+        <div class="card"><div class="card-title mb8">Evolução da média</div><div id="chart-al-evo" style="height:230px"></div></div>
       </div>
-      <div class="g1 g2">
-        <div class="card"><div class="card-title mb8">Pontos fortes</div><div id="aluno-strong"></div></div>
-        <div class="card"><div class="card-title mb8">Pontos de atenção</div><div id="aluno-weak"></div></div>
+      <div class="card mb12">
+        <div class="card-title mb8">Participação por simulado</div>
+        <div id="chart-al-part" style="height:110px"></div>
       </div>
-      <div class="insight-hero mt12">
-        <div class="ih-label">Síntese pedagógica individual</div>
-        <div class="ih-text" id="aluno-insight">Selecione um aluno para ver a síntese pedagógica.</div>
-      </div>
-    </div>
 
-    <!-- TAB: EVOLUÇÃO -->
-    <div class="aluno-tab-content hidden" id="atab-evolucao">
-      <div class="evo-cards">
-        <div class="evo-card"><div class="evo-label">Crescimento (5 sim.)</div><div class="evo-val" style="color:var(--green)" id="aluno-evo-crescimento">—</div><div class="evo-note">Variação acumulada</div></div>
-        <div class="evo-card"><div class="evo-label">Último simulado</div><div class="evo-val" id="aluno-evo-ultimo">—</div><div class="evo-note">Desempenho atual</div></div>
-        <div class="evo-card"><div class="evo-label">Tendência</div><div class="evo-val" id="aluno-evo-tend">—</div><div class="evo-note" id="aluno-evo-nota">—</div></div>
+      <div class="insight-hero mb14">
+        <div class="ih-label">Síntese pedagógica</div>
+        <div class="ih-text" id="al-perf-sintese">—</div>
       </div>
-      <div class="g1 g2">
-        <div class="card"><div class="card-title mb8">Evolução da média geral</div><div id="chart-aluno-evo" style="height:200px"></div></div>
-        <div class="card"><div class="card-title mb8">Comparativo com a rede</div><div id="chart-aluno-evo-rede" style="height:200px"></div></div>
-      </div>
-    </div>
 
-    <!-- TAB: PARTICIPAÇÃO -->
-    <div class="aluno-tab-content hidden" id="atab-participacao">
-      <div class="g1 g4 mb12">
-        <div class="kpi"><div class="kpi-label">Taxa de participação</div><div class="kpi-val" id="aluno-part-taxa">—</div><div class="kpi-note">Simulados realizados</div></div>
-        <div class="kpi"><div class="kpi-label">Simulados realizados</div><div class="kpi-val" id="aluno-part-total">—</div><div class="kpi-note">De 5 disponíveis</div></div>
-        <div class="kpi"><div class="kpi-label">Média da rede</div><div class="kpi-val">89%</div><div class="kpi-note">Participação geral</div></div>
-        <div class="kpi"><div class="kpi-label">Tendência</div><div class="kpi-val" id="aluno-part-tend">—</div><div class="kpi-note">Nos últimos simulados</div></div>
+      <div class="g1 g2 mb14">
+        <div class="card">
+          <div class="card-title mb10" style="color:var(--green)">Pontos fortes</div>
+          <div id="al-perf-fortes">—</div>
+        </div>
+        <div class="card">
+          <div class="card-title mb10" style="color:var(--amber)">Pontos de atenção</div>
+          <div id="al-perf-fracos">—</div>
+        </div>
       </div>
-      <div class="g1 g2">
-        <div class="card"><div class="card-title mb8">Evolução da participação</div><div id="chart-aluno-part-evo" style="height:200px"></div></div>
-        <div class="card"><div class="card-title mb8">Participação por área</div><div id="chart-aluno-part-area" style="height:200px"></div></div>
-      </div>
-      <div class="pnote green mt12">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="9 11 12 14 22 4"/></svg>
-        <span class="pnote-text" id="aluno-part-nota">A participação consistente é fundamental para a confiabilidade dos dados individuais.</span>
+
+      <div class="card">
+        <div class="card-title mb14">Histórico por simulado</div>
+        <div id="al-perf-historico" class="al-hist-list"></div>
       </div>
     </div>
 

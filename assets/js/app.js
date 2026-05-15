@@ -592,15 +592,273 @@ function _buildEscolasComponentes() {
 }
 
 function _initAlunos() {
-  _populateAlunoSelect();
-  loadAluno(S.alunoKey);
-  switchAlunoTab('desempenho');
+  const sel = el('al-perf-aluno');
+  if (sel && typeof ALUNOS_REDE !== 'undefined') {
+    sel.innerHTML = ALUNOS_REDE.map(a =>
+      '<option value="' + a.key + '">' + a.nome + ' — ' + a.escolaNome + '</option>'
+    ).join('');
+    sel.value = S.alunoPerfilAluno || ALUNOS_REDE[0].key;
+  }
+  switchAlunoTab('ranking');
 }
 
 function _initProfessores() {
   _populateProfSelect();
   loadProfessor(S.profKey);
   switchProfTab('questoes');
+}
+
+/* ── ALUNOS — HELPERS ──────────────────────────────────────── */
+function _statusBadgeKey(status) {
+  const map = {
+    'Destaque': 'dest', 'Em crescimento': 'cresc', 'Estável': 'est',
+    'Atenção': 'att', 'Queda recente': 'queda', 'Baixa participação': 'part',
+  };
+  return map[status] || 'est';
+}
+
+function _alunoStatusBadge(status) {
+  return '<span class="al-badge al-badge-' + _statusBadgeKey(status) + '">' + (status || '—') + '</span>';
+}
+
+function _goToPerfil(key) {
+  S.alunoPerfilAluno = key;
+  const sel = el('al-perf-aluno');
+  if (sel) sel.value = key;
+  switchAlunoTab('perfil');
+}
+
+/* ── ALUNOS — TAB BUILDERS ─────────────────────────────────── */
+function _buildAlunosRanking() {
+  if (typeof ALUNOS_REDE === 'undefined') return;
+
+  const sim    = S.alunoRankingSimulado;
+  const turma  = S.alunoRankingTurma;
+  const escola = S.alunoRankingEscola;
+  const ord    = S.alunoRankingOrdenar;
+  const busca  = (S.alunoRankingBusca || '').toLowerCase();
+
+  const alunos = ALUNOS_REDE.filter(a =>
+    (escola === 'todas' || a.escola === escola) &&
+    (turma  === 'todas' || a.turma  === turma)
+  );
+
+  const sorted = (typeof sortAlunosPor === 'function' ? sortAlunosPor(alunos, sim, ord) : alunos.slice())
+    .map((a, i) => ({ ...a, pos: i + 1 }));
+  const rows = busca ? sorted.filter(a => a.nome.toLowerCase().includes(busca)) : sorted;
+
+  // KPIs
+  const mediaVal = typeof calcGrupoValSim === 'function' ? calcGrupoValSim(alunos, sim) : 0;
+  const dest     = alunos.filter(a => a.status === 'Destaque').length;
+  const atencao  = alunos.filter(a => a.status === 'Atenção' || a.status === 'Queda recente').length;
+  const bestEvo  = alunos.length ? alunos.reduce((m, a) => Math.max(m, a.evolucao), -Infinity) : 0;
+  const part     = typeof calcGrupoPart === 'function' ? calcGrupoPart(alunos) : 0;
+
+  _setKpi('al-kpi-media',   mediaVal.toFixed(1) + '%');
+  _setKpi('al-kpi-dest',    dest);
+  _setKpi('al-kpi-atencao', atencao);
+  _setKpi('al-kpi-evo',     (bestEvo >= 0 ? '+' : '') + bestEvo.toFixed(1) + ' p.p.');
+  _setKpi('al-kpi-part',    part + '%');
+
+  const mediaNote = el('al-kpi-media-note');
+  if (mediaNote) mediaNote.textContent = sim === 'acumulado' ? 'Acumulada' : sim + 'º Simulado';
+
+  // Title + subtitle
+  const titleParts = [];
+  if (escola !== 'todas' && typeof _AR_ESCOLA_CONF !== 'undefined') titleParts.push(_AR_ESCOLA_CONF[escola].nome);
+  if (turma  !== 'todas') titleParts.push(turma);
+  const titleEl = el('al-rank-title');
+  if (titleEl) titleEl.textContent = 'Ranking — ' + (titleParts.length ? titleParts.join(' · ') : 'Rede completa');
+
+  const ordLabels = { geral:'Média geral', mat:'Matemática', fis:'Física', qui:'Química', ing:'Inglês', evo:'Evolução', part:'Participação' };
+  const subEl = el('al-rank-sub');
+  if (subEl) subEl.textContent = alunos.length + ' alunos · Ordenado por ' + (ordLabels[ord] || 'Média geral');
+
+  const colEl = el('al-rank-col-media');
+  if (colEl) colEl.textContent = sim === 'acumulado' ? 'Média' : sim + 'º Sim.';
+
+  // Table
+  const tbody = el('al-rank-tbody');
+  if (tbody) {
+    tbody.innerHTML = rows.map(a => {
+      const val     = typeof getAlunoValSim === 'function' ? getAlunoValSim(a, sim) : a.media;
+      const evoCls  = a.evolucao >= 5 ? 'diff-pos' : a.evolucao < 0 ? 'diff-neg' : '';
+      return '<tr onclick="_goToPerfil(\'' + a.key + '\')" style="cursor:pointer">' +
+        '<td>' + a.pos + '</td>' +
+        '<td><strong>' + a.nome + '</strong></td>' +
+        '<td>' + a.escolaNome + '</td>' +
+        '<td>' + a.turma + '</td>' +
+        '<td>' + a.serie + '</td>' +
+        '<td>' + val.toFixed(1) + '%</td>' +
+        '<td>' + (a.discs['Matemática']    || 0).toFixed(1) + '%</td>' +
+        '<td>' + (a.discs['Física']        || 0).toFixed(1) + '%</td>' +
+        '<td>' + (a.discs['Química']       || 0).toFixed(1) + '%</td>' +
+        '<td>' + (a.discs['Língua Inglesa']|| 0).toFixed(1) + '%</td>' +
+        '<td>' + a.partRate + '%</td>' +
+        '<td class="' + evoCls + '">' + (a.evolucao >= 0 ? '+' : '') + a.evolucao.toFixed(1) + '</td>' +
+        '<td>' + _alunoStatusBadge(a.status) + '</td>' +
+        '</tr>';
+    }).join('');
+  }
+
+  // Leitura do ranking
+  const leituraEl = el('al-rank-leitura');
+  if (leituraEl && alunos.length) {
+    const atLow  = alunos.filter(a => a.status === 'Atenção' || a.status === 'Queda recente');
+    const atAlta = alunos.filter(a => a.status === 'Em crescimento');
+    const escolasAt = {};
+    atLow.forEach(a => { escolasAt[a.escolaNome] = (escolasAt[a.escolaNome] || 0) + 1; });
+    const topEscolaAt = Object.entries(escolasAt).sort((a, b) => b[1] - a[1])[0];
+    const bestEvoAluno = alunos.slice().sort((a, b) => b.evolucao - a.evolucao)[0];
+    const topMedia     = alunos.slice().sort((a, b) => b.media - a.media)[0];
+
+    let txt = 'No recorte selecionado, ' + alunos.length + ' aluno' + (alunos.length !== 1 ? 's' : '') + '.';
+    if (atLow.length) txt += ' ' + atLow.length + ' aluno' + (atLow.length !== 1 ? 's' : '') + ' em atenção ou queda recente' + (topEscolaAt ? ', com concentração na ' + topEscolaAt[0] : '') + '.';
+    if (atAlta.length) txt += ' ' + atAlta.length + ' em crescimento consistente.';
+    if (topMedia) txt += ' Melhor desempenho: ' + topMedia.nome.split(' ')[0] + ' (' + topMedia.media.toFixed(1) + '% · ' + topMedia.escolaNome + ').';
+    if (bestEvoAluno) txt += ' Maior evolução: ' + bestEvoAluno.nome.split(' ')[0] + ' (+' + bestEvoAluno.evolucao.toFixed(1) + ' p.p.).';
+    leituraEl.textContent = txt;
+  }
+}
+
+function _buildAlunoPerfil() {
+  if (typeof ALUNOS_REDE === 'undefined') return;
+  const aluno = ALUNOS_REDE.find(a => a.key === S.alunoPerfilAluno) || ALUNOS_REDE[0];
+  if (!aluno) return;
+
+  const sim     = S.alunoPerfilSimulado;
+  const simIdx  = (sim === 'acumulado') ? -1 : parseInt(sim, 10) - 1;
+  const mediaVal = typeof getAlunoValSim === 'function' ? getAlunoValSim(aluno, sim) : aluno.media;
+  const discData = (simIdx >= 0 && aluno.simDiscs) ? aluno.simDiscs[simIdx] : aluno.discs;
+  const sortedDiscs = _AR_DISCS.slice().sort((a, b) => (discData[b] || 0) - (discData[a] || 0));
+  const forteDisc   = sortedDiscs[0];
+  const fracaDisc   = sortedDiscs[sortedDiscs.length - 1];
+
+  // Hero
+  const avEl = el('al-perf-av');
+  if (avEl) avEl.textContent = aluno.av;
+  const nomeEl = el('al-perf-nome');
+  if (nomeEl) nomeEl.textContent = aluno.nome;
+  const metaEl = el('al-perf-meta');
+  if (metaEl) metaEl.textContent = aluno.escolaNome + ' · ' + aluno.turma + ' · ' + aluno.serie;
+  const statusEl = el('al-perf-status');
+  if (statusEl) {
+    statusEl.textContent = aluno.status;
+    statusEl.className = 'al-status-badge al-badge al-badge-' + _statusBadgeKey(aluno.status);
+  }
+
+  // KPIs
+  _setKpi('al-perf-kpi-media',  mediaVal.toFixed(1) + '%');
+  _setKpi('al-perf-kpi-part',   aluno.partRate + '%');
+  _setKpi('al-perf-kpi-rank',   aluno.rankRede + 'º / ' + ALUNOS_REDE.length);
+  _setKpi('al-perf-kpi-forte',  forteDisc);
+  _setKpi('al-perf-kpi-fraca',  fracaDisc);
+  const mediaNote = el('al-perf-kpi-media-note');
+  if (mediaNote) mediaNote.textContent = sim === 'acumulado' ? 'Acumulada' : sim + 'º Simulado';
+
+  // Charts
+  if (typeof renderAlunoPerfilDisciplinasChart === 'function') renderAlunoPerfilDisciplinasChart(aluno, sim);
+  if (typeof renderAlunoPerfilEvolucaoChart    === 'function') renderAlunoPerfilEvolucaoChart(aluno);
+  if (typeof renderAlunoPerfilParticipacaoChart === 'function') renderAlunoPerfilParticipacaoChart(aluno);
+
+  // Síntese
+  const sinteseEl = el('al-perf-sintese');
+  if (sinteseEl) {
+    const cresc    = aluno.evolucao;
+    const crescing = aluno.sims[4] - aluno.sims[3];
+    let txt = aluno.nome + ' apresenta ' + (sim === 'acumulado'
+      ? 'média acumulada de ' + aluno.media.toFixed(1) + '%'
+      : 'desempenho de ' + mediaVal.toFixed(1) + '% no ' + sim + 'º Simulado') +
+      ' — ' + aluno.status.toLowerCase() + ', posição ' + aluno.rankRede + 'º na rede.';
+    txt += ' Crescimento de ' + (cresc >= 0 ? '+' : '') + cresc.toFixed(1) + ' p.p. ao longo dos 5 simulados.';
+    txt += ' Ponto forte: ' + forteDisc + ' (' + (discData[forteDisc] || 0).toFixed(1) + '%).';
+    txt += ' Disciplina com maior atenção: ' + fracaDisc + ' (' + (discData[fracaDisc] || 0).toFixed(1) + '%).';
+    txt += ' Participação: ' + aluno.partRate + '%.';
+    if (crescing >= 3) txt += ' Tendência de alta no último simulado.';
+    else if (crescing < -3) txt += ' Queda no último simulado — requer atenção.';
+    sinteseEl.textContent = txt;
+  }
+
+  // Pontos fortes
+  const alunoIdx  = ALUNOS_REDE.indexOf(aluno);
+  const fortesEl  = el('al-perf-fortes');
+  if (fortesEl) {
+    const items = [];
+    sortedDiscs.slice(0, 2).forEach((d, i) => {
+      const val     = discData[d] || 0;
+      const redeVal = (REDE_6_DISC_SIM[d] || [0,0,0,0,0])[4];
+      const diff    = parseFloat((val - redeVal).toFixed(1));
+      const ass     = (_AR_ASSUNTOS[d] || [])[(alunoIdx * 3 + i) % (_AR_ASSUNTOS[d] || ['—']).length] || '—';
+      items.push('<div class="al-ponto">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center">' +
+          '<span style="font-weight:600;font-size:12px;color:var(--t1)">' + d + '</span>' +
+          '<span class="diff-pos" style="font-size:11px">' + (diff >= 0 ? '+' : '') + diff + ' p.p. vs. rede</span>' +
+        '</div>' +
+        '<div style="font-size:11px;color:var(--t3);margin-top:2px">' + ass + ' · ' + val.toFixed(1) + '%</div>' +
+      '</div>');
+    });
+    if (aluno.evolucao >= 5) items.push('<div class="al-ponto"><div style="font-weight:600;font-size:12px;color:var(--t1)">Evolução</div><div style="font-size:11px;color:var(--t3);margin-top:2px">+' + aluno.evolucao.toFixed(1) + ' p.p. — crescimento consistente ao longo dos simulados</div></div>');
+    if (aluno.partRate >= 90) items.push('<div class="al-ponto"><div style="font-weight:600;font-size:12px;color:var(--t1)">Participação</div><div style="font-size:11px;color:var(--t3);margin-top:2px">Presença exemplar — ' + aluno.partRate + '%</div></div>');
+    fortesEl.innerHTML = items.join('') || '<div class="card-sub">—</div>';
+  }
+
+  // Pontos de atenção
+  const fracosEl = el('al-perf-fracos');
+  if (fracosEl) {
+    const items = [];
+    sortedDiscs.slice(-2).reverse().forEach((d, i) => {
+      const val     = discData[d] || 0;
+      const redeVal = (REDE_6_DISC_SIM[d] || [0,0,0,0,0])[4];
+      const diff    = parseFloat((val - redeVal).toFixed(1));
+      const ass     = (_AR_ASSUNTOS[d] || [])[(alunoIdx * 5 + i + 2) % (_AR_ASSUNTOS[d] || ['—']).length] || '—';
+      items.push('<div class="al-ponto">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center">' +
+          '<span style="font-weight:600;font-size:12px;color:var(--t1)">' + d + '</span>' +
+          '<span class="' + (diff >= 0 ? 'diff-neu' : 'diff-neg') + '" style="font-size:11px">' + (diff >= 0 ? '+' : '') + diff + ' p.p. vs. rede</span>' +
+        '</div>' +
+        '<div style="font-size:11px;color:var(--t3);margin-top:2px">' + ass + ' · ' + val.toFixed(1) + '%</div>' +
+      '</div>');
+    });
+    if (aluno.partRate < 75) items.push('<div class="al-ponto"><div style="font-weight:600;font-size:12px;color:var(--t1)">Participação</div><div style="font-size:11px;color:var(--t3);margin-top:2px">Baixa presença — ' + aluno.partRate + '% dos simulados</div></div>');
+    if (aluno.evolucao < 0)  items.push('<div class="al-ponto"><div style="font-weight:600;font-size:12px;color:var(--t1)">Evolução</div><div style="font-size:11px;color:var(--t3);margin-top:2px">' + aluno.evolucao.toFixed(1) + ' p.p. — queda ao longo dos simulados</div></div>');
+    fracosEl.innerHTML = items.join('') || '<div class="card-sub">—</div>';
+  }
+
+  // Histórico
+  _buildAlunoHistorico(aluno, alunoIdx);
+}
+
+function _buildAlunoHistorico(aluno, alunoIdx) {
+  const histEl = el('al-perf-historico');
+  if (!histEl) return;
+
+  histEl.innerHTML = aluno.sims.map((simVal, s) => {
+    const presente   = aluno.part[s] === 1;
+    const sd         = aluno.simDiscs ? aluno.simDiscs[s] : aluno.discs;
+    const sortedD    = _AR_DISCS.slice().sort((a, b) => (sd[b] || 0) - (sd[a] || 0));
+    const forte      = sortedD[0];
+    const fraco      = sortedD[sortedD.length - 1];
+    const forteAss   = (_AR_ASSUNTOS[forte] || [])[(alunoIdx * 3 + s * 7) % (_AR_ASSUNTOS[forte] || ['—']).length] || '—';
+    const fracoAss   = (_AR_ASSUNTOS[fraco]  || [])[(alunoIdx * 5 + s * 11) % (_AR_ASSUNTOS[fraco]  || ['—']).length] || '—';
+    const redeVal    = REDE_6_MEDIA[s];
+    const diff       = parseFloat((simVal - redeVal).toFixed(1));
+    const diffCls    = diff >= 0 ? 'diff-pos' : 'diff-neg';
+
+    return '<div class="al-hist-item">' +
+      '<div class="al-hist-num">' + (s + 1) + '</div>' +
+      '<div class="al-hist-body">' +
+        '<div class="al-hist-row">' +
+          '<div><div class="al-hist-label">Média</div><div class="al-hist-val">' + simVal.toFixed(1) + '%</div></div>' +
+          '<div><div class="al-hist-label">vs. Rede</div><div class="al-hist-val ' + diffCls + '">' + (diff >= 0 ? '+' : '') + diff + ' p.p.</div></div>' +
+          '<div><div class="al-hist-label">Participação</div><div class="al-hist-val ' + (presente ? 'diff-pos' : 'diff-neg') + '">' + (presente ? 'Presente' : 'Ausente') + '</div></div>' +
+        '</div>' +
+        '<div class="al-hist-row" style="margin-top:8px">' +
+          '<div><div class="al-hist-label" style="color:var(--green)">Ponto forte</div><div style="font-size:11px;color:var(--t1)">' + forte + ' <span style="color:var(--t3)">· ' + forteAss + '</span></div></div>' +
+          '<div><div class="al-hist-label" style="color:var(--amber)">Ponto de atenção</div><div style="font-size:11px;color:var(--t1)">' + fraco + ' <span style="color:var(--t3)">· ' + fracoAss + '</span></div></div>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }).join('');
 }
 
 /* ── DASHBOARD ─────────────────────────────────────────────── */

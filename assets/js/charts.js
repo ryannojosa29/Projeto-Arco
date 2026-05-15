@@ -562,3 +562,67 @@ function renderProfEvoQualCharts(profKey) {
       CFG
     );
 }
+
+/* ══════════════════════════════════════════════════════════
+   ALUNOS_REDE — Gráficos da página Alunos
+══════════════════════════════════════════════════════════ */
+
+function renderAlunoPerfilDisciplinasChart(aluno, simKey) {
+  if (!el('chart-al-discs') || typeof _AR_DISCS === 'undefined') return;
+  const simIdx   = (simKey && simKey !== 'acumulado') ? parseInt(simKey, 10) - 1 : -1;
+  const discData = (simIdx >= 0 && aluno.simDiscs) ? aluno.simDiscs[simIdx] : aluno.discs;
+  const prim     = aluno.nome.split(' ')[0];
+  const vals     = _AR_DISCS.map(d => discData[d] || 0);
+  const rede     = _AR_DISCS.map(d => (REDE_6_DISC_SIM[d] || [0,0,0,0,0])[4]);
+
+  Plotly.react('chart-al-discs', [
+    { type:'bar', orientation:'h', x:vals, y:_AR_DISCS, name:prim,
+      marker:{ color:C.orange, opacity:0.9 } },
+    { type:'bar', orientation:'h', x:rede, y:_AR_DISCS, name:'Rede',
+      marker:{ color:C.slate, opacity:0.6 } },
+  ], {
+    ...CT, barmode:'group',
+    margin:{ t:8, r:12, b:32, l:115 },
+    xaxis:{ range:[0,100], ticksuffix:'%', tickfont:{size:9}, gridcolor:C.border },
+    yaxis:{ tickfont:{size:9} },
+    legend:{ orientation:'h', y:-0.22, font:{size:9} },
+  }, CFG);
+}
+
+function renderAlunoPerfilEvolucaoChart(aluno) {
+  if (!el('chart-al-evo')) return;
+  const prim = aluno.nome.split(' ')[0];
+
+  Plotly.react('chart-al-evo', [
+    { type:'scatter', mode:'lines+markers', name:prim,
+      x:SIM_LABELS_CURTOS, y:aluno.sims,
+      line:{ color:C.orange, width:2.5 }, marker:{ size:7, color:C.orange } },
+    { type:'scatter', mode:'lines', name:'Rede',
+      x:SIM_LABELS_CURTOS, y:REDE_6_MEDIA,
+      line:{ color:C.slate, width:1.5, dash:'dot' } },
+  ], {
+    ...CT, margin:{ t:8, r:12, b:50, l:42 },
+    xaxis:{ tickfont:{size:9} },
+    yaxis:{ ticksuffix:'%', tickfont:{size:9}, gridcolor:C.border },
+    legend:{ orientation:'h', y:-0.36, font:{size:9} },
+  }, CFG);
+}
+
+function renderAlunoPerfilParticipacaoChart(aluno) {
+  if (!el('chart-al-part')) return;
+  const colors = aluno.part.map(v => v === 1 ? C.green : C.red);
+  const vals   = aluno.part.map(v => v === 1 ? 100 : 40);
+  const texts  = aluno.part.map(v => v === 1 ? 'Presente' : 'Ausente');
+
+  Plotly.react('chart-al-part', [{
+    type:'bar', x:SIM_LABELS_CURTOS, y:vals,
+    marker:{ color:colors, opacity:0.85 },
+    text:texts, textposition:'inside',
+    textfont:{ size:10, color:'#fff' },
+  }], {
+    ...CT, height:110,
+    margin:{ t:6, r:12, b:32, l:8 },
+    yaxis:{ visible:false, range:[0,120] },
+    xaxis:{ tickfont:{size:9} },
+  }, CFG);
+}
