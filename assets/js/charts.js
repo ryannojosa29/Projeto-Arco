@@ -570,10 +570,11 @@ function renderProfEvoQualCharts(profKey) {
 function renderAlunoPerfilDisciplinasChart(aluno, simKey) {
   if (!el('chart-al-discs') || typeof _AR_DISCS === 'undefined') return;
   const simIdx   = (simKey && simKey !== 'acumulado') ? parseInt(simKey, 10) - 1 : -1;
+  const redeRef  = simIdx >= 0 ? simIdx : 4;
   const discData = (simIdx >= 0 && aluno.simDiscs) ? aluno.simDiscs[simIdx] : aluno.discs;
   const prim     = aluno.nome.split(' ')[0];
   const vals     = _AR_DISCS.map(d => discData[d] || 0);
-  const rede     = _AR_DISCS.map(d => (REDE_6_DISC_SIM[d] || [0,0,0,0,0])[4]);
+  const rede     = _AR_DISCS.map(d => (REDE_6_DISC_SIM[d] || [0,0,0,0,0])[redeRef]);
 
   Plotly.react('chart-al-discs', [
     { type:'bar', orientation:'h', x:vals, y:_AR_DISCS, name:prim,

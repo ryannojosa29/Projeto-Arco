@@ -721,6 +721,201 @@ function _buildAlunosRanking() {
   }
 }
 
+function _getAlunoDiagnostico(aluno, sim, mediaVal, discData, forteDisc, fracaDisc) {
+  const cresc    = aluno.evolucao;
+  const crescing = aluno.sims[4] - aluno.sims[3];
+  const forteVal = (discData[forteDisc] || 0).toFixed(1);
+  const fracaVal = (discData[fracaDisc] || 0).toFixed(1);
+  const simLabel = sim === 'acumulado' ? 'acumulado' : sim + 'º Simulado';
+  const simIdx   = sim === 'acumulado' ? 4 : Math.max(0, parseInt(sim, 10) - 1);
+  const redeRef  = REDE_6_MEDIA[simIdx] !== undefined ? REDE_6_MEDIA[simIdx] : REDE_6_MEDIA[4];
+  const diff     = parseFloat((mediaVal - redeRef).toFixed(1));
+  const fmtDiff  = (diff >= 0 ? '+' : '') + diff + ' p.p.';
+
+  let estado, evidencia, acao;
+  switch (aluno.status) {
+    case 'Destaque':
+      estado    = 'Desempenho acima da média — referência na rede';
+      evidencia = mediaVal.toFixed(1) + '% no ' + simLabel + ' (' + fmtDiff + ' vs. rede) · Ponto forte: ' + forteDisc + ' (' + forteVal + '%)';
+      acao      = 'Manter progressão e desafiar com questões de maior complexidade em ' + fracaDisc;
+      break;
+    case 'Em crescimento':
+      estado    = 'Trajetória ascendente — manter o ritmo';
+      evidencia = 'Evolução de +' + cresc.toFixed(1) + ' p.p. ao longo dos simulados · Média atual: ' + mediaVal.toFixed(1) + '%';
+      acao      = 'Reforçar os conteúdos de ' + fracaDisc + ' para sustentar a curva de crescimento';
+      break;
+    case 'Estável':
+      estado    = 'Desempenho estável — oportunidade de crescimento';
+      evidencia = mediaVal.toFixed(1) + '% no ' + simLabel + ' · ' + fmtDiff + ' vs. rede · ' + fracaDisc + ': ' + fracaVal + '%';
+      acao      = 'Investigar o que impede a progressão em ' + fracaDisc + ' e propor atividades de aprofundamento';
+      break;
+    case 'Queda recente':
+      estado    = 'Queda no último simulado — requer atenção imediata';
+      evidencia = crescing.toFixed(1) + ' p.p. entre o último e o penúltimo simulado · Média: ' + mediaVal.toFixed(1) + '%';
+      acao      = 'Retomar conteúdos de ' + fracaDisc + ' com atividades de recuperação e monitorar próximo simulado';
+      break;
+    case 'Atenção':
+      estado    = 'Desempenho crítico — abaixo da referência da rede';
+      evidencia = mediaVal.toFixed(1) + '% vs. ' + redeRef.toFixed(1) + '% da rede (' + fmtDiff + ') · ' + fracaDisc + ': ' + fracaVal + '%';
+      acao      = 'Priorizar intervenção em ' + fracaDisc + ' e verificar barreiras de aprendizado com o professor responsável';
+      break;
+    case 'Baixa participação':
+      estado    = 'Presença irregular — dados incompletos';
+      evidencia = aluno.partRate + '% de participação nos simulados · Ausente em pelo menos 1 avaliação';
+      acao      = 'Investigar causas da ausência e garantir que o aluno realize reposição dos simulados perdidos';
+      break;
+    default:
+      estado    = 'Desempenho em acompanhamento';
+      evidencia = mediaVal.toFixed(1) + '% no ' + simLabel;
+      acao      = 'Monitorar evolução no próximo simulado';
+  }
+  return { estado: estado, evidencia: evidencia, acao: acao };
+}
+
+function _getAlunoRisco(aluno, discData, fracaDisc, redeRef) {
+  const fracaVal  = discData[fracaDisc] || 0;
+  const redeFraga = (REDE_6_DISC_SIM[fracaDisc] || [0,0,0,0,0])[redeRef !== undefined ? redeRef : 4];
+  const fracaDiff = parseFloat((fracaVal - redeFraga).toFixed(1));
+  const crescing  = aluno.sims[4] - aluno.sims[3];
+
+  let nivel, cls;
+  if (aluno.media < 40 || aluno.partRate < 60 || (crescing < -8 && aluno.media < 50)) {
+    nivel = 'Alto';   cls = 'al-risk-alto';
+  } else if (aluno.media < 50 || aluno.partRate < 75 || fracaDiff < -12) {
+    nivel = 'Moderado'; cls = 'al-risk-moderado';
+  } else {
+    nivel = 'Baixo';  cls = 'al-risk-baixo';
+  }
+
+  const checks = [];
+  if (aluno.media >= 50)       checks.push({ ok: true,  text: 'Desempenho acima da linha de atenção' });
+  else if (aluno.media >= 40)  checks.push({ ok: null,  text: 'Desempenho próximo da linha crítica (' + aluno.media.toFixed(1) + '%)' });
+  else                         checks.push({ ok: false, text: 'Desempenho crítico (' + aluno.media.toFixed(1) + '%)' });
+
+  if (aluno.partRate >= 80)       checks.push({ ok: true,  text: 'Participação adequada (' + aluno.partRate + '%)' });
+  else if (aluno.partRate >= 65)  checks.push({ ok: null,  text: 'Participação abaixo do esperado (' + aluno.partRate + '%)' });
+  else                            checks.push({ ok: false, text: 'Baixa presença nos simulados (' + aluno.partRate + '%)' });
+
+  if (crescing >= 0)       checks.push({ ok: true,  text: 'Sem queda abrupta no último simulado' });
+  else if (crescing >= -5) checks.push({ ok: null,  text: 'Leve oscilação (' + crescing.toFixed(1) + ' p.p.) no último simulado' });
+  else                     checks.push({ ok: false, text: 'Queda de ' + Math.abs(crescing).toFixed(1) + ' p.p. no último simulado' });
+
+  return { nivel: nivel, cls: cls, checks: checks };
+}
+
+function _getAlunoIntervencao(aluno, discData, fracaDisc, forteDisc) {
+  const alunoIdx  = ALUNOS_REDE.indexOf(aluno);
+  const assuntosF = _AR_ASSUNTOS[fracaDisc] || ['conteúdos específicos'];
+  const assunto   = assuntosF[(alunoIdx * 7 + 3) % assuntosF.length];
+  const fracaVal  = (discData[fracaDisc] || 0).toFixed(1);
+  const forteVal  = (discData[forteDisc] || 0).toFixed(1);
+  const crescing  = aluno.sims[4] - aluno.sims[3];
+
+  if (aluno.partRate < 65)  return 'Contato imediato com a família para investigar causas das ausências. Oferecer acompanhamento presencial adicional para reposição do conteúdo perdido.';
+  if (aluno.media < 40)     return 'Diagnóstico individualizado com foco em ' + fracaDisc + ' (' + assunto + ', ' + fracaVal + '%). Plano de recuperação com professor de área, prioridade máxima.';
+  if (crescing < -5)        return 'Reunião de acompanhamento para identificar o que provocou a queda no último simulado. Revisão dirigida em ' + fracaDisc + ' (' + assunto + ').';
+  if (aluno.status === 'Destaque') return 'Oferecer material de extensão em ' + fracaDisc + ' (' + assunto + ', ' + fracaVal + '%) para eliminar a última lacuna e consolidar o destaque em todas as disciplinas.';
+  return 'Reforço em ' + fracaDisc + ' (' + assunto + ') — nota atual ' + fracaVal + '%, foco nos conteúdos que mais pesam. Aproveitar ' + forteDisc + ' (' + forteVal + '%) como âncora motivacional.';
+}
+
+function _getAlunoComparacaoGrupo(aluno, sim, mediaVal) {
+  const simIdx = sim === 'acumulado' ? -1 : Math.max(0, parseInt(sim, 10) - 1);
+  const getVal = function(a) { return simIdx >= 0 ? (a.sims[simIdx] || 0) : a.media; };
+
+  const redeVal  = simIdx >= 0 ? REDE_6_MEDIA[simIdx] : parseFloat((REDE_6_MEDIA.reduce(function(s, v) { return s + v; }, 0) / REDE_6_MEDIA.length).toFixed(1));
+  const vsRede   = parseFloat((mediaVal - redeVal).toFixed(1));
+
+  const escolaColegas = ALUNOS_REDE.filter(function(a) { return a.escolaKey === aluno.escolaKey; });
+  const escolaMed = escolaColegas.length ? parseFloat((escolaColegas.reduce(function(s, a) { return s + getVal(a); }, 0) / escolaColegas.length).toFixed(1)) : redeVal;
+  const vsEscola  = parseFloat((mediaVal - escolaMed).toFixed(1));
+
+  const turmaColegas = ALUNOS_REDE.filter(function(a) { return a.escolaKey === aluno.escolaKey && a.turma === aluno.turma; });
+  const turmaMed = turmaColegas.length ? parseFloat((turmaColegas.reduce(function(s, a) { return s + getVal(a); }, 0) / turmaColegas.length).toFixed(1)) : escolaMed;
+  const vsTurma  = parseFloat((mediaVal - turmaMed).toFixed(1));
+
+  const sorted   = ALUNOS_REDE.slice().sort(function(a, b) { return getVal(b) - getVal(a); });
+  const pos      = sorted.findIndex(function(a) { return a.key === aluno.key; }) + 1;
+  const pctTop   = Math.round((pos / ALUNOS_REDE.length) * 100);
+  const top10n   = Math.max(1, Math.floor(ALUNOS_REDE.length * 0.1));
+  const vsTop10  = parseFloat((mediaVal - getVal(sorted[top10n - 1])).toFixed(1));
+
+  return { vsRede: vsRede, vsEscola: vsEscola, vsTurma: vsTurma, pctTop: pctTop, vsTop10: vsTop10 };
+}
+
+function _getAlunoLeituraSimulado(aluno, s, simVal, presente, forte, fraco, diff) {
+  if (!presente) return 'Aluno ausente neste simulado — dados indisponíveis.';
+  const sd       = aluno.simDiscs && aluno.simDiscs[s] ? aluno.simDiscs[s] : aluno.discs;
+  const forteVal = (sd[forte] || 0).toFixed(1);
+  const fracoVal = (sd[fraco] || 0).toFixed(1);
+  const tendencia = s > 0 ? parseFloat((simVal - aluno.sims[s - 1]).toFixed(1)) : 0;
+
+  let txt = '';
+  if      (diff >= 5)  txt = 'Resultado bem acima da média da rede (+' + diff + ' p.p.).';
+  else if (diff >= 0)  txt = 'Resultado dentro da média da rede (+' + diff + ' p.p.).';
+  else if (diff >= -5) txt = 'Ligeiramente abaixo da média da rede (' + diff + ' p.p.).';
+  else                 txt = 'Resultado abaixo da rede (' + diff + ' p.p.) — requer atenção.';
+
+  if (s > 0) {
+    if (tendencia > 3)       txt += ' Melhora de +' + tendencia.toFixed(1) + ' p.p. em relação ao simulado anterior.';
+    else if (tendencia < -3) txt += ' Queda de ' + Math.abs(tendencia).toFixed(1) + ' p.p. em relação ao simulado anterior.';
+  }
+  txt += ' Destaque em ' + forte + ' (' + forteVal + '%). Atenção em ' + fraco + ' (' + fracoVal + '%).';
+  return txt;
+}
+
+/* ── HELPERS DE RENDERIZAÇÃO DE DIAGNÓSTICO ─────────────── */
+function _getDiagBullets(aluno, fracaDisc, forteDisc, assunto) {
+  if (aluno.partRate < 65) return [
+    'Contato com a família sobre ausências',
+    'Garantir reposição de avaliações',
+    'Acompanhar retorno às próximas avaliações'
+  ];
+  if (aluno.media < 40) return [
+    'Diagnóstico individualizado urgente',
+    'Plano de recuperação em ' + fracaDisc,
+    'Revisão dirigida: ' + assunto
+  ];
+  if (aluno.status === 'Destaque') return [
+    'Material de extensão em ' + fracaDisc,
+    'Questões de alta complexidade em ' + assunto,
+    'Consolidar liderança na rede'
+  ];
+  if (aluno.status === 'Queda recente') return [
+    'Identificar causa da queda recente',
+    'Revisão em ' + fracaDisc + ': ' + assunto,
+    'Monitorar de perto no próximo simulado'
+  ];
+  return [
+    'Reforço em ' + fracaDisc + ': ' + assunto,
+    'Usar ' + forteDisc + ' como âncora motivacional',
+    'Acompanhar evolução no próximo simulado'
+  ];
+}
+
+function _getAlunoIntervencaoData(aluno, discData, fracaDisc, forteDisc) {
+  const alunoIdx  = ALUNOS_REDE.indexOf(aluno);
+  const assuntosF = _AR_ASSUNTOS[fracaDisc] || ['conteúdos específicos'];
+  const assunto   = assuntosF[(alunoIdx * 7 + 3) % assuntosF.length];
+  const crescing  = aluno.sims[4] - aluno.sims[3];
+  let objetivo;
+  if (aluno.partRate < 65)              objetivo = 'Garantir presença e reposição';
+  else if (aluno.media < 40)            objetivo = 'Recuperação — prioridade máxima';
+  else if (crescing < -5)              objetivo = 'Reverter queda e estabilizar';
+  else if (aluno.status === 'Destaque') objetivo = 'Eliminar lacuna final e manter destaque';
+  else                                  objetivo = 'Sustentar crescimento sem perder regularidade';
+  return { foco: fracaDisc, assunto: assunto, apoio: forteDisc, objetivo: objetivo };
+}
+
+function _dcls(v) { return v >= 3 ? 'pos' : v <= -3 ? 'neg' : 'neu'; }
+function _dfmt(v) { return (v >= 0 ? '+' : '') + v.toFixed(1) + ' p.p.'; }
+function _dbar(v) { return Math.min(100, Math.max(2, Math.round(50 + v * 1.8))); }
+function _dmicro(v, sfx) {
+  if (v >= 5)  return 'Acima d' + sfx;
+  if (v >= 0)  return 'Na média d' + sfx;
+  if (v >= -5) return 'Próximo d' + sfx;
+  return 'Abaixo d' + sfx;
+}
+
 function _buildAlunoPerfil() {
   if (typeof ALUNOS_REDE === 'undefined') return;
   const aluno = ALUNOS_REDE.find(a => a.key === S.alunoPerfilAluno) || ALUNOS_REDE[0];
@@ -728,19 +923,24 @@ function _buildAlunoPerfil() {
 
   const sim     = S.alunoPerfilSimulado;
   const simIdx  = (sim === 'acumulado') ? -1 : parseInt(sim, 10) - 1;
+  const redeRef = simIdx >= 0 ? simIdx : 4;
   const mediaVal = typeof getAlunoValSim === 'function' ? getAlunoValSim(aluno, sim) : aluno.media;
   const discData = (simIdx >= 0 && aluno.simDiscs) ? aluno.simDiscs[simIdx] : aluno.discs;
   const sortedDiscs = _AR_DISCS.slice().sort((a, b) => (discData[b] || 0) - (discData[a] || 0));
   const forteDisc   = sortedDiscs[0];
   const fracaDisc   = sortedDiscs[sortedDiscs.length - 1];
 
-  // Hero
+  // Hero — identidade
   const avEl = el('al-perf-av');
   if (avEl) avEl.textContent = aluno.av;
   const nomeEl = el('al-perf-nome');
   if (nomeEl) nomeEl.textContent = aluno.nome;
-  const metaEl = el('al-perf-meta');
-  if (metaEl) metaEl.textContent = aluno.escolaNome + ' · ' + aluno.turma + ' · ' + aluno.serie;
+  const chipEscolaEl = el('al-chip-escola'); if (chipEscolaEl) chipEscolaEl.textContent = aluno.escolaNome;
+  const chipTurmaEl  = el('al-chip-turma');  if (chipTurmaEl)  chipTurmaEl.textContent  = aluno.turma;
+  const chipSerieEl  = el('al-chip-serie');  if (chipSerieEl)  chipSerieEl.textContent  = aluno.serie;
+  const chipSimEl    = el('al-chip-sim');    if (chipSimEl)    chipSimEl.textContent    = sim === 'acumulado' ? 'Acumulado (1–5)' : sim + 'º Simulado';
+  const rankTagEl    = el('al-perf-rank-tag');
+  if (rankTagEl) rankTagEl.textContent = 'Nº ' + aluno.rankEscola + 'º na escola · Nº ' + aluno.rankRede + 'º na rede';
   const statusEl = el('al-perf-status');
   if (statusEl) {
     statusEl.textContent = aluno.status;
@@ -748,34 +948,45 @@ function _buildAlunoPerfil() {
   }
 
   // KPIs
-  _setKpi('al-perf-kpi-media',  mediaVal.toFixed(1) + '%');
-  _setKpi('al-perf-kpi-part',   aluno.partRate + '%');
-  _setKpi('al-perf-kpi-rank',   aluno.rankRede + 'º / ' + ALUNOS_REDE.length);
-  _setKpi('al-perf-kpi-forte',  forteDisc);
-  _setKpi('al-perf-kpi-fraca',  fracaDisc);
+  _setKpi('al-perf-kpi-media', mediaVal.toFixed(1) + '%');
+  _setKpi('al-perf-kpi-part',  aluno.partRate + '%');
+  const evoVal = aluno.evolucao;
+  _setKpi('al-perf-kpi-evo',   (evoVal >= 0 ? '+' : '') + evoVal.toFixed(1) + ' p.p.');
+  _setKpi('al-perf-kpi-forte', forteDisc);
+  _setKpi('al-perf-kpi-fraca', fracaDisc);
   const mediaNote = el('al-perf-kpi-media-note');
   if (mediaNote) mediaNote.textContent = sim === 'acumulado' ? 'Acumulada' : sim + 'º Simulado';
+  const forteNote = el('al-perf-kpi-forte-note');
+  if (forteNote) forteNote.textContent = (discData[forteDisc] || 0).toFixed(1) + '%';
+  const fracaNote = el('al-perf-kpi-fraca-note');
+  if (fracaNote) fracaNote.textContent = (discData[fracaDisc] || 0).toFixed(1) + '%';
 
   // Charts
   if (typeof renderAlunoPerfilDisciplinasChart === 'function') renderAlunoPerfilDisciplinasChart(aluno, sim);
   if (typeof renderAlunoPerfilEvolucaoChart    === 'function') renderAlunoPerfilEvolucaoChart(aluno);
-  if (typeof renderAlunoPerfilParticipacaoChart === 'function') renderAlunoPerfilParticipacaoChart(aluno);
 
-  // Síntese
+  // Síntese (sim-aware)
   const sinteseEl = el('al-perf-sintese');
   if (sinteseEl) {
-    const cresc    = aluno.evolucao;
-    const crescing = aluno.sims[4] - aluno.sims[3];
-    let txt = aluno.nome + ' apresenta ' + (sim === 'acumulado'
-      ? 'média acumulada de ' + aluno.media.toFixed(1) + '%'
-      : 'desempenho de ' + mediaVal.toFixed(1) + '% no ' + sim + 'º Simulado') +
-      ' — ' + aluno.status.toLowerCase() + ', posição ' + aluno.rankRede + 'º na rede.';
-    txt += ' Crescimento de ' + (cresc >= 0 ? '+' : '') + cresc.toFixed(1) + ' p.p. ao longo dos 5 simulados.';
+    const redeSimVal = REDE_6_MEDIA[redeRef];
+    const vsRede     = parseFloat((mediaVal - redeSimVal).toFixed(1));
+    const prim       = aluno.nome.split(' ')[0];
+    let txt = prim + ' apresenta ' + (sim === 'acumulado'
+      ? 'média acumulada de ' + mediaVal.toFixed(1) + '% (' + (vsRede >= 0 ? '+' : '') + vsRede + ' p.p. vs. rede)'
+      : mediaVal.toFixed(1) + '% no ' + sim + 'º Simulado (' + (vsRede >= 0 ? '+' : '') + vsRede + ' p.p. vs. rede)') +
+      ' — ' + aluno.status.toLowerCase() + ', ' + aluno.rankRede + 'º na rede.';
+    if (sim === 'acumulado') {
+      const cresc = aluno.evolucao;
+      txt += ' Evolução: ' + (cresc >= 0 ? '+' : '') + cresc.toFixed(1) + ' p.p. do 1º ao 5º simulado.';
+    } else if (simIdx > 0) {
+      const delta = parseFloat((mediaVal - aluno.sims[simIdx - 1]).toFixed(1));
+      txt += delta >= 0
+        ? ' Ganho de +' + delta.toFixed(1) + ' p.p. em relação ao simulado anterior.'
+        : ' Queda de ' + Math.abs(delta).toFixed(1) + ' p.p. em relação ao simulado anterior.';
+    }
     txt += ' Ponto forte: ' + forteDisc + ' (' + (discData[forteDisc] || 0).toFixed(1) + '%).';
-    txt += ' Disciplina com maior atenção: ' + fracaDisc + ' (' + (discData[fracaDisc] || 0).toFixed(1) + '%).';
-    txt += ' Participação: ' + aluno.partRate + '%.';
-    if (crescing >= 3) txt += ' Tendência de alta no último simulado.';
-    else if (crescing < -3) txt += ' Queda no último simulado — requer atenção.';
+    txt += ' Maior atenção: ' + fracaDisc + ' (' + (discData[fracaDisc] || 0).toFixed(1) + '%).';
+    txt += ' Participação acumulada: ' + aluno.partRate + '%.';
     sinteseEl.textContent = txt;
   }
 
@@ -786,7 +997,7 @@ function _buildAlunoPerfil() {
     const items = [];
     sortedDiscs.slice(0, 2).forEach((d, i) => {
       const val     = discData[d] || 0;
-      const redeVal = (REDE_6_DISC_SIM[d] || [0,0,0,0,0])[4];
+      const redeVal = (REDE_6_DISC_SIM[d] || [0,0,0,0,0])[redeRef];
       const diff    = parseFloat((val - redeVal).toFixed(1));
       const ass     = (_AR_ASSUNTOS[d] || [])[(alunoIdx * 3 + i) % (_AR_ASSUNTOS[d] || ['—']).length] || '—';
       items.push('<div class="al-ponto">' +
@@ -808,7 +1019,7 @@ function _buildAlunoPerfil() {
     const items = [];
     sortedDiscs.slice(-2).reverse().forEach((d, i) => {
       const val     = discData[d] || 0;
-      const redeVal = (REDE_6_DISC_SIM[d] || [0,0,0,0,0])[4];
+      const redeVal = (REDE_6_DISC_SIM[d] || [0,0,0,0,0])[redeRef];
       const diff    = parseFloat((val - redeVal).toFixed(1));
       const ass     = (_AR_ASSUNTOS[d] || [])[(alunoIdx * 5 + i + 2) % (_AR_ASSUNTOS[d] || ['—']).length] || '—';
       items.push('<div class="al-ponto">' +
@@ -822,6 +1033,136 @@ function _buildAlunoPerfil() {
     if (aluno.partRate < 75) items.push('<div class="al-ponto"><div style="font-weight:600;font-size:12px;color:var(--t1)">Participação</div><div style="font-size:11px;color:var(--t3);margin-top:2px">Baixa presença — ' + aluno.partRate + '% dos simulados</div></div>');
     if (aluno.evolucao < 0)  items.push('<div class="al-ponto"><div style="font-weight:600;font-size:12px;color:var(--t1)">Evolução</div><div style="font-size:11px;color:var(--t3);margin-top:2px">' + aluno.evolucao.toFixed(1) + ' p.p. — queda ao longo dos simulados</div></div>');
     fracosEl.innerHTML = items.join('') || '<div class="card-sub">—</div>';
+  }
+
+  // ── ÁREA DE DIAGNÓSTICO VISUAL ──────────────────────────────
+  const diag  = _getAlunoDiagnostico(aluno, sim, mediaVal, discData, forteDisc, fracaDisc);
+  const risco = _getAlunoRisco(aluno, discData, fracaDisc, redeRef);
+  const bench = _getAlunoComparacaoGrupo(aluno, sim, mediaVal);
+  const intv  = _getAlunoIntervencaoData(aluno, discData, fracaDisc, forteDisc);
+
+  // — Card: Diagnóstico principal —
+  const diagCard = el('al-diagnosis-card');
+  if (diagCard) {
+    const sbMap = {
+      'Destaque':           { label: 'Destaque na rede',      cls: 'dest'  },
+      'Em crescimento':     { label: 'Trajetória ascendente', cls: 'cresc' },
+      'Estável':            { label: 'Desempenho estável',    cls: 'est'   },
+      'Atenção':            { label: 'Atenção necessária',    cls: 'att'   },
+      'Queda recente':      { label: 'Queda recente',         cls: 'queda' },
+      'Baixa participação': { label: 'Baixa participação',    cls: 'part'  },
+    };
+    const sb = sbMap[aluno.status] || { label: aluno.status, cls: 'est' };
+    const microMap = {
+      'Destaque':           'manter progressão e desafiar',
+      'Em crescimento':     'manter o ritmo e consolidar',
+      'Estável':            'identificar o que trava a progressão',
+      'Atenção':            'priorizar intervenção imediata',
+      'Queda recente':      'intervir antes do próximo simulado',
+      'Baixa participação': 'garantir presença nas próximas avaliações',
+    };
+    const micro     = microMap[aluno.status] || 'monitorar evolução';
+    const estadoPts = diag.estado.split(' — ');
+    const estadoSh  = estadoPts[0] || diag.estado;
+    const estadoSub = estadoPts[1] || '';
+    const evoDelta  = simIdx > 0 ? parseFloat((mediaVal - aluno.sims[simIdx - 1]).toFixed(1)) : aluno.evolucao;
+    const evoLabel  = simIdx > 0 ? 'vs. anterior' : 'evolução';
+    const evoCls    = evoDelta >= 3 ? 'var(--green)' : evoDelta < -3 ? 'var(--red)' : 'var(--t3)';
+    const bullets   = _getDiagBullets(aluno, fracaDisc, forteDisc, intv.assunto);
+
+    diagCard.innerHTML =
+      '<div class="al-diagnosis-head">' +
+        '<div>' +
+          '<div class="al-diagnosis-title">Diagnóstico do aluno</div>' +
+          '<span class="al-diagnosis-status al-ds-' + sb.cls + '">' + sb.label + '</span>' +
+          '<div class="al-diagnosis-micro">' + micro + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="al-diagnosis-grid">' +
+        '<div class="al-diagnosis-mini">' +
+          '<div class="al-dm-label">Estado atual</div>' +
+          '<div class="al-dm-val">' + estadoSh + '</div>' +
+          (estadoSub ? '<div style="font-size:10.5px;color:var(--t3);margin-top:3px">' + estadoSub + '</div>' : '') +
+          '<div class="al-dm-delta ' + _dcls(evoDelta) + '">' + _dfmt(evoDelta) + '</div>' +
+        '</div>' +
+        '<div class="al-diagnosis-mini al-dm-evidence">' +
+          '<div class="al-dm-label">Evidência</div>' +
+          '<div class="al-evidence-row">' +
+            '<span class="al-ev-num">' + mediaVal.toFixed(1) + '%</span>' +
+            '<span class="al-ev-label">Média</span>' +
+          '</div>' +
+          '<div class="al-evidence-row">' +
+            '<span class="al-ev-num" style="color:' + evoCls + '">' + _dfmt(evoDelta) + '</span>' +
+            '<span class="al-ev-label">' + evoLabel + '</span>' +
+          '</div>' +
+          '<div class="al-evidence-row">' +
+            '<span class="al-ev-num">' + aluno.partRate + '%</span>' +
+            '<span class="al-ev-label">Presença</span>' +
+          '</div>' +
+        '</div>' +
+        '<div class="al-diagnosis-mini">' +
+          '<div class="al-dm-label">Próxima ação</div>' +
+          '<div class="al-na-chip">' + fracaDisc + '</div>' +
+          '<ul class="al-na-list">' + bullets.map(function(b) { return '<li>' + b + '</li>'; }).join('') + '</ul>' +
+        '</div>' +
+      '</div>';
+  }
+
+  // — Card: Comparação com o grupo —
+  const benchCard = el('al-benchmark-card');
+  if (benchCard) {
+    const bRows = [
+      { label: 'Rede',    v: bench.vsRede,   sfx: 'a rede'    },
+      { label: 'Escola',  v: bench.vsEscola, sfx: 'a escola'  },
+      { label: 'Turma',   v: bench.vsTurma,  sfx: 'a turma'   },
+      { label: 'Top 10%', v: bench.vsTop10,  sfx: 'o top 10%' },
+    ];
+    benchCard.innerHTML = '<div class="al-bc-title">Comparação com o grupo</div>' +
+      bRows.map(function(r) {
+        const cls = _dcls(r.v);
+        return '<div class="al-benchmark-row">' +
+          '<div class="al-br-label">' + r.label + '</div>' +
+          '<div class="al-br-delta ' + cls + '">' + _dfmt(r.v) + '</div>' +
+          '<div class="al-br-bar-wrap"><div class="al-br-bar ' + cls + '" style="width:' + _dbar(r.v) + '%"></div></div>' +
+          '<div class="al-br-micro">' + _dmicro(r.v, r.sfx) + '</div>' +
+        '</div>';
+      }).join('');
+  }
+
+  // — Card: Risco pedagógico —
+  const riscoCard = el('al-risk-card');
+  if (riscoCard) {
+    riscoCard.innerHTML =
+      '<div class="al-rc-title">Risco pedagógico</div>' +
+      '<div class="al-risk-badge ' + risco.cls + '">' + risco.nivel + '</div>' +
+      '<div class="al-rc-checks">' +
+      risco.checks.map(function(c) {
+        const icon = c.ok === true ? '✅' : c.ok === false ? '❌' : '⚠️';
+        return '<div class="al-rc-check"><span class="al-rc-icon">' + icon + '</span><span>' + c.text + '</span></div>';
+      }).join('') +
+      '</div>';
+  }
+
+  // — Card: Intervenção recomendada —
+  const apCard = el('al-action-plan-card');
+  if (apCard) {
+    apCard.innerHTML =
+      '<div class="al-ap-title">Intervenção recomendada</div>' +
+      '<div class="al-ap-row">' +
+        '<span class="al-ap-label">Foco principal</span>' +
+        '<div style="display:flex;align-items:center;gap:6px;margin-top:3px">' +
+          '<span class="al-ap-val">' + intv.foco + '</span>' +
+          '<span class="al-ap-chip">' + intv.assunto + '</span>' +
+        '</div>' +
+      '</div>' +
+      '<div class="al-ap-row">' +
+        '<span class="al-ap-label">Apoio complementar</span>' +
+        '<span class="al-ap-val">' + intv.apoio + '</span>' +
+      '</div>' +
+      '<div class="al-ap-row">' +
+        '<span class="al-ap-label">Objetivo</span>' +
+        '<span class="al-ap-obj">' + intv.objetivo + '</span>' +
+      '</div>';
   }
 
   // Histórico
@@ -856,6 +1197,7 @@ function _buildAlunoHistorico(aluno, alunoIdx) {
           '<div><div class="al-hist-label" style="color:var(--green)">Ponto forte</div><div style="font-size:11px;color:var(--t1)">' + forte + ' <span style="color:var(--t3)">· ' + forteAss + '</span></div></div>' +
           '<div><div class="al-hist-label" style="color:var(--amber)">Ponto de atenção</div><div style="font-size:11px;color:var(--t1)">' + fraco + ' <span style="color:var(--t3)">· ' + fracoAss + '</span></div></div>' +
         '</div>' +
+        '<div class="al-hist-leitura">' + _getAlunoLeituraSimulado(aluno, s, simVal, presente, forte, fraco, diff) + '</div>' +
       '</div>' +
     '</div>';
   }).join('');

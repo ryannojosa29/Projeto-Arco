@@ -830,30 +830,43 @@
       <div class="card mb14">
         <div class="al-hero">
           <div class="al-av" id="al-perf-av">—</div>
-          <div>
+          <div class="al-hero-body">
             <div class="al-nome" id="al-perf-nome">—</div>
-            <div class="al-meta" id="al-perf-meta">—</div>
-            <div style="margin-top:8px"><span class="al-status-badge" id="al-perf-status">—</span></div>
+            <div class="al-chips">
+              <span class="al-chip" id="al-chip-escola">—</span>
+              <span class="al-chip" id="al-chip-turma">—</span>
+              <span class="al-chip" id="al-chip-serie">—</span>
+              <span class="al-chip al-chip-sim" id="al-chip-sim">—</span>
+            </div>
+            <div class="al-hero-foot">
+              <span class="al-status-badge" id="al-perf-status">—</span>
+              <span class="al-rank-tag" id="al-perf-rank-tag">—</span>
+            </div>
           </div>
         </div>
         <div class="g1 g5 mt14">
           <div class="kpi"><div class="kpi-label">Média</div><div class="kpi-val" id="al-perf-kpi-media">—</div><div class="kpi-note" id="al-perf-kpi-media-note">Acumulada</div></div>
           <div class="kpi"><div class="kpi-label">Participação</div><div class="kpi-val" id="al-perf-kpi-part">—</div><div class="kpi-note">dos simulados</div></div>
-          <div class="kpi"><div class="kpi-label">Ranking</div><div class="kpi-val" id="al-perf-kpi-rank">—</div><div class="kpi-note">posição na rede</div></div>
-          <div class="kpi"><div class="kpi-label">Ponto forte</div><div class="kpi-val" id="al-perf-kpi-forte" style="font-size:13px">—</div><div class="kpi-note">melhor disciplina</div></div>
-          <div class="kpi"><div class="kpi-label">Atenção</div><div class="kpi-val" id="al-perf-kpi-fraca" style="font-size:13px">—</div><div class="kpi-note">disciplina crítica</div></div>
+          <div class="kpi"><div class="kpi-label">Evolução</div><div class="kpi-val" id="al-perf-kpi-evo">—</div><div class="kpi-note">do 1º ao 5º sim.</div></div>
+          <div class="kpi"><div class="kpi-label">Ponto forte</div><div class="kpi-val" id="al-perf-kpi-forte" style="font-size:13px">—</div><div class="kpi-note" id="al-perf-kpi-forte-note">—</div></div>
+          <div class="kpi"><div class="kpi-label">Atenção</div><div class="kpi-val" id="al-perf-kpi-fraca" style="font-size:13px">—</div><div class="kpi-note" id="al-perf-kpi-fraca-note">—</div></div>
         </div>
+      </div>
+
+      <!-- Diagnóstico premium — preenchido via JS -->
+      <div class="card mb12 al-diagnosis-main" id="al-diagnosis-card"></div>
+
+      <!-- Benchmark + Risco + Intervenção — preenchidos via JS -->
+      <div class="g1 g3 mb12">
+        <div class="card al-benchmark-card" id="al-benchmark-card"></div>
+        <div class="card al-risk-card" id="al-risk-card"></div>
+        <div class="card al-action-plan-card" id="al-action-plan-card"></div>
       </div>
 
       <div class="g1 g2 mb12">
         <div class="card"><div class="card-title mb8">Desempenho por disciplina</div><div id="chart-al-discs" style="height:230px"></div></div>
         <div class="card"><div class="card-title mb8">Evolução da média</div><div id="chart-al-evo" style="height:230px"></div></div>
       </div>
-      <div class="card mb12">
-        <div class="card-title mb8">Participação por simulado</div>
-        <div id="chart-al-part" style="height:110px"></div>
-      </div>
-
       <div class="insight-hero mb14">
         <div class="ih-label">Síntese pedagógica</div>
         <div class="ih-text" id="al-perf-sintese">—</div>

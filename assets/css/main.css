@@ -637,7 +637,18 @@ select.sel:hover { border-color: var(--orange); }
 .prof-tab-content.hidden { display: none; }
 
 /* ── ALUNOS 2-TAB PAGE ───────────────────────────────────── */
-.al-hero { display: flex; align-items: center; gap: 18px; }
+.al-hero { display: flex; align-items: flex-start; gap: 18px; }
+.al-hero-body { flex: 1; min-width: 0; }
+.al-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
+.al-chip {
+  display: inline-flex; align-items: center;
+  padding: 3px 10px; border-radius: 99px;
+  font-size: 10.5px; font-weight: 600;
+  background: var(--surface2); color: var(--t2); border: 1px solid var(--border);
+}
+.al-chip-sim { background: var(--navy); color: #fff; border-color: transparent; }
+.al-hero-foot { display: flex; align-items: center; gap: 10px; margin-top: 9px; flex-wrap: wrap; }
+.al-rank-tag { font-size: 11px; color: var(--t3); font-weight: 600; }
 .al-av {
   width: 56px; height: 56px; border-radius: 50%;
   background: linear-gradient(135deg, var(--navy), var(--navy3));
@@ -688,6 +699,137 @@ select.sel:hover { border-color: var(--orange); }
 .al-hist-row { display: flex; gap: 24px; flex-wrap: wrap; }
 .al-hist-label { font-size: 10px; color: var(--t3); font-weight: 600; text-transform: uppercase; letter-spacing: .04em; margin-bottom: 2px; }
 .al-hist-val { font-size: 13px; font-weight: 700; color: var(--t1); }
+.al-hist-leitura { font-size: 11px; color: var(--t3); line-height: 1.5; font-style: italic; margin-top: 6px; }
+
+/* ── DIAGNÓSTICO DO ALUNO ───────────────────────────────── */
+.al-diag-grid { display: flex; gap: 0; }
+.al-diag-part { flex: 1; padding: 4px 16px 4px 0; }
+.al-diag-part:first-child { padding-left: 0; }
+.al-diag-sep { width: 1px; background: var(--border); margin-right: 16px; flex-shrink: 0; }
+.al-diag-label { font-size: 10px; font-weight: 700; color: var(--t3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+.al-diag-text { font-size: 12.5px; color: var(--t1); line-height: 1.55; }
+
+/* ── CARDS RISCO / INTERVENÇÃO / COMPARAÇÃO ─────────────── */
+.al-scard { display: flex; flex-direction: column; gap: 6px; }
+.al-scard-label { font-size: 10px; font-weight: 700; color: var(--t3); text-transform: uppercase; letter-spacing: .06em; }
+.al-scard-text { font-size: 12px; color: var(--t2); line-height: 1.6; }
+.al-risk-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 800; width: fit-content; margin-bottom: 2px; }
+.al-risk-alto     { background: #FEE2E2; color: #B91C1C; }
+.al-risk-moderado { background: #FEF9C3; color: #A16207; }
+.al-risk-baixo    { background: #DCFCE7; color: #15803D; }
+
+/* ── DIAGNÓSTICO PREMIUM ──────────────────────────────────── */
+.al-diagnosis-head { display: flex; align-items: flex-start; margin-bottom: 16px; }
+.al-diagnosis-title {
+  font-size: 10px; font-weight: 700; color: var(--t3);
+  text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px;
+}
+.al-diagnosis-status {
+  display: inline-block; padding: 5px 14px; border-radius: 99px;
+  font-size: 13px; font-weight: 800; letter-spacing: -.01em;
+}
+.al-ds-dest  { background: #DCFCE7; color: #15803D; }
+.al-ds-cresc { background: #DBEAFE; color: #1D4ED8; }
+.al-ds-est   { background: #F1F5F9; color: #64748B; }
+.al-ds-att   { background: #FEF9C3; color: #A16207; }
+.al-ds-queda { background: #FEE2E2; color: #B91C1C; }
+.al-ds-part  { background: #FFF7ED; color: #C2410C; }
+.al-diagnosis-micro { font-size: 11px; color: var(--t3); margin-top: 6px; font-style: italic; }
+
+.al-diagnosis-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 1px;
+  background: var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.al-diagnosis-mini {
+  background: var(--surface2);
+  padding: 14px 15px;
+  transition: background .18s ease;
+}
+.al-diagnosis-mini:hover { background: var(--bg); }
+.al-dm-label {
+  font-size: 10px; font-weight: 700; color: var(--t3);
+  text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px;
+}
+.al-dm-val { font-size: 12px; font-weight: 600; color: var(--t1); line-height: 1.45; }
+.al-dm-delta { font-size: 22px; font-weight: 800; margin-top: 10px; }
+.al-dm-delta.pos { color: var(--green); }
+.al-dm-delta.neg { color: var(--red); }
+.al-dm-delta.neu { color: var(--t3); }
+
+.al-dm-evidence { display: flex; flex-direction: column; }
+.al-evidence-row {
+  display: flex; align-items: baseline; gap: 7px;
+  padding: 6px 0; border-bottom: 1px solid var(--border);
+}
+.al-evidence-row:last-child { border-bottom: none; }
+.al-ev-num { font-size: 17px; font-weight: 800; color: var(--t1); line-height: 1; }
+.al-ev-label { font-size: 9.5px; color: var(--t3); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+
+.al-na-chip {
+  display: inline-block; padding: 3px 10px; border-radius: 99px;
+  background: var(--navy); color: #fff;
+  font-size: 10.5px; font-weight: 700; margin-bottom: 9px;
+}
+.al-na-list { margin: 0; padding: 0; list-style: none; }
+.al-na-list li {
+  font-size: 11px; color: var(--t2); margin-bottom: 5px;
+  line-height: 1.4; padding-left: 14px; position: relative;
+}
+.al-na-list li::before { content: '→'; position: absolute; left: 0; color: var(--orange); font-weight: 700; font-size: 10px; }
+
+/* ── BENCHMARK CARD ──────────────────────────────────────── */
+.al-bc-title {
+  font-size: 10px; font-weight: 700; color: var(--t3);
+  text-transform: uppercase; letter-spacing: .08em; margin-bottom: 14px;
+}
+.al-benchmark-row {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 0; border-bottom: 1px solid var(--border);
+}
+.al-benchmark-row:last-child { border-bottom: none; }
+.al-br-label { flex: 0 0 44px; font-size: 11px; font-weight: 700; color: var(--t2); }
+.al-br-delta { flex: 0 0 58px; font-size: 12px; font-weight: 800; text-align: right; }
+.al-br-delta.pos { color: var(--green); }
+.al-br-delta.neu { color: var(--t3); }
+.al-br-delta.neg { color: var(--red); }
+.al-br-bar-wrap { flex: 1; height: 4px; background: var(--border); border-radius: 99px; overflow: hidden; }
+.al-br-bar { height: 100%; border-radius: 99px; transition: width .6s ease; }
+.al-br-bar.pos { background: var(--green); }
+.al-br-bar.neu { background: var(--t4); }
+.al-br-bar.neg { background: var(--red); }
+.al-br-micro { flex: 0 0 82px; font-size: 9.5px; color: var(--t3); text-align: right; font-weight: 500; }
+
+/* ── RISCO CARD ──────────────────────────────────────────── */
+.al-rc-title {
+  font-size: 10px; font-weight: 700; color: var(--t3);
+  text-transform: uppercase; letter-spacing: .08em; margin-bottom: 12px;
+}
+.al-rc-checks { margin-top: 12px; display: flex; flex-direction: column; gap: 8px; }
+.al-rc-check {
+  display: flex; align-items: flex-start; gap: 7px;
+  font-size: 11px; color: var(--t2); line-height: 1.45;
+}
+.al-rc-icon { flex-shrink: 0; font-size: 11px; margin-top: 1px; }
+
+/* ── PLANO DE AÇÃO CARD ──────────────────────────────────── */
+.al-ap-title {
+  font-size: 10px; font-weight: 700; color: var(--t3);
+  text-transform: uppercase; letter-spacing: .08em; margin-bottom: 14px;
+}
+.al-ap-row { display: flex; flex-direction: column; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.al-ap-row:last-child { border-bottom: none; }
+.al-ap-label { font-size: 9.5px; color: var(--t3); font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+.al-ap-val { font-size: 13px; font-weight: 700; color: var(--t1); margin-top: 3px; }
+.al-ap-chip {
+  display: inline-block; padding: 2px 8px; border-radius: 99px;
+  background: var(--surface2); border: 1px solid var(--border);
+  font-size: 9.5px; font-weight: 600; color: var(--t2);
+}
+.al-ap-obj { font-size: 11.5px; color: var(--t2); margin-top: 3px; line-height: 1.4; font-style: italic; }
 
 /* ── ALUNO EVO NOTA ─────────────────────────────────────── */
 .aluno-evo-nota { font-size: 11px; font-weight: 600; margin-top: 8px; display: block; }
