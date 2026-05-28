@@ -42,7 +42,9 @@ function _texto(padrao, q) {
     case 'evolucao_positiva':
       return `Evolução positiva detectada: acerto de ${q.acerto}% sugere melhora em relação ao padrão histórico. Intervenções pedagógicas recentes em ${comp} podem estar gerando resultado. Manter acompanhamento para confirmar consolidação do aprendizado.`;
     default:
-      return `Questão com desempenho dentro do esperado: acerto de ${q.acerto}% e discriminante ${q.discriminante}. Distrator ${dist} dentro do padrão. Nenhum sinal de atenção identificado para este item.`;
+      return q.discriminante != null
+        ? `Questão com desempenho dentro do esperado: acerto de ${q.acerto}% e discriminante ${q.discriminante}. Distrator ${dist} dentro do padrão. Nenhum sinal de atenção identificado para este item.`
+        : `Questão com desempenho dentro do esperado: acerto de ${q.acerto}%. Distrator ${dist} dentro do padrão. Nenhum sinal de atenção identificado para este item.`;
   }
 }
 
@@ -80,29 +82,25 @@ function inferirQuestao(q) {
 
   let padrao = 'neutro';
 
-  // Padrão 5: Distrator dominante (alta prioridade, detectar antes)
+  // Padrão 5: Distrator dominante (alta prioridade; só depende de DP)
   if (DP >= THRESHOLDS.distrator.dominante) {
     padrao = 'distrator_dominante';
   }
-  // Padrão 1: Acerto alto + discriminante alto
-  else if (A >= THRESHOLDS.acerto.bom && D >= THRESHOLDS.discriminante.alto) {
-    padrao = 'excelente';
-  }
-  // Padrão 2a: Acerto alto + discriminante bom (fácil mas decente)
-  else if (A >= THRESHOLDS.acerto.facil && D >= THRESHOLDS.discriminante.baixo) {
-    padrao = 'facil_boa_disc';
-  }
-  // Padrão 2b: Acerto alto + discriminante baixo (fácil e fraca)
-  else if (A >= THRESHOLDS.acerto.facil && D < THRESHOLDS.discriminante.baixo) {
-    padrao = 'facil_baixa_disc';
-  }
-  // Padrão 3: Acerto baixo + discriminante alto (boa questão, conteúdo não dominado)
-  else if (A < THRESHOLDS.acerto.baixo && D >= THRESHOLDS.discriminante.alto) {
-    padrao = 'dificil_boa_disc';
-  }
-  // Padrão 4: Acerto baixo + discriminante baixo (questão problemática)
-  else if (A < THRESHOLDS.acerto.baixo && D < THRESHOLDS.discriminante.baixo) {
-    padrao = 'dificil_baixa_disc';
+  // Demais padrões dependem do discriminante. Na Fase 1 (sem folha individual)
+  // D vem null — pular para não disparar falso-positivo, já que null em
+  // comparações numéricas é coagido a 0 em JS.
+  else if (typeof D === 'number') {
+    if (A >= THRESHOLDS.acerto.bom && D >= THRESHOLDS.discriminante.alto) {
+      padrao = 'excelente';
+    } else if (A >= THRESHOLDS.acerto.facil && D >= THRESHOLDS.discriminante.baixo) {
+      padrao = 'facil_boa_disc';
+    } else if (A >= THRESHOLDS.acerto.facil && D < THRESHOLDS.discriminante.baixo) {
+      padrao = 'facil_baixa_disc';
+    } else if (A < THRESHOLDS.acerto.baixo && D >= THRESHOLDS.discriminante.alto) {
+      padrao = 'dificil_boa_disc';
+    } else if (A < THRESHOLDS.acerto.baixo && D < THRESHOLDS.discriminante.baixo) {
+      padrao = 'dificil_baixa_disc';
+    }
   }
 
   return {

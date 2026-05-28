@@ -130,7 +130,8 @@ function _buildSimKpiStrip() {
 
 function _buildSimSignals() {
   const src       = _SIM_Q.length ? _SIM_Q : QUESTOES;
-  const baixaDisc = src.filter(q => q.discriminante < 0.24).length;
+  const temDisc   = src.some(q => typeof q.discriminante === 'number');
+  const baixaDisc = temDisc ? src.filter(q => typeof q.discriminante === 'number' && q.discriminante < 0.24).length : '—';
   const criticas  = src.filter(q => q.status === 'crit').length;
   const distDom   = src.filter(q => q.distPct >= 27).length;
   const faceis    = src.filter(q => q.acerto >= 76).length;
@@ -1655,7 +1656,8 @@ function buildQGrid() {
   const src = _SIM_Q.length ? _SIM_Q : QUESTOES;
   grid.innerHTML = src.map((q, i) => {
     const active = (i === S.selectedQIdx) ? ' active' : '';
-    return `<div class="qcell2 ${q.status}${active}" onclick="selectQ(${i})" title="Q${q.num} — ${q.comp}">
+    const tip = `Q${q.num}${q.comp ? ' — ' + q.comp : ''}`;
+    return `<div class="qcell2 ${q.status}${active}" onclick="selectQ(${i})" title="${tip}">
       <span class="qc2-num">${String(q.num).padStart(2,'0')}</span>
       <span class="qc2-gab">${q.gab}</span>
     </div>`;
@@ -1684,29 +1686,34 @@ function _renderQDetail(q) {
   _setKpi('q-num',    String(q.num).padStart(2, '0'));
   _setKpi('qp-pos',   pos + ' de ' + src.length);
   _setKpi('q-disc',   q.disc);
-  _setKpi('q-comp',   q.comp);
-  _setKpi('q-assunto',q.assunto);
+  _setKpi('q-comp',   q.comp || '—');
+  _setKpi('q-assunto',q.assunto || 'A definir (prova)');
   _setKpi('q-diff',   q.diff);
 
   // Metric boxes
   _setKpi('q-acerto',   q.acerto + '%');
-  _setKpi('q-discrim',  q.discriminante.toFixed(2));
+  _setKpi('q-discrim',  q.discriminante != null ? q.discriminante.toFixed(2) : '—');
   const grau = (1 - q.acerto / 100).toFixed(2);
   _setKpi('q-grau',     grau);
-  _setKpi('q-bisserial',(Math.min(q.discriminante * 1.12, 0.99)).toFixed(2));
+  _setKpi('q-bisserial',q.discriminante != null ? (Math.min(q.discriminante * 1.12, 0.99)).toFixed(2) : '—');
 
   // Semantic tags
   const _tag = (id, lbl, cls) => { const t = el(id); if (t) { t.textContent = lbl; t.className = 'qmb-tag ' + cls; } };
   const acTag = q.acerto >= 70 ? ['Alto', 'pos'] : q.acerto >= 42 ? ['Médio', 'neu'] : ['Baixo', 'neg'];
   _tag('q-acerto-tag',   acTag[0], acTag[1]);
-  const dcTag = q.discriminante >= 0.35 ? ['Alto', 'pos'] : q.discriminante >= 0.25 ? ['Bom', 'pos'] : q.discriminante >= 0.15 ? ['Regular', 'warn'] : ['Fraco', 'neg'];
-  _tag('q-discrim-tag',  dcTag[0], dcTag[1]);
+  if (q.discriminante != null) {
+    const dcTag = q.discriminante >= 0.35 ? ['Alto', 'pos'] : q.discriminante >= 0.25 ? ['Bom', 'pos'] : q.discriminante >= 0.15 ? ['Regular', 'warn'] : ['Fraco', 'neg'];
+    _tag('q-discrim-tag',  dcTag[0], dcTag[1]);
+    const bsF = q.discriminante * 1.12;
+    const bsTag = bsF >= 0.40 ? ['Adequada', 'pos'] : bsF >= 0.25 ? ['Regular', 'warn'] : ['Fraca', 'neg'];
+    _tag('q-bisserial-tag',bsTag[0], bsTag[1]);
+  } else {
+    _tag('q-discrim-tag',   '—', 'neu');
+    _tag('q-bisserial-tag', '—', 'neu');
+  }
   const grauF = parseFloat(grau);
   const grTag = grauF >= 0.65 ? ['Alta', 'neg'] : grauF >= 0.45 ? ['Média', 'warn'] : ['Baixa', 'pos'];
   _tag('q-grau-tag',     grTag[0], grTag[1]);
-  const bsF = q.discriminante * 1.12;
-  const bsTag = bsF >= 0.40 ? ['Adequada', 'pos'] : bsF >= 0.25 ? ['Regular', 'warn'] : ['Fraca', 'neg'];
-  _tag('q-bisserial-tag',bsTag[0], bsTag[1]);
 
   // Status badge
   const statusEl = el('q-status');
@@ -1734,14 +1741,22 @@ function _renderAltBars(q) {
   const container = el('q-alt-bars');
   if (!container) return;
   const letters  = ['A','B','C','D','E'];
-  const remaining = Math.max(0, 100 - q.acerto - q.distPct);
-  const others    = letters.filter(l => l !== q.gab && l !== q.dist);
-  const dist = {};
-  letters.forEach(l => dist[l] = 0);
-  dist[q.gab]  = q.acerto;
-  dist[q.dist] = q.distPct;
-  const perOther = Math.floor(remaining / 3);
-  others.forEach((l, i) => { dist[l] = i === 0 ? remaining - perOther * 2 : perOther; });
+  let dist;
+  if (q.distrib && typeof q.distrib === 'object') {
+    // Distribuição exata vinda do banco (API Python).
+    dist = {};
+    letters.forEach(l => dist[l] = q.distrib[l] ?? 0);
+  } else {
+    // Fallback: síntese a partir de acerto + distPct.
+    const remaining = Math.max(0, 100 - q.acerto - q.distPct);
+    const others    = letters.filter(l => l !== q.gab && l !== q.dist);
+    dist = {};
+    letters.forEach(l => dist[l] = 0);
+    dist[q.gab]  = q.acerto;
+    dist[q.dist] = q.distPct;
+    const perOther = Math.floor(remaining / 3);
+    others.forEach((l, i) => { dist[l] = i === 0 ? remaining - perOther * 2 : perOther; });
+  }
 
   container.innerHTML = letters.map(l => {
     const pct   = dist[l];
@@ -1805,17 +1820,20 @@ function _renderQSidebar(q) {
 }
 
 function _buildHipotese(q) {
+  const temDisc = typeof q.discriminante === 'number';
   if (q.distPct >= 27)
     return `A alternativa ${q.dist} atraiu ${q.distPct}% dos alunos — possível equívoco conceitual ou ambiguidade no enunciado. Recomenda-se analisar o distrator e verificar se a habilidade foi adequadamente trabalhada antes do exame.`;
-  if (q.discriminante < 0.24)
+  if (temDisc && q.discriminante < 0.24)
     return `Discriminante baixo (${q.discriminante.toFixed(2)}) indica que a questão não diferencia alunos de alta e baixa proficiência. Pode refletir ambiguidade no enunciado ou aprendizagem superficial presente em todos os perfis.`;
   if (q.acerto >= 76)
     return `Alta taxa de acerto (${q.acerto}%) sugere habilidade consolidada na rede. Considere elevar o nível de complexidade nas próximas avaliações para medir aprendizagem profunda.`;
   if (q.acerto < 35)
-    return `Acerto muito baixo (${q.acerto}%) indica lacuna crítica em ${q.comp}. Recomenda-se intervenção pedagógica direta com foco nesta habilidade nas próximas semanas.`;
-  if (q.discriminante >= 0.35)
+    return `Acerto muito baixo (${q.acerto}%) indica lacuna crítica${q.comp ? ' em ' + q.comp : ''}. Recomenda-se intervenção pedagógica direta com foco nesta habilidade nas próximas semanas.`;
+  if (temDisc && q.discriminante >= 0.35)
     return `Questão altamente discriminante (${q.discriminante.toFixed(2)}): separa bem os perfis de aprendizagem. Resultado confiável para diagnóstico individual — priorize no acompanhamento de alunos em atenção.`;
-  return `Desempenho dentro do esperado para este nível de habilidade. ${q.acerto}% de acerto com discriminante ${q.discriminante.toFixed(2)} — questão equilibrada para diagnóstico.`;
+  return temDisc
+    ? `Desempenho dentro do esperado para este nível de habilidade. ${q.acerto}% de acerto com discriminante ${q.discriminante.toFixed(2)} — questão equilibrada para diagnóstico.`
+    : `Desempenho dentro do esperado: ${q.acerto}% de acerto. O índice de discriminação (separa alunos por proficiência) estará disponível na Fase 2, com a folha de respostas individual.`;
 }
 
 function _buildRedeCtx(q) {
@@ -1956,10 +1974,11 @@ function _renderDiscDetail(disc, byDisc) {
   _setKpi('disc-detail-name', disc);
   _setKpi('disc-acerto',      d.media.toFixed(1) + '%');
 
-  const avgDiscrim = d.qs.reduce((s, q) => s + q.discriminante, 0) / (d.qs.length || 1);
-  _setKpi('disc-discrim', avgDiscrim.toFixed(2));
+  const discVals = d.qs.filter(q => typeof q.discriminante === 'number');
+  const avgDiscrim = discVals.length ? discVals.reduce((s, q) => s + q.discriminante, 0) / discVals.length : null;
+  _setKpi('disc-discrim', avgDiscrim != null ? avgDiscrim.toFixed(2) : '—');
   const dcTag = el('disc-discrim-tag');
-  if (dcTag) dcTag.textContent = avgDiscrim >= 0.35 ? 'Alto' : avgDiscrim >= 0.25 ? 'Bom' : avgDiscrim >= 0.15 ? 'Regular' : 'Fraco';
+  if (dcTag) dcTag.textContent = avgDiscrim == null ? '—' : avgDiscrim >= 0.35 ? 'Alto' : avgDiscrim >= 0.25 ? 'Bom' : avgDiscrim >= 0.15 ? 'Regular' : 'Fraco';
 
   const diffMap = { 'Fácil': 0.25, 'Médio': 0.50, 'Médio-alto': 0.65, 'Alto': 0.80 };
   const avgDiff = d.qs.reduce((s, q) => s + (diffMap[q.diff] || 0.5), 0) / (d.qs.length || 1);
@@ -2007,14 +2026,14 @@ function _renderDiscDetail(disc, byDisc) {
       return `<div class="disc-q-row" id="${rowId}">
         <div class="disc-q-hd">
           <span class="disc-q-num">Q${String(q.num).padStart(2,'0')}</span>
-          <span class="disc-q-assunto">${q.assunto}</span>
+          <span class="disc-q-assunto">${q.assunto || '—'}</span>
           <span class="disc-q-acerto ${aTag}">${q.acerto}%</span>
         </div>
         <div class="disc-q-status-row"><span class="badge ${statusCls}">${statusLabel}</span></div>
         <div class="disc-q-dados">
           <span>Acerto: <strong>${q.acerto}%</strong></span>
           <span>Vs. rede: <strong>${diffSign}${diffPP} p.p.</strong></span>
-          <span>Disc.: <strong>${q.discriminante.toFixed(2)}</strong></span>
+          <span>Disc.: <strong>${q.discriminante != null ? q.discriminante.toFixed(2) : '—'}</strong></span>
           <span>Distrator: <strong>${q.dist} (${q.distPct}%)</strong></span>
         </div>
         <button class="disc-q-toggle" onclick="toggleDiscConclusion('${rowId}')">
@@ -2860,7 +2879,7 @@ function buildCompTable(escolaKey) {
 }
 
 /* ── BOOTSTRAP ─────────────────────────────────────────────── */
-document.addEventListener('DOMContentLoaded', function () {
+document.addEventListener('DOMContentLoaded', async function () {
   // Ativa listeners nos nav-items
   document.querySelectorAll('.nav-item').forEach(item => {
     item.addEventListener('click', function () {
@@ -2881,6 +2900,19 @@ document.addEventListener('DOMContentLoaded', function () {
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') fecharModal();
   });
+
+  // Hidratação a partir da API Python (Fase 1: questões reais por simulado).
+  // Bloqueia o primeiro render por até ~3s; cai no mock se a API não responder.
+  if (typeof window.bootstrapArco === 'function') {
+    try {
+      await Promise.race([
+        window.bootstrapArco(),
+        new Promise(resolve => setTimeout(resolve, 3000)),
+      ]);
+    } catch (err) {
+      console.warn('[arco] bootstrap erro (seguindo no mock):', err);
+    }
+  }
 
   // Inicia no dashboard
   goTo('dashboard');

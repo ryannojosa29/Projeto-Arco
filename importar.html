@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Importar gabarito — Arco</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="assets/css/tokens.css"/>
+<link rel="stylesheet" href="assets/css/main.css"/>
+<style>
+  body { font-family:'Plus Jakarta Sans',system-ui,sans-serif; background:var(--bg, #f7f7f8); margin:0; padding:32px; color:var(--t1, #1a1a1a); }
+  .wrap { max-width: 780px; margin: 0 auto; }
+  h1 { font-size: 22px; font-weight: 700; margin: 0 0 4px; }
+  h2 { font-size: 15px; font-weight: 700; margin: 0 0 12px; color: var(--t2, #2b2b35); }
+  .sub { color: var(--t4, #6b6b78); font-size: 13px; margin-bottom: 22px; }
+  .card { background:#fff; border:1px solid var(--border, #e6e6ee); border-radius:12px; padding:22px; box-shadow:0 1px 2px rgba(0,0,0,.03); margin-bottom: 18px; }
+  .row { display: grid; gap: 14px; margin-bottom: 14px; }
+  .row.two { grid-template-columns: 1fr 2fr; }
+  label { display:block; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.04em; color:var(--t4,#6b6b78); margin-bottom:5px; }
+  input[type=text], input[type=number], input[type=file] { width:100%; padding:10px 12px; border:1px solid var(--border,#dcdce6); border-radius:8px; font:inherit; background:#fff; box-sizing: border-box; }
+  input[type=file] { padding:8px; }
+  button { background:#E8521A; color:#fff; border:0; padding:11px 18px; border-radius:8px; font:600 14px 'Plus Jakarta Sans'; cursor:pointer; }
+  button.secondary { background:#fff; color:#2b2b35; border:1px solid #dcdce6; }
+  button.danger    { background:#fff; color:#991b1b; border:1px solid #fecaca; }
+  button:disabled  { opacity:.55; cursor:not-allowed; }
+  .out { margin-top: 14px; padding: 12px 14px; border-radius: 10px; font-size: 13px; line-height:1.5; white-space: pre-wrap; }
+  .ok  { background:#ecfdf5; border:1px solid #a7f3d0; color:#065f46; }
+  .err { background:#fef2f2; border:1px solid #fecaca; color:#991b1b; }
+  .info{ background:#eff6ff; border:1px solid #bfdbfe; color:#1e40af; }
+  small { color:var(--t4,#6b6b78); }
+  .back { display:inline-block; margin-bottom:14px; font-size:13px; color:var(--t4); text-decoration:none; }
+  .back:hover { color: #E8521A; }
+  .ciclo-row { display: grid; grid-template-columns: 64px 1fr auto; gap: 14px; align-items: center; padding: 10px 12px; border:1px solid var(--border,#e6e6ee); border-radius:10px; margin-bottom: 8px; background:#fafafb; }
+  .ciclo-num { font-size: 22px; font-weight: 700; color: #E8521A; text-align: center; }
+  .ciclo-meta { font-size:12px; color: var(--t4,#6b6b78); }
+  .ciclo-meta strong { color: var(--t2,#2b2b35); font-weight:600; }
+  .ciclo-actions { display:flex; gap: 8px; }
+  .ciclo-actions button { padding: 7px 12px; font-size: 12px; font-weight: 600; }
+  .empty { color: var(--t4,#6b6b78); font-size: 13px; text-align: center; padding: 16px; border: 1px dashed var(--border,#e6e6ee); border-radius: 10px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html">← voltar ao app</a>
+  <h1>Gerenciar ciclos do simulado</h1>
+  <div class="sub">Importa, substitui e exclui os dados de cada ciclo do simulado (uma planilha de gabarito por ciclo).</div>
+
+  <!-- Importar / atualizar -->
+  <div class="card">
+    <h2>Importar ou atualizar dados de um ciclo</h2>
+    <form id="form-import">
+      <div class="row two">
+        <div>
+          <label for="f-ciclo">Ciclo</label>
+          <input id="f-ciclo" name="ciclo" type="number" min="1" max="99" value="1" required/>
+          <small>1 = 1º simulado, 2 = 2º, etc.</small>
+        </div>
+        <div>
+          <label for="f-arquivo">Planilha (.xlsx)</label>
+          <input id="f-arquivo" name="arquivo" type="file" accept=".xlsx" required/>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="f-nome">Nome (opcional)</label>
+          <input id="f-nome" name="nome" type="text" placeholder='ex: "1º Simulado ENEM 2025" — se vazio, usa "Nº Simulado"'/>
+        </div>
+      </div>
+      <button id="btn-go" type="submit">Importar</button>
+      <small id="warn-replace" style="margin-left:12px; color:#92400e; display:none">⚠️ esse ciclo já tem dados — vai substituí-los.</small>
+    </form>
+    <div id="out" class="out info" style="display:none"></div>
+  </div>
+
+  <!-- Lista de ciclos -->
+  <div class="card">
+    <h2>Ciclos carregados</h2>
+    <div id="lista">
+      <div class="empty">Carregando…</div>
+    </div>
+  </div>
+</div>
+
+<script src="assets/js/config.js"></script>
+<script>
+(function () {
+  const BASE = (window.ARCO && window.ARCO.API_BASE || '').replace(/\/$/, '');
+  const form = document.getElementById('form-import');
+  const btn  = document.getElementById('btn-go');
+  const out  = document.getElementById('out');
+  const lista= document.getElementById('lista');
+  const cicloIn = document.getElementById('f-ciclo');
+  const warn = document.getElementById('warn-replace');
+
+  let ciclosExistentes = []; // [{chave, nome, ordem, n_questoes, criado_em, ...}]
+
+  function show(kind, text) {
+    out.style.display = 'block';
+    out.className = 'out ' + kind;
+    out.textContent = text;
+  }
+  function fmtData(iso) {
+    if (!iso) return '—';
+    try { return new Date(iso).toLocaleString('pt-BR', {dateStyle:'short', timeStyle:'short'}); }
+    catch { return iso; }
+  }
+  function checaSubstituicao() {
+    const ciclo = parseInt(cicloIn.value, 10);
+    const existe = ciclosExistentes.some(c => c.ordem === ciclo);
+    warn.style.display = existe ? '' : 'none';
+  }
+  cicloIn.addEventListener('input', checaSubstituicao);
+
+  async function carregarLista() {
+    lista.innerHTML = '<div class="empty">Carregando…</div>';
+    try {
+      const res = await fetch(`${BASE}/api/simulados`);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      ciclosExistentes = await res.json();
+    } catch (err) {
+      lista.innerHTML = `<div class="empty err">Falha ao buscar ciclos: ${err.message}. A API está rodando em ${BASE}?</div>`;
+      return;
+    }
+    if (!ciclosExistentes.length) {
+      lista.innerHTML = '<div class="empty">Nenhum ciclo carregado ainda.</div>';
+      checaSubstituicao();
+      return;
+    }
+    lista.innerHTML = ciclosExistentes.map(c => `
+      <div class="ciclo-row" data-ordem="${c.ordem}" data-chave="${c.chave}">
+        <div class="ciclo-num">${c.ordem}º</div>
+        <div>
+          <div><strong>${c.nome}</strong></div>
+          <div class="ciclo-meta">
+            ${c.n_questoes} questões · ${c.referencia || '—'} · criado em ${fmtData(c.criado_em)}
+          </div>
+        </div>
+        <div class="ciclo-actions">
+          <button type="button" class="secondary" data-act="substituir">Substituir dados</button>
+          <button type="button" class="danger"    data-act="excluir">Excluir</button>
+        </div>
+      </div>`).join('');
+    checaSubstituicao();
+  }
+
+  lista.addEventListener('click', async (ev) => {
+    const btnEl = ev.target.closest('button[data-act]');
+    if (!btnEl) return;
+    const row = btnEl.closest('.ciclo-row');
+    const ordem = parseInt(row.dataset.ordem, 10);
+    const chave = row.dataset.chave;
+    const act = btnEl.dataset.act;
+    if (act === 'substituir') {
+      cicloIn.value = ordem;
+      checaSubstituicao();
+      window.scrollTo({top: 0, behavior:'smooth'});
+      cicloIn.focus();
+    } else if (act === 'excluir') {
+      const nome = ciclosExistentes.find(c => c.chave === chave)?.nome || chave;
+      if (!confirm(`Excluir o ciclo "${nome}" e TODOS os seus dados?\n\nEssa ação não pode ser desfeita.`)) return;
+      btnEl.disabled = true;
+      try {
+        const res = await fetch(`${BASE}/api/simulados/${encodeURIComponent(chave)}`, { method: 'DELETE' });
+        if (!res.ok && res.status !== 204) {
+          const j = await res.json().catch(() => ({}));
+          throw new Error(j.detail || `HTTP ${res.status}`);
+        }
+        show('ok', `Ciclo "${nome}" excluído.`);
+        await carregarLista();
+      } catch (err) {
+        show('err', `Falha ao excluir: ${err.message}`);
+      } finally {
+        btnEl.disabled = false;
+      }
+    }
+  });
+
+  form.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    btn.disabled = true; show('info', 'Enviando…');
+    const fd = new FormData(form);
+    try {
+      const res = await fetch(`${BASE}/api/importacoes`, { method: 'POST', body: fd });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        show('err', `Erro ${res.status}: ${json.detail || res.statusText}`);
+      } else {
+        const msg = `✓ ${json.linhas} questões importadas em ${json.simulado.nome} (ciclo ${json.simulado.ordem}).\n`
+                  + (json.erros && json.erros.length ? `Avisos:\n  - ${json.erros.join('\n  - ')}` : 'Sem avisos.');
+        show('ok', msg);
+        await carregarLista();
+      }
+    } catch (err) {
+      show('err', `Falha na chamada: ${err.message}\n\nA API Python está rodando em ${BASE}?`);
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  carregarLista();
+})();
+</script>
+</body>
+</html>

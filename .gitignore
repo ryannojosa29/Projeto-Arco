@@ -1,2 +1,12 @@
 .env
 node_modules/
+
+# Python / backend
+.venv/
+__pycache__/
+*.pyc
+backend/.venv/
+
+# Supabase CLI
+supabase/.temp/
+supabase/.branches/
