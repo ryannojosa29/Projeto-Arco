@@ -41,10 +41,17 @@ function renderSimDistChart(q) {
   const alts = ['A', 'B', 'C', 'D', 'E'];
   const gabIdx = alts.indexOf(q.gab);
   const distIdx = alts.indexOf(q.dist);
-  const base = Math.max(0, Math.round((100 - q.acerto - q.distPct - 8) / 3));
-  const vals = [base, base + 2, base, base + 1, base + 1];
-  vals[gabIdx]  = q.acerto;
-  vals[distIdx] = q.distPct;
+  let vals;
+  if (q.distrib && typeof q.distrib === 'object') {
+    // Distribuição exata vinda do banco (API Python).
+    vals = alts.map(l => q.distrib[l] ?? 0);
+  } else {
+    // Fallback: síntese a partir de acerto + distPct.
+    const base = Math.max(0, Math.round((100 - q.acerto - q.distPct - 8) / 3));
+    vals = [base, base + 2, base, base + 1, base + 1];
+    vals[gabIdx]  = q.acerto;
+    vals[distIdx] = q.distPct;
+  }
 
   const colors = alts.map((_, i) =>
     i === gabIdx  ? C.green :

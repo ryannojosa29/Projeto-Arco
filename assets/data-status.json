@@ -1,0 +1,70 @@
+{
+  "_doc": "Fonte de verdade do que é real vs mockado. Dirige o runtime (selo no modo demo, bloqueio no modo official) e gera docs/ROADMAP-DEMOCK.md. Para 'des-mockar' um domínio, mude seu status para 'real'.",
+  "fases": {
+    "1": "Gabarito agregado — questões objetivas + KPIs do simulado",
+    "2": "Folha de respostas individual — aluno, discriminante, ranking, turma, presença",
+    "3": "Prova — competência, assunto, professor autor, resolução",
+    "4": "Redação — 5 competências (0–1000)",
+    "5": "Multi-escola — rede, ranking de escolas"
+  },
+  "dominios": {
+    "simulados": {
+      "label": "Análise de questões + KPIs do simulado",
+      "nav": true,
+      "status": "real",
+      "fase": 1
+    },
+    "dashboard": {
+      "label": "Home / visão geral",
+      "nav": true,
+      "status": "partial",
+      "fase": 5,
+      "nota": "mistura KPIs reais do simulado com agregados de rede ainda mockados"
+    },
+    "alunos": {
+      "label": "Perfil, evolução e ranking de alunos",
+      "nav": true,
+      "status": "mock",
+      "fase": 2
+    },
+    "professores": {
+      "label": "Auditoria pedagógica do professor",
+      "nav": true,
+      "status": "mock",
+      "fase": 3
+    },
+    "escolas": {
+      "label": "Visão por escola, rede e ranking",
+      "nav": true,
+      "status": "mock",
+      "fase": 5
+    },
+    "questao.discriminante": {
+      "label": "Discriminante / ponto-biserial / índice de qualidade",
+      "nav": false,
+      "status": "mock",
+      "fase": 2,
+      "nota": "exige resposta individual para correlacionar acerto com nota total"
+    },
+    "questao.competencia": {
+      "label": "Competência e assunto de cada questão",
+      "nav": false,
+      "status": "mock",
+      "fase": 3,
+      "nota": "vem da importação da prova"
+    },
+    "simulado.evolucao": {
+      "label": "Séries de evolução entre simulados",
+      "nav": false,
+      "status": "mock",
+      "fase": 1,
+      "nota": "vira real ao acumular vários ciclos importados"
+    },
+    "redacao": {
+      "label": "Redação (5 competências)",
+      "nav": false,
+      "status": "mock",
+      "fase": 4
+    }
+  }
+}

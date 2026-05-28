@@ -163,6 +163,7 @@ A documentação fica na pasta `docs/`. Leitura recomendada:
 | `06-questoes-abertas.md` | Decisões pendentes e decisões tomadas |
 | `07-glossario.md` | Vocabulário padrão do produto |
 | `08-roadmap-e-proximos-passos.md` | Estado atual, próximas etapas, prioridades |
+| `09-pipeline-de-ingestao-de-provas.md` | Pipeline `.docx` → metadados pedagógicos (parser + agentes de IA) |
 
 ---
 

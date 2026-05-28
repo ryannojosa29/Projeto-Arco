@@ -1,0 +1,61 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Servir frontend (Arco)",
+      "type": "shell",
+      "command": "pkill -f 'http.server 8000' 2>/dev/null; python3 -m http.server 8000",
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "arco"
+      },
+      "problemMatcher": [],
+      "runOptions": {
+        "instanceLimit": 1
+      },
+      "detail": "Inicia um servidor HTTP estático em http://localhost:8000"
+    },
+    {
+      "label": "Subir backend (FastAPI)",
+      "type": "shell",
+      "command": "source .venv/bin/activate && pkill -f 'uvicorn app.main:app' 2>/dev/null; uvicorn app.main:app --port 8001 --reload",
+      "options": {
+        "cwd": "${workspaceFolder}/backend"
+      },
+      "isBackground": true,
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "arco"
+      },
+      "problemMatcher": [],
+      "runOptions": {
+        "instanceLimit": 1
+      },
+      "detail": "Sobe a API Python em http://localhost:8001 (precisa de backend/.venv já criado)"
+    },
+    {
+      "label": "Arco — subir front + back",
+      "dependsOn": ["Servir frontend (Arco)", "Subir backend (FastAPI)"],
+      "dependsOrder": "parallel",
+      "problemMatcher": [],
+      "detail": "Sobe o front (:8000) e a API (:8001) juntos."
+    },
+    {
+      "label": "Supabase — rodar migrations (db push)",
+      "type": "shell",
+      "command": "supabase db push",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated"
+      },
+      "problemMatcher": [],
+      "detail": "Aplica as migrations pendentes de supabase/migrations/ no projeto Supabase linkado. Pré-requisito 1x: 'supabase login' e 'supabase link --project-ref lahpzvkiesemyyzbmayr'."
+    }
+  ]
+}
