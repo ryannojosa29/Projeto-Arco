@@ -41,10 +41,6 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
       Professores
     </div>
-    <div class="nav-item sb-item" data-page="devolutivas">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-      Devolutivas
-    </div>
   </nav>
   <div class="sb-slogan">Transformando dados educacionais em <span>decisões pedagógicas.</span></div>
   <div class="sb-user">
@@ -897,7 +893,7 @@
 <div class="page hidden" id="page-professores">
   <div class="ph">
     <div class="ph-top" style="margin-bottom:0">
-      <div><div class="ph-title">Professores</div><div class="ph-sub">Auditoria pedagógica das questões produzidas e impacto no aprendizado dos alunos.</div></div>
+      <div><div class="ph-title">Professores</div><div class="ph-sub">O que os itens de cada frente revelam sobre aprendizagem dos alunos e qualidade diagnóstica do conjunto.</div></div>
       <div class="prof-filtros-wrap">
         <div class="fsel">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
@@ -916,54 +912,111 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="12" height="12"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
           <div><div class="f-label">Componente</div><select class="fsel-input" id="sel-prof-comp" onchange="setProfComp(this.value)"><option value="todas">Todos</option></select></div>
         </div>
+        <button class="btn-export" onclick="alert('Exportando relatório da frente…')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="13" height="13"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Exportar
+        </button>
       </div>
     </div>
     <div style="display:flex;gap:0;margin-top:14px">
-      <div class="tab prof-atab active" data-tab="visao-geral" onclick="switchProfTab('visao-geral')">Visão geral</div>
-      <div class="tab prof-atab" data-tab="questoes" onclick="switchProfTab('questoes')">Questões</div>
+      <div class="tab prof-atab active" data-tab="painel"       onclick="switchProfTab('painel')">Painel da frente</div>
+      <div class="tab prof-atab"        data-tab="itens"        onclick="switchProfTab('itens')">Itens e evidências</div>
+      <div class="tab prof-atab"        data-tab="aprendizagem" onclick="switchProfTab('aprendizagem')">Aprendizagem</div>
+      <div class="tab prof-atab"        data-tab="devolutiva"   onclick="switchProfTab('devolutiva')">Devolutiva</div>
     </div>
   </div>
   <div class="pb" style="overflow-y:auto">
 
-    <!-- TAB: VISÃO GERAL -->
-    <div class="prof-tab-content" id="ptab-visao-geral">
-
-      <!-- Hero do professor -->
-      <div class="card mb12" id="prof-hero-card"></div>
-
-      <!-- 5 KPIs -->
-      <div class="g1 g5 mb12">
-        <div class="kpi"><div class="kpi-label">Índice de qualidade</div><div class="kpi-val" id="prof-kpi-iq">—</div><div class="kpi-note" id="prof-kpi-iq-note">Escala 0–100</div></div>
-        <div class="kpi"><div class="kpi-label">Acerto médio</div><div class="kpi-val" id="prof-kpi-acerto">—</div><div class="kpi-note">Nas questões</div></div>
-        <div class="kpi"><div class="kpi-label">Questões</div><div class="kpi-val" id="prof-kpi-nqs">—</div><div class="kpi-note" id="prof-kpi-nqs-note">Neste período</div></div>
-        <div class="kpi"><div class="kpi-label">Discriminante</div><div class="kpi-val" id="prof-kpi-disc">—</div><div class="kpi-note">Médio</div></div>
-        <div class="kpi"><div class="kpi-label">Cobertura</div><div class="kpi-val" id="prof-kpi-cobertura">—</div><div class="kpi-note">Componentes cobertos</div></div>
+    <!-- ══ TAB 1: PAINEL DA FRENTE ══ -->
+    <div class="prof-tab-content" id="ptab-painel">
+      <div class="card prof-hero-v2 mb12" id="prof-hero-v2"></div>
+      <div class="g1 g6 mb12">
+        <div class="kpi"><div class="kpi-label">Questões analisadas</div><div class="kpi-val" id="pkpi-nqs">—</div><div class="kpi-note" id="pkpi-nqs-note">—</div></div>
+        <div class="kpi"><div class="kpi-label">Acerto médio</div><div class="kpi-val" id="pkpi-acerto">—</div><div class="kpi-note" id="pkpi-acerto-note">—</div></div>
+        <div class="kpi"><div class="kpi-label">Evolução</div><div class="kpi-val" id="pkpi-evo">—</div><div class="kpi-note">Sim 1 → Sim 5</div></div>
+        <div class="kpi"><div class="kpi-label">Discriminante médio</div><div class="kpi-val" id="pkpi-disc">—</div><div class="kpi-note" id="pkpi-disc-note">—</div></div>
+        <div class="kpi"><div class="kpi-label">Distratores funcionais</div><div class="kpi-val" id="pkpi-dist">—</div><div class="kpi-note">15–35% absorção</div></div>
+        <div class="kpi"><div class="kpi-label">Revisão sugerida</div><div class="kpi-val" id="pkpi-revisao">—</div><div class="kpi-note" id="pkpi-revisao-note">—</div></div>
       </div>
-
-      <!-- Diagnóstico -->
-      <div class="card mb12" id="prof-diag-card"></div>
-
-      <!-- Gráficos -->
-      <div class="g1 g3 mb12">
-        <div class="card"><div class="card-title mb8">Evolução do índice de qualidade</div><div id="chart-prof-evo-iq" style="height:180px"></div></div>
-        <div class="card"><div class="card-title mb8">Distribuição por dificuldade</div><div id="chart-prof-dif-dist" style="height:180px"></div></div>
-        <div class="card"><div class="card-title mb8">Acerto por questão</div><div id="chart-prof-acerto-qs" style="height:180px"></div></div>
+      <div class="card mb12" id="prof-leitura-exec"></div>
+      <div class="card mb12">
+        <div class="prof-mapa-hd">
+          <div class="card-title">Mapa diagnóstico dos itens</div>
+          <div class="prof-mapa-legend2">
+            <span class="pmleg pmleg-ideal">Zona ideal</span>
+            <span class="pmleg pmleg-dif">Difícil + diagnóstico</span>
+            <span class="pmleg pmleg-info">Pouco informativo</span>
+            <span class="pmleg pmleg-rev">Revisão técnica</span>
+          </div>
+        </div>
+        <div class="prof-mapa-zonas-v2">
+          <span class="pmz pmz-info">↖ Fácil e pouco informativo</span>
+          <span class="pmz pmz-ideal">↗ Zona ideal diagnóstica</span>
+          <span class="pmz pmz-rev">↙ Revisão técnica sugerida</span>
+          <span class="pmz pmz-dif">↘ Difícil e diagnóstico</span>
+        </div>
+        <div id="chart-prof-mapa-v2" style="height:300px"></div>
       </div>
-
-      <!-- Sinais + Recomendação -->
-      <div class="g1 g2 mb12">
-        <div class="card" id="prof-sinais-card"></div>
-        <div class="card" id="prof-rec-card"></div>
-      </div>
-
+      <div class="card" id="prof-sinais-v2"></div>
     </div>
 
-    <!-- TAB: QUESTÕES -->
-    <div class="prof-tab-content hidden" id="ptab-questoes">
+    <!-- ══ TAB 2: ITENS E EVIDÊNCIAS ══ -->
+    <div class="prof-tab-content hidden" id="ptab-itens">
+      <div class="g1 g4 mb12" id="prof-itens-kpis"></div>
+      <div class="g1 g2 mb12">
+        <div class="card">
+          <div class="card-title mb8">Arquitetura do conjunto — dificuldade × qualidade</div>
+          <div id="chart-prof-arq" style="height:220px"></div>
+        </div>
+        <div class="card">
+          <div class="card-title mb8">Distratores em funcionamento</div>
+          <div id="chart-prof-dist-v2" style="height:220px"></div>
+        </div>
+      </div>
+      <div class="prof-q-filtros mb10">
+        <span class="prof-q-filtro-lbl">Filtrar por qualidade:</span>
+        <button class="prof-q-ftag active" onclick="setProfStatus('todos');document.querySelectorAll('.prof-q-ftag').forEach(b=>b.classList.remove('active'));this.classList.add('active')">Todos</button>
+        <button class="prof-q-ftag" onclick="setProfStatus('excelente');document.querySelectorAll('.prof-q-ftag').forEach(b=>b.classList.remove('active'));this.classList.add('active')">Excelente</button>
+        <button class="prof-q-ftag" onclick="setProfStatus('boa');document.querySelectorAll('.prof-q-ftag').forEach(b=>b.classList.remove('active'));this.classList.add('active')">Boa</button>
+        <button class="prof-q-ftag" onclick="setProfStatus('atencao');document.querySelectorAll('.prof-q-ftag').forEach(b=>b.classList.remove('active'));this.classList.add('active')">Atenção</button>
+        <button class="prof-q-ftag" onclick="setProfStatus('revisao');document.querySelectorAll('.prof-q-ftag').forEach(b=>b.classList.remove('active'));this.classList.add('active')">Revisão sugerida</button>
+      </div>
       <div class="prof-q-layout">
         <div class="prof-q-lista" id="prof-q-lista"></div>
-        <div class="prof-q-detalhe card" id="prof-q-detalhe"><div class="prof-q-detalhe-empty">Selecione uma questão para ver a análise detalhada</div></div>
+        <div class="prof-q-detalhe card" id="prof-q-detalhe"><div class="prof-q-detalhe-empty">Selecione um item para ver a análise detalhada</div></div>
       </div>
+    </div>
+
+    <!-- ══ TAB 3: APRENDIZAGEM ══ -->
+    <div class="prof-tab-content hidden" id="ptab-aprendizagem">
+      <div class="g1 g5 mb12">
+        <div class="kpi"><div class="kpi-label">Acerto médio</div><div class="kpi-val" id="pal-kpi-acerto">—</div><div class="kpi-note" id="pal-kpi-acerto-note">—</div></div>
+        <div class="kpi"><div class="kpi-label">Evolução</div><div class="kpi-val" id="pal-kpi-evo">—</div><div class="kpi-note">Sim 1 → Sim 5</div></div>
+        <div class="kpi"><div class="kpi-label">Melhor componente</div><div class="kpi-val" id="pal-kpi-melhor">—</div><div class="kpi-note" id="pal-kpi-melhor-note">—</div></div>
+        <div class="kpi"><div class="kpi-label">Componente fragilizado</div><div class="kpi-val" id="pal-kpi-fraco">—</div><div class="kpi-note" id="pal-kpi-fraco-note">—</div></div>
+        <div class="kpi"><div class="kpi-label">Itens diagnósticos</div><div class="kpi-val" id="pal-kpi-diag">—</div><div class="kpi-note">discriminante ≥ 0,28</div></div>
+      </div>
+      <div class="card mb12">
+        <div class="card-title mb4">Evolução da frente nos simulados</div>
+        <div class="prof-chart-note mb6" id="pal-evo-note"></div>
+        <div id="chart-prof-frente-evo" style="height:200px"></div>
+      </div>
+      <div class="g1 g2 mb12">
+        <div class="card">
+          <div class="card-title mb8">Mapa de domínio por componente</div>
+          <div id="chart-prof-assuntos" style="height:220px"></div>
+        </div>
+        <div class="card">
+          <div class="card-title mb4">Distribuição de domínio</div>
+          <div id="chart-prof-faixas" style="height:180px"></div>
+          <div class="prof-faixas-nota" id="prof-faixas-nota"></div>
+        </div>
+      </div>
+      <div class="g1 g2 mb12">
+        <div class="card" id="prof-hipoteses-card"></div>
+        <div class="card" id="prof-acoes-card"></div>
+      </div>
+      <div class="card mb12" id="prof-impacto-card"></div>
     </div>
 
   </div>

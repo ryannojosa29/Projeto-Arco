@@ -493,6 +493,52 @@ function renderProfEvoIqChart(evoQI, tend) {
   );
 }
 
+function renderProfScatterChart(qs) {
+  if (!el('chart-prof-scatter')) return;
+  if (!qs.length) { Plotly.purge('chart-prof-scatter'); return; }
+  const efiColor = q => q.efi >= 85 ? C.green : q.efi >= 70 ? C.blue : q.efi >= 55 ? C.amber : C.red;
+  Plotly.react('chart-prof-scatter',
+    [{ type:'scatter', mode:'markers',
+       x: qs.map(q => q.acerto),
+       y: qs.map(q => q.discriminante),
+       text: qs.map(q => `S${q.sim}·Q${q.num}<br>${q.assunto}<br>EFI: ${q.efi}`),
+       hoverinfo: 'text',
+       marker:{ color: qs.map(efiColor), size: 8, opacity: 0.85 },
+    }],
+    { ...CT, margin:{ t:6, r:10, b:32, l:42 },
+      xaxis:{ title:'Acerto (%)', ticksuffix:'%', tickfont:{size:9}, gridcolor: C.border, range:[0,100] },
+      yaxis:{ title:'Discriminante', tickfont:{size:9}, gridcolor: C.border },
+      shapes:[
+        { type:'rect', x0:30, x1:70, y0:0, y1:1, xref:'x', yref:'paper', fillcolor:'rgba(16,185,129,0.05)', line:{width:0} },
+        { type:'line', x0:0, x1:100, y0:0.28, y1:0.28, xref:'x', yref:'y', line:{ color:C.slate, width:1, dash:'dot' } },
+      ],
+    }, CFG
+  );
+}
+
+function renderProfEfiDistChart(qs) {
+  if (!el('chart-prof-efi-dist')) return;
+  if (!qs.length) { Plotly.purge('chart-prof-efi-dist'); return; }
+  const cats   = ['Excelente\n(≥85)', 'Boa\n(70–84)', 'Atenção\n(55–69)', 'Revisão\n(<55)'];
+  const counts = [
+    qs.filter(q => q.efi >= 85).length,
+    qs.filter(q => q.efi >= 70 && q.efi < 85).length,
+    qs.filter(q => q.efi >= 55 && q.efi < 70).length,
+    qs.filter(q => q.efi < 55).length,
+  ];
+  const colors = [C.green, C.blue, C.amber, C.red];
+  Plotly.react('chart-prof-efi-dist',
+    [{ type:'bar', x: cats, y: counts,
+       marker:{ color: colors, opacity: 0.85 },
+       text: counts.map(c => c > 0 ? c : ''), textposition:'outside',
+    }],
+    { ...CT, margin:{ t:6, r:10, b:46, l:30 },
+      xaxis:{ tickfont:{size:9} },
+      yaxis:{ tickfont:{size:9}, gridcolor: C.border, dtick:1 },
+    }, CFG
+  );
+}
+
 function renderProfDifDistChart(qs) {
   if (!el('chart-prof-dif-dist')) return;
   const diffs  = ['Fácil','Médio','Médio-alto','Alto'];
@@ -527,6 +573,230 @@ function renderProfAcertoQsChart(qs) {
         { type:'rect', x0:-0.5, x1:vals.length-0.5, y0:30, y1:70,
           fillcolor:'rgba(16,185,129,0.06)', line:{width:0} },
       ],
+    }, CFG
+  );
+}
+
+/* ── PROFESSORES — gráficos das 3 abas ── */
+function renderProfMapaChart(qs) {
+  if (!el('chart-prof-mapa')) return;
+  if (!qs.length) { Plotly.purge('chart-prof-mapa'); return; }
+  const efiColor = q => q.efi >= 85 ? C.green : q.efi >= 70 ? C.blue : q.efi >= 55 ? C.amber : C.red;
+  Plotly.react('chart-prof-mapa',
+    [{ type:'scatter', mode:'markers',
+       x: qs.map(q => q.acerto),
+       y: qs.map(q => q.discriminante),
+       text: qs.map(q => `S${q.sim}·Q${q.num}<br>${q.assunto}<br>EFI ${q.efi} · Acerto ${q.acerto}%`),
+       hoverinfo:'text',
+       marker:{ color: qs.map(efiColor), size:9, opacity:0.88, line:{ color:'rgba(255,255,255,0.8)', width:1.5 } },
+    }],
+    { ...CT, margin:{ t:6, r:10, b:36, l:46 },
+      xaxis:{ title:'Acerto (%)', ticksuffix:'%', tickfont:{size:9}, gridcolor:C.border, range:[0,100] },
+      yaxis:{ title:'Discriminante', tickfont:{size:9}, gridcolor:C.border },
+      shapes:[
+        { type:'rect',  x0:30, x1:70, y0:0.28, y1:1,   xref:'x', yref:'y',      fillcolor:'rgba(16,185,129,0.06)', line:{width:0} },
+        { type:'line',  x0:0,  x1:100, y0:0.28, y1:0.28, xref:'x', yref:'y',    line:{ color:C.slate, width:1, dash:'dot' } },
+        { type:'line',  x0:30, x1:30, y0:0, y1:1, xref:'x', yref:'paper', line:{ color:C.slate, width:1, dash:'dot' } },
+        { type:'line',  x0:70, x1:70, y0:0, y1:1, xref:'x', yref:'paper', line:{ color:C.slate, width:1, dash:'dot' } },
+      ],
+    }, CFG
+  );
+}
+
+function renderProfEfiDonutChart(qs) {
+  if (!el('chart-prof-efi-donut')) return;
+  if (!qs.length) { Plotly.purge('chart-prof-efi-donut'); return; }
+  const values = [
+    qs.filter(q => q.efi >= 85).length,
+    qs.filter(q => q.efi >= 70 && q.efi < 85).length,
+    qs.filter(q => q.efi >= 55 && q.efi < 70).length,
+    qs.filter(q => q.efi < 55).length,
+  ];
+  Plotly.react('chart-prof-efi-donut',
+    [{ type:'pie', values,
+       labels:['Excelente (≥85)', 'Boa (70–84)', 'Atenção (55–69)', 'Revisão (<55)'],
+       marker:{ colors:[C.green, C.blue, C.amber, C.red] },
+       hole:.52, textinfo:'value', textfont:{size:10},
+       hoverinfo:'label+percent', sort:false,
+    }],
+    { ...CT, margin:{ t:4, r:4, b:4, l:4 }, showlegend:true,
+      legend:{ font:{size:8.5}, orientation:'v', x:1.02, y:.5 },
+    }, CFG
+  );
+}
+
+function renderProfFrenteEvoChart(evoAcerto, redeAcerto, tend) {
+  if (!el('chart-prof-frente-evo')) return;
+  const lineColor = tend === 'up' ? C.green : tend === 'down' ? C.red : C.orange;
+  Plotly.react('chart-prof-frente-evo',
+    [{ type:'scatter', mode:'lines+markers', name:'Frente',
+       x: SIM_LABELS_CURTOS, y: evoAcerto,
+       line:{ color:lineColor, width:2.5 }, marker:{ size:5 },
+    },
+    { type:'scatter', mode:'lines', name:'Média rede',
+      x: SIM_LABELS_CURTOS, y: redeAcerto,
+      line:{ color:C.slate, width:1.5, dash:'dot' },
+    }],
+    { ...CT, margin:{ t:24, r:10, b:32, l:42 },
+      xaxis:{ tickfont:{size:9} },
+      yaxis:{ ticksuffix:'%', range:[0,100], tickfont:{size:9}, gridcolor:C.border },
+      legend:{ font:{size:9}, orientation:'h', x:0, y:1.15 },
+    }, CFG
+  );
+}
+
+function renderProfAssuntosChart(assuntos) {
+  if (!el('chart-prof-assuntos')) return;
+  if (!assuntos.length) { Plotly.purge('chart-prof-assuntos'); return; }
+  const vals   = assuntos.map(a => a.acertoMedio);
+  const labels = assuntos.map(a => a.comp);
+  const colors = vals.map(v => v >= 60 ? C.green : v >= 40 ? C.blue : C.red);
+  Plotly.react('chart-prof-assuntos',
+    [{ type:'bar', orientation:'h',
+       x: vals, y: labels,
+       marker:{ color:colors, opacity:0.85 },
+       text: vals.map(v => v + '%'), textposition:'outside',
+    }],
+    { ...CT, margin:{ t:6, r:44, b:28, l:110 },
+      xaxis:{ ticksuffix:'%', range:[0,110], tickfont:{size:9}, gridcolor:C.border },
+      yaxis:{ tickfont:{size:9} },
+      shapes:[
+        { type:'line', x0:40, x1:40, y0:0, y1:1, xref:'x', yref:'paper', line:{ color:C.slate, width:1, dash:'dot' } },
+      ],
+    }, CFG
+  );
+}
+
+/* ── PROFESSORES v2 — novos gráficos ─────────────────────── */
+
+function renderProfMapaV2Chart(qs) {
+  if (!el('chart-prof-mapa-v2')) return;
+  if (!qs.length) { Plotly.purge('chart-prof-mapa-v2'); return; }
+
+  const zoneColor = q => {
+    if (q.acerto >= 40 && q.acerto <= 75 && q.discriminante >= 0.28) return C.green;
+    if (q.acerto < 40 && q.discriminante >= 0.28) return C.amber;
+    if (q.acerto > 75 && q.discriminante < 0.28) return C.slate;
+    return C.red;
+  };
+
+  Plotly.react('chart-prof-mapa-v2',
+    [{
+      type: 'scatter', mode: 'markers+text',
+      x: qs.map(q => q.acerto),
+      y: qs.map(q => q.discriminante),
+      text: qs.map(q => `S${q.sim}·Q${q.num}`),
+      textposition: 'top center',
+      textfont: { size: 8, color: '#64748b' },
+      marker: {
+        color: qs.map(zoneColor),
+        size: qs.map(q => 8 + q.distPct / 8),
+        opacity: 0.85,
+        line: { color: '#fff', width: 1.5 },
+      },
+      hovertemplate: '<b>%{text}</b><br>Acerto: %{x}%<br>Disc: %{y:.2f}<extra></extra>',
+    }],
+    {
+      ...CT,
+      margin: { t: 10, r: 16, b: 40, l: 44 },
+      xaxis: { title: { text: 'Acerto (%)', font: { size: 10 } }, range: [0, 105], ticksuffix: '%', tickfont: { size: 9 }, gridcolor: C.border },
+      yaxis: { title: { text: 'Discriminante', font: { size: 10 } }, range: [0, 0.6], tickfont: { size: 9 }, gridcolor: C.border },
+      shapes: [
+        { type:'rect', x0:40, x1:75, y0:0.28, y1:0.6, xref:'x', yref:'y', fillcolor:'rgba(22,163,74,.07)', line:{color:'rgba(22,163,74,.25)', width:1} },
+        { type:'line', x0:40, x1:40, y0:0, y1:0.6, xref:'x', yref:'y', line:{color:C.slate, width:1, dash:'dot'} },
+        { type:'line', x0:75, x1:75, y0:0, y1:0.6, xref:'x', yref:'y', line:{color:C.slate, width:1, dash:'dot'} },
+        { type:'line', x0:0, x1:105, y0:0.28, y1:0.28, xref:'x', yref:'y', line:{color:C.slate, width:1, dash:'dot'} },
+      ],
+    }, CFG
+  );
+}
+
+function renderProfArqChart(qs) {
+  if (!el('chart-prof-arq')) return;
+  if (!qs.length) { Plotly.purge('chart-prof-arq'); return; }
+
+  const diffs = ['Fácil', 'Médio', 'Médio-alto', 'Alto'];
+  const qualidades = ['excelente', 'boa', 'atencao', 'revisao'];
+  const qColors = { excelente: C.green, boa: C.blue, atencao: C.amber, revisao: C.red };
+  const qLabels = { excelente: 'Excelente', boa: 'Boa', atencao: 'Atenção', revisao: 'Revisão' };
+
+  const traces = qualidades.map(q => ({
+    type: 'bar', name: qLabels[q],
+    x: diffs,
+    y: diffs.map(d => qs.filter(i => i.diff === d && i.status === q).length),
+    marker: { color: qColors[q], opacity: 0.85 },
+  }));
+
+  Plotly.react('chart-prof-arq', traces,
+    {
+      ...CT,
+      barmode: 'stack',
+      margin: { t: 8, r: 16, b: 40, l: 36 },
+      xaxis: { tickfont: { size: 9 }, gridcolor: C.border },
+      yaxis: { tickfont: { size: 9 }, gridcolor: C.border, dtick: 1 },
+      legend: { orientation: 'h', y: -0.25, font: { size: 9 } },
+    }, CFG
+  );
+}
+
+function renderProfDistV2Chart(qs) {
+  if (!el('chart-prof-dist-v2')) return;
+  if (!qs.length) { Plotly.purge('chart-prof-dist-v2'); return; }
+
+  const sorted = [...qs].filter(q => q.distPct > 0).sort((a, b) => b.distPct - a.distPct).slice(0, 12);
+  const labels  = sorted.map(q => `S${q.sim}·Q${q.num}`);
+  const vals    = sorted.map(q => q.distPct);
+  const colors  = sorted.map(q => q.distPct > 35 ? C.red : q.distPct >= 15 ? C.green : C.slate);
+
+  Plotly.react('chart-prof-dist-v2',
+    [{
+      type: 'bar', orientation: 'h',
+      x: vals, y: labels,
+      marker: { color: colors, opacity: 0.85 },
+      text: vals.map(v => v + '%'), textposition: 'outside',
+    }],
+    {
+      ...CT,
+      margin: { t: 8, r: 44, b: 28, l: 64 },
+      xaxis: { ticksuffix: '%', range: [0, 55], tickfont: { size: 9 }, gridcolor: C.border },
+      yaxis: { tickfont: { size: 8 } },
+      shapes: [
+        { type:'line', x0:15, x1:15, y0:0, y1:1, xref:'x', yref:'paper', line:{color:C.green, width:1.5, dash:'dot'} },
+        { type:'line', x0:35, x1:35, y0:0, y1:1, xref:'x', yref:'paper', line:{color:C.red, width:1.5, dash:'dot'} },
+      ],
+    }, CFG
+  );
+}
+
+function renderProfFaixasChart(qs) {
+  if (!el('chart-prof-faixas')) return;
+  if (!qs.length) { Plotly.purge('chart-prof-faixas'); return; }
+
+  const ideal   = qs.filter(q => q.acerto >= 40 && q.acerto <= 75 && q.discriminante >= 0.28).length;
+  const difDiag = qs.filter(q => q.acerto < 40 && q.discriminante >= 0.28).length;
+  const facil   = qs.filter(q => q.acerto > 75 && q.discriminante < 0.28).length;
+  const revisao = qs.filter(q => q.status === 'revisao').length;
+  const outros  = qs.length - ideal - difDiag - facil - revisao;
+
+  Plotly.react('chart-prof-faixas',
+    [{
+      type: 'pie',
+      labels: ['Zona ideal', 'Difícil + diagnóstico', 'Fácil – pouco info', 'Revisão técnica', 'Outros'],
+      values: [ideal, difDiag, facil, revisao, Math.max(0, outros)],
+      hole: 0.55,
+      marker: { colors: [C.green, C.amber, C.slate, C.red, '#e2e8f0'] },
+      textinfo: 'percent',
+      textfont: { size: 9 },
+      hovertemplate: '<b>%{label}</b><br>%{value} item(ns) (%{percent})<extra></extra>',
+    }],
+    {
+      ...CT,
+      margin: { t: 8, r: 8, b: 8, l: 8 },
+      showlegend: false,
+      annotations: [{
+        text: `<b>${qs.length}</b><br><span style="font-size:8px">itens</span>`,
+        x: 0.5, y: 0.5, showarrow: false, font: { size: 12 }, xanchor: 'center', yanchor: 'middle',
+      }],
     }, CFG
   );
 }

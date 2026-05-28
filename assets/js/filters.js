@@ -39,9 +39,10 @@ const S = {
 
   /* Professores */
   profKey:             'silva',
-  profTab:             'visao-geral',
+  profTab:             'painel',
   profSim:             'acumulado',
   profComp:            'todas',
+  profStatus:          'todos',
   profQuestaoSelecionada: null,
 
   /* Navegação */
@@ -93,8 +94,9 @@ function setAlunoPerfilAluno(val)      { S.alunoPerfilAluno     = val;  if (type
 function setAlunoPerfilSimulado(val)   { S.alunoPerfilSimulado  = val;  if (typeof _buildAlunoPerfil   === 'function') _buildAlunoPerfil();   }
 
 function setProfessor(val) {
-  S.profKey  = val;
-  S.profComp = 'todas';
+  S.profKey    = val;
+  S.profComp   = 'todas';
+  S.profStatus = 'todos';
   S.profQuestaoSelecionada = null;
   if (typeof _buildProfCompSelect === 'function') _buildProfCompSelect();
   refreshProfessores();
@@ -110,6 +112,12 @@ function setProfComp(val) {
   S.profComp = val;
   S.profQuestaoSelecionada = null;
   refreshProfessores();
+}
+
+function setProfStatus(val) {
+  S.profStatus = val;
+  S.profQuestaoSelecionada = null;
+  if (typeof _buildProfQuestoes === 'function') _buildProfQuestoes();
 }
 
 function setProfQuestao(id) {
@@ -178,8 +186,9 @@ function _buildAlunosCurrentTab() {
 
 function refreshProfessores() {
   switch (S.profTab) {
-    case 'visao-geral': if (typeof _buildProfVisaoGeral === 'function') _buildProfVisaoGeral(); break;
-    case 'questoes':    if (typeof _buildProfQuestoes   === 'function') _buildProfQuestoes();   break;
+    case 'painel':        if (typeof _buildProfPainel       === 'function') _buildProfPainel();       break;
+    case 'itens':         if (typeof _buildProfItens        === 'function') _buildProfItens();        break;
+    case 'aprendizagem':  if (typeof _buildProfAprendizagem === 'function') _buildProfAprendizagem(); break;
   }
 }
 
@@ -300,4 +309,9 @@ function switchProfTab(tab) {
     if (el.dataset.tab === tab) el.classList.add('active');
   });
   refreshProfessores();
+}
+
+function toggleProfSinal(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.toggle('expanded');
 }

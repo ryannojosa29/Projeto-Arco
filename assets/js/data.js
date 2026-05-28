@@ -279,16 +279,15 @@ function getProfessor(key) {
 }
 
 /* ══════════════════════════════════════════════════════════
-   PROF_DADOS — 6 professores para a nova página Professores
-   150 questões: 6 profs × 5 sims × 5 questões
+   PROF_DADOS — 5 frentes de conhecimento (rede online)
+   125 questões: 5 profs × 5 sims × 5 questões
 ══════════════════════════════════════════════════════════ */
 const PROF_DADOS = [
-  { key:'silva',    nome:'Prof. Carlos Silva',     disc:'Física',         escola:'Escola A', turma:'T1', av:'CS', iqTend:'up'     },
-  { key:'santos',   nome:'Profa. Ana Santos',      disc:'Matemática',     escola:'Escola B', turma:'T1', av:'AS', iqTend:'stable' },
-  { key:'oliveira', nome:'Prof. Ricardo Oliveira', disc:'Química',        escola:'Escola C', turma:'T1', av:'RO', iqTend:'down'   },
-  { key:'lima',     nome:'Profa. Beatriz Lima',    disc:'Língua Inglesa', escola:'Escola A', turma:'T2', av:'BL', iqTend:'up'     },
-  { key:'pereira',  nome:'Prof. Marcos Pereira',   disc:'Linguagens',     escola:'Escola B', turma:'T2', av:'MP', iqTend:'up'     },
-  { key:'costa',    nome:'Profa. Juliana Costa',   disc:'C. Humanas',     escola:'Escola D', turma:'T1', av:'JC', iqTend:'stable' },
+  { key:'silva',    nome:'Prof. Carlos Silva',     disc:'Física',         abrangencia:'Rede online', av:'CS', iqTend:'up'     },
+  { key:'ferreira', nome:'Profa. Marina Ferreira', disc:'Física',         abrangencia:'Rede online', av:'MF', iqTend:'stable' },
+  { key:'santos',   nome:'Profa. Ana Santos',      disc:'Matemática',     abrangencia:'Rede online', av:'AS', iqTend:'stable' },
+  { key:'oliveira', nome:'Prof. Ricardo Oliveira', disc:'Química',        abrangencia:'Rede online', av:'RO', iqTend:'down'   },
+  { key:'lima',     nome:'Profa. Beatriz Lima',    disc:'Língua Inglesa', abrangencia:'Rede online', av:'BL', iqTend:'up'     },
 ];
 
 function _calcProfQI(disc, acerto, distPct, pbis, diff) {
@@ -301,13 +300,57 @@ function _calcProfQI(disc, acerto, distPct, pbis, diff) {
 }
 
 function _mkPQ(profKey, sim, num, comp, assunto, diff, acerto, disc, distPct, pbis) {
-  const qi = _calcProfQI(disc, acerto, distPct, pbis, diff);
-  const status = qi >= 80 ? 'excelente' : qi >= 65 ? 'boa' : qi >= 50 ? 'atencao' : 'critica';
-  return { id: profKey+'-'+sim+'-'+num, profKey, sim, num, comp, assunto, diff, acerto, discriminante: disc, distPct, pbis, qualIdx: qi, status };
+  const efi    = _calcProfQI(disc, acerto, distPct, pbis, diff);
+  const status = efi >= 85 ? 'excelente' : efi >= 70 ? 'boa' : efi >= 55 ? 'atencao' : 'revisao';
+  const pIdx   = PROF_DADOS.findIndex(p => p.key === profKey);
+  const gabIdx = ((pIdx * 5 + (sim - 1) * 7 + (num - 1) * 3)) % 5;
+  const gab    = 'ABCDE'[gabIdx];
+  const alts   = ['A','B','C','D','E'].filter(a => a !== gab);
+  const distDom = alts[((pIdx * 3 + (sim - 1) * 5 + (num - 1) * 7)) % 4];
+  const rem    = Math.max(0, 100 - acerto - distPct);
+  const oth    = ['A','B','C','D','E'].filter(a => a !== gab && a !== distDom);
+  const perO   = Math.floor(rem / oth.length);
+  const extra  = rem - perO * oth.length;
+  const gabDist = { A:0, B:0, C:0, D:0, E:0 };
+  gabDist[gab]     = acerto;
+  gabDist[distDom] = distPct;
+  oth.forEach((a, i) => { gabDist[a] = perO + (i === 0 ? extra : 0); });
+
+  /* Hipótese pedagógica e sugestão geradas pelos dados */
+  let hipotese, sugestao;
+  if (disc < 0.20 && acerto < 35) {
+    hipotese = 'Possível lacuna generalizada: alunos de todos os níveis erraram. Pode indicar formulação ambígua ou conteúdo ainda não consolidado na rede.';
+  } else if (disc < 0.25 && acerto < 40) {
+    hipotese = 'Dificuldade real detectada: baixa discriminação e acerto baixo sugerem lacuna conceitual generalizada na frente.';
+  } else if (disc < 0.25 && acerto > 70) {
+    hipotese = 'Item com pouco poder diagnóstico: alunos de todos os níveis acertam, o que reduz a utilidade para separar desempenhos.';
+  } else if (distPct > 35) {
+    hipotese = `Concentração no distrator dominante (${distPct}%): indica confusão conceitual recorrente — alunos migram para a mesma alternativa errada.`;
+  } else if (disc >= 0.35 && acerto >= 30 && acerto <= 70) {
+    hipotese = 'Item bem calibrado: separa com clareza alunos com e sem domínio do conteúdo. Alta utilidade diagnóstica.';
+  } else if (acerto > 75) {
+    hipotese = 'Conteúdo bem consolidado pelos alunos. Acerto elevado reduz o valor diagnóstico do item para separação de perfis.';
+  } else if (acerto < 30) {
+    hipotese = 'Acerto muito baixo: pode indicar conteúdo ainda não trabalhado, excesso de dificuldade ou formulação que gera ambiguidade.';
+  } else {
+    hipotese = 'Desempenho dentro do esperado. Item adequado ao nível da frente com discriminação satisfatória.';
+  }
+
+  if (efi >= 85) {
+    sugestao = 'Manter como referência diagnóstica. Pode ser reutilizado ou adaptado em ciclos futuros sem ajustes estruturais.';
+  } else if (efi >= 70) {
+    sugestao = 'Pequenos ajustes nos distratores ou na calibragem de dificuldade podem elevar o impacto diagnóstico do item.';
+  } else if (efi >= 55) {
+    sugestao = 'Revisar enunciado e alternativas. Verificar se a dificuldade está adequada ao nível esperado da frente.';
+  } else {
+    sugestao = 'Revisão técnica completa sugerida: calibragem, distratores e equilíbrio de dificuldade merecem atenção antes do próximo ciclo.';
+  }
+
+  return { id: profKey+'-'+sim+'-'+num, profKey, sim, num, comp, assunto, diff, acerto, discriminante: disc, distPct, pbis, efi, status, gab, distDom, gabDist, hipotese, sugestao };
 }
 
 const PROF_QUESTOES_DADOS = [
-  /* SILVA — Física (melhora progressiva) */
+  /* SILVA — Física 1 (melhora progressiva) */
   _mkPQ('silva',1,1,'Mecânica',         'Cinemática — MRU e MRUV',              'Médio',      58,0.35,22,0.32),
   _mkPQ('silva',1,2,'Mecânica',         'Dinâmica — Leis de Newton',            'Médio-alto', 45,0.38,28,0.35),
   _mkPQ('silva',1,3,'Termodinâmica',    'Leis da Termodinâmica',                'Alto',       38,0.28,32,0.26),
@@ -333,6 +376,33 @@ const PROF_QUESTOES_DADOS = [
   _mkPQ('silva',5,3,'Termodinâmica',    'Entropia e 2ª Lei',                    'Médio-alto', 48,0.44,26,0.41),
   _mkPQ('silva',5,4,'Eletromagnetismo', 'Equações de Maxwell (Conceitual)',     'Alto',       40,0.40,28,0.37),
   _mkPQ('silva',5,5,'Óptica',           'Interferência e Difração da Luz',      'Médio',      65,0.42,22,0.39),
+
+  /* FERREIRA — Física 2 (estável, bem calibrado) */
+  _mkPQ('ferreira',1,1,'Mecânica',         'Cinemática — Velocidade Média',              'Médio',      62,0.38,24,0.34),
+  _mkPQ('ferreira',1,2,'Eletromagnetismo', 'Cargas Elétricas e Lei de Coulomb',          'Médio',      58,0.36,26,0.32),
+  _mkPQ('ferreira',1,3,'Ondulatória',      'Oscilações — Pêndulo e Mola',               'Médio-alto', 48,0.34,28,0.30),
+  _mkPQ('ferreira',1,4,'Termodinâmica',    '1ª Lei da Termodinâmica',                   'Médio',      60,0.32,26,0.28),
+  _mkPQ('ferreira',1,5,'Física Moderna',   'Modelo Atômico de Bohr',                    'Alto',       35,0.28,32,0.24),
+  _mkPQ('ferreira',2,1,'Mecânica',         'Plano Inclinado e Atrito',                  'Médio',      60,0.40,24,0.36),
+  _mkPQ('ferreira',2,2,'Eletromagnetismo', 'Potencial e Campo Elétrico',                'Médio-alto', 50,0.38,26,0.34),
+  _mkPQ('ferreira',2,3,'Ondulatória',      'Interferência Construtiva e Destrutiva',    'Médio-alto', 46,0.36,28,0.32),
+  _mkPQ('ferreira',2,4,'Termodinâmica',    '2ª Lei — Entropia e Irreversibilidade',     'Alto',       38,0.34,30,0.30),
+  _mkPQ('ferreira',2,5,'Óptica',           'Espelhos Planos e Esféricos',               'Médio',      65,0.30,22,0.26),
+  _mkPQ('ferreira',3,1,'Mecânica',         'Momento Angular e Conservação',             'Médio-alto', 52,0.40,25,0.36),
+  _mkPQ('ferreira',3,2,'Eletromagnetismo', 'Circuitos RC e RL',                         'Alto',       40,0.38,28,0.34),
+  _mkPQ('ferreira',3,3,'Ondulatória',      'Efeito Doppler',                            'Médio',      62,0.36,24,0.32),
+  _mkPQ('ferreira',3,4,'Termodinâmica',    'Ciclos Termodinâmicos e Eficiência',        'Médio-alto', 50,0.34,26,0.30),
+  _mkPQ('ferreira',3,5,'Física Moderna',   'Dualidade Onda-Partícula',                  'Alto',       35,0.32,32,0.28),
+  _mkPQ('ferreira',4,1,'Mecânica',         'Colisões — Elásticas e Inelásticas',        'Médio',      60,0.40,24,0.36),
+  _mkPQ('ferreira',4,2,'Eletromagnetismo', 'Transformadores e Indução Mútua',           'Médio-alto', 50,0.38,26,0.34),
+  _mkPQ('ferreira',4,3,'Ondulatória',      'Ondas Estacionárias e Ressonância',         'Médio-alto', 48,0.36,27,0.32),
+  _mkPQ('ferreira',4,4,'Termodinâmica',    'Processos Isocórico, Isobárico, Isotérmico','Alto',       38,0.34,30,0.30),
+  _mkPQ('ferreira',4,5,'Física Moderna',   'Radioatividade e Decaimento Nuclear',       'Médio',      62,0.32,24,0.28),
+  _mkPQ('ferreira',5,1,'Mecânica',         'Equilíbrio de Torques e Estática',          'Médio',      62,0.42,24,0.38),
+  _mkPQ('ferreira',5,2,'Eletromagnetismo', 'Ondas Eletromagnéticas e Espectro',         'Médio-alto', 50,0.40,25,0.36),
+  _mkPQ('ferreira',5,3,'Ondulatória',      'Polarização e Difração da Luz',             'Médio-alto', 48,0.38,26,0.34),
+  _mkPQ('ferreira',5,4,'Termodinâmica',    'Transferência de Calor — Condução e Radiação','Médio',    62,0.36,24,0.32),
+  _mkPQ('ferreira',5,5,'Física Moderna',   'Fissão, Fusão e Energia Nuclear',           'Alto',       38,0.34,30,0.30),
 
   /* SANTOS — Matemática (alta qualidade, consistente) */
   _mkPQ('santos',1,1,'Funções',         'Domínio, Imagem e Gráficos',           'Médio',      65,0.50,23,0.46),
@@ -414,82 +484,31 @@ const PROF_QUESTOES_DADOS = [
   _mkPQ('lima',5,3,'Vocabulary',        'Academic Word List em Contexto',       'Médio',      60,0.48,23,0.44),
   _mkPQ('lima',5,4,'Reading',           'Comparação Entre Textos',              'Médio-alto', 54,0.46,23,0.42),
   _mkPQ('lima',5,5,'Grammar',           'Discourse Markers e Coesão Textual',   'Médio',      65,0.44,22,0.40),
-
-  /* PEREIRA — Linguagens (em desenvolvimento) */
-  _mkPQ('pereira',1,1,'Interpretação',  'Leitura e Inferência Textual',         'Médio',      62,0.30,27,0.26),
-  _mkPQ('pereira',1,2,'Literatura',     'Modernismo Brasileiro — 1ª Fase',      'Médio',      58,0.28,29,0.24),
-  _mkPQ('pereira',1,3,'Gramática',      'Concordância Verbal',                  'Fácil',      78,0.20,15,0.16),
-  _mkPQ('pereira',1,4,'Interpretação',  'Texto Argumentativo — Estrutura',      'Médio-alto', 48,0.26,31,0.22),
-  _mkPQ('pereira',1,5,'Literatura',     'Romantismo e Realismo Brasileiro',     'Alto',       36,0.22,35,0.18),
-  _mkPQ('pereira',2,1,'Interpretação',  'Texto Instrucional e Técnico',         'Médio',      64,0.32,26,0.28),
-  _mkPQ('pereira',2,2,'Gramática',      'Regência Verbal e Nominal',            'Médio',      60,0.30,27,0.26),
-  _mkPQ('pereira',2,3,'Literatura',     'Pré-Modernismo — Contexto e Obras',    'Médio',      56,0.28,28,0.24),
-  _mkPQ('pereira',2,4,'Produção Textual','Estrutura da Dissertação',            'Médio-alto', 50,0.26,29,0.22),
-  _mkPQ('pereira',2,5,'Semântica',      'Polissemia e Conotação',               'Alto',       38,0.24,33,0.20),
-  _mkPQ('pereira',3,1,'Interpretação',  'Crônica e Conto — Análise',            'Médio',      62,0.36,25,0.32),
-  _mkPQ('pereira',3,2,'Literatura',     'Barroco Brasileiro — Gregório de Matos','Médio-alto',50,0.34,26,0.30),
-  _mkPQ('pereira',3,3,'Gramática',      'Crase e Regras de Uso',                'Médio',      58,0.32,26,0.28),
-  _mkPQ('pereira',3,4,'Semântica',      'Figuras de Linguagem',                 'Médio',      60,0.30,27,0.26),
-  _mkPQ('pereira',3,5,'Produção Textual','Argumentação e Contra-Argumentação',  'Médio-alto', 46,0.28,30,0.24),
-  _mkPQ('pereira',4,1,'Interpretação',  'Texto Multimodal e Infográfico',       'Médio',      63,0.38,24,0.34),
-  _mkPQ('pereira',4,2,'Literatura',     'Realismo e Naturalismo',               'Médio',      58,0.36,26,0.32),
-  _mkPQ('pereira',4,3,'Gramática',      'Pontuação e Estilística',              'Médio',      60,0.34,26,0.30),
-  _mkPQ('pereira',4,4,'Produção Textual','Coesão e Coerência Textual',          'Médio-alto', 50,0.32,27,0.28),
-  _mkPQ('pereira',4,5,'Semântica',      'Intertextualidade e Paródia',          'Médio-alto', 48,0.30,28,0.26),
-  _mkPQ('pereira',5,1,'Interpretação',  'Análise Discursiva e Argumentação',    'Médio',      62,0.42,23,0.38),
-  _mkPQ('pereira',5,2,'Literatura',     'Modernismo — 2ª e 3ª Fase',            'Médio-alto', 52,0.40,24,0.36),
-  _mkPQ('pereira',5,3,'Gramática',      'Período Composto — Subordinação',      'Médio',      60,0.38,25,0.34),
-  _mkPQ('pereira',5,4,'Produção Textual','Tipos Textuais e Gêneros',            'Médio',      64,0.36,24,0.32),
-  _mkPQ('pereira',5,5,'Semântica',      'Sentido Figurado e Implícito',         'Médio-alto', 50,0.34,26,0.30),
-
-  /* COSTA — C. Humanas (sólido, crescimento estável) */
-  _mkPQ('costa',1,1,'História',         'Independência do Brasil — Contexto',   'Médio',      62,0.40,24,0.36),
-  _mkPQ('costa',1,2,'Geografia',        'Urbanização Brasileira',               'Médio',      60,0.38,25,0.34),
-  _mkPQ('costa',1,3,'Filosofia',        'Iluminismo e Razão',                   'Médio-alto', 50,0.36,26,0.32),
-  _mkPQ('costa',1,4,'Sociologia',       'Trabalho, Alienação e Capitalismo',    'Médio',      58,0.34,26,0.30),
-  _mkPQ('costa',1,5,'História',         'Revoluções Liberais do Séc. XIX',      'Alto',       38,0.30,30,0.26),
-  _mkPQ('costa',2,1,'História',         'Era Vargas — Populismo',               'Médio',      63,0.42,23,0.38),
-  _mkPQ('costa',2,2,'Geografia',        'Geopolítica Mundial Contemporânea',    'Médio-alto', 52,0.40,25,0.36),
-  _mkPQ('costa',2,3,'Filosofia',        'Contratualismo — Hobbes, Locke, Rousseau','Médio',   60,0.38,25,0.34),
-  _mkPQ('costa',2,4,'Sociologia',       'Estratificação e Mobilidade Social',   'Médio',      62,0.36,25,0.32),
-  _mkPQ('costa',2,5,'Política',         'Democracia e Estado de Direito',       'Médio-alto', 48,0.34,26,0.30),
-  _mkPQ('costa',3,1,'História',         'Guerra Fria — Bipolaridade',           'Médio',      64,0.44,23,0.40),
-  _mkPQ('costa',3,2,'Filosofia',        'Existencialismo — Sartre e Heidegger', 'Médio-alto', 52,0.42,24,0.38),
-  _mkPQ('costa',3,3,'Geografia',        'Meio Ambiente e Sustentabilidade',     'Médio',      62,0.40,24,0.36),
-  _mkPQ('costa',3,4,'Sociologia',       'Cultura, Identidade e Globalização',   'Médio',      60,0.38,25,0.34),
-  _mkPQ('costa',3,5,'História',         'Descolonização da África e Ásia',      'Médio-alto', 48,0.36,26,0.32),
-  _mkPQ('costa',4,1,'História',         'Regime Militar Brasileiro (1964–1985)','Médio',      63,0.46,22,0.42),
-  _mkPQ('costa',4,2,'Filosofia',        'Ética e Bioética Contemporânea',       'Médio',      64,0.44,22,0.40),
-  _mkPQ('costa',4,3,'Geografia',        'Globalização Econômica',               'Médio-alto', 52,0.42,24,0.38),
-  _mkPQ('costa',4,4,'Sociologia',       'Movimentos Sociais e Cidadania',       'Médio',      62,0.40,24,0.36),
-  _mkPQ('costa',4,5,'Política',         'Sistemas Eleitorais e Partidos',       'Médio-alto', 48,0.38,25,0.34),
-  _mkPQ('costa',5,1,'História',         'Brasil República — Era Contemporânea', 'Médio',      64,0.47,22,0.43),
-  _mkPQ('costa',5,2,'Filosofia',        'Filosofia da Ciência e Epistemologia', 'Médio-alto', 54,0.45,23,0.41),
-  _mkPQ('costa',5,3,'Geografia',        'Energia, Recursos e Matriz Energética','Médio',      62,0.43,23,0.39),
-  _mkPQ('costa',5,4,'Sociologia',       'Desigualdade Social e Pobreza',        'Médio',      60,0.41,24,0.37),
-  _mkPQ('costa',5,5,'Política',         'Direitos Humanos e Cidadania Global',  'Médio',      65,0.40,22,0.36),
 ];
 
 function getProfDados(key) {
   return PROF_DADOS.find(p => p.key === key) || PROF_DADOS[0];
 }
 
-function getProfQuestoesFiltradas(key, sim, comp) {
+function getProfQuestoesFiltradas(key, sim, comp, status) {
   return PROF_QUESTOES_DADOS.filter(q =>
     q.profKey === key &&
-    (sim  === 'acumulado' || q.sim === parseInt(sim, 10)) &&
-    (comp === 'todas'     || q.comp === comp)
+    (sim    === 'acumulado' || q.sim === parseInt(sim, 10)) &&
+    (comp   === 'todas'     || q.comp === comp) &&
+    (!status || status === 'todos' || q.status === status)
   );
 }
 
 function getProfResumo(key, sim, comp) {
   const qs = getProfQuestoesFiltradas(key, sim, comp);
-  if (!qs.length) return { nqs: 0, iqMedio: 0, acertoMedio: 0, discMedio: 0, comps: 0 };
-  const iqMedio     = Math.round(qs.reduce((s, q) => s + q.qualIdx, 0)    / qs.length);
-  const acertoMedio = Math.round(qs.reduce((s, q) => s + q.acerto, 0)     / qs.length);
-  const discMedio   = parseFloat((qs.reduce((s, q) => s + q.discriminante, 0) / qs.length).toFixed(2));
-  const comps       = new Set(qs.map(q => q.comp)).size;
-  return { nqs: qs.length, iqMedio, acertoMedio, discMedio, comps };
+  if (!qs.length) return { nqs: 0, efiMedio: 0, acertoMedio: 0, discMedio: 0, comps: 0, distFuncionais: 0, itensRevisao: 0 };
+  const efiMedio       = Math.round(qs.reduce((s, q) => s + q.efi, 0) / qs.length);
+  const acertoMedio    = Math.round(qs.reduce((s, q) => s + q.acerto, 0) / qs.length);
+  const discMedio      = parseFloat((qs.reduce((s, q) => s + q.discriminante, 0) / qs.length).toFixed(2));
+  const comps          = new Set(qs.map(q => q.comp)).size;
+  const distFuncionais = Math.round(qs.filter(q => q.distPct >= 15 && q.distPct <= 35).length / qs.length * 100);
+  const itensRevisao   = qs.filter(q => q.status === 'revisao').length;
+  return { nqs: qs.length, efiMedio, acertoMedio, discMedio, comps, distFuncionais, itensRevisao };
 }
 
 function getProfEvoQI(key, comp) {
@@ -497,13 +516,73 @@ function getProfEvoQI(key, comp) {
     const qs = PROF_QUESTOES_DADOS.filter(q =>
       q.profKey === key && q.sim === sim && (comp === 'todas' || q.comp === comp)
     );
-    return qs.length ? Math.round(qs.reduce((s, q) => s + q.qualIdx, 0) / qs.length) : 0;
+    return qs.length ? Math.round(qs.reduce((s, q) => s + q.efi, 0) / qs.length) : 0;
   });
 }
 
 function getProfComps(key) {
   const qs = PROF_QUESTOES_DADOS.filter(q => q.profKey === key);
   return [...new Set(qs.map(q => q.comp))].sort();
+}
+
+/* Evolução do acerto médio por simulado (para Aba 3) */
+function getProfEvoAcerto(key, comp) {
+  return [1,2,3,4,5].map(sim => {
+    const qs = PROF_QUESTOES_DADOS.filter(q =>
+      q.profKey === key && q.sim === sim && (comp === 'todas' || q.comp === comp)
+    );
+    return qs.length ? parseFloat((qs.reduce((s, q) => s + q.acerto, 0) / qs.length).toFixed(1)) : 0;
+  });
+}
+
+/* Média de acerto da rede por disciplina por simulado (linha de referência) */
+function getRedeEvoAcerto(disc) {
+  return [1,2,3,4,5].map(sim => {
+    const qs = PROF_QUESTOES_DADOS.filter(q => {
+      const p = PROF_DADOS.find(p2 => p2.key === q.profKey);
+      return q.sim === sim && p && p.disc === disc;
+    });
+    return qs.length ? parseFloat((qs.reduce((s, q) => s + q.acerto, 0) / qs.length).toFixed(1)) : 0;
+  });
+}
+
+/* Assuntos agrupados por componente com acerto médio e EFI médio */
+function getProfAssuntos(key, sim, comp) {
+  const qs = getProfQuestoesFiltradas(key, sim, comp);
+  const byComp = {};
+  qs.forEach(q => {
+    if (!byComp[q.comp]) byComp[q.comp] = { comp: q.comp, acertos: [], efis: [], count: 0 };
+    byComp[q.comp].acertos.push(q.acerto);
+    byComp[q.comp].efis.push(q.efi);
+    byComp[q.comp].count++;
+  });
+  return Object.values(byComp).map(c => ({
+    comp: c.comp,
+    acertoMedio: Math.round(c.acertos.reduce((s, v) => s + v, 0) / c.acertos.length),
+    efiMedio:    Math.round(c.efis.reduce((s, v) => s + v, 0)    / c.efis.length),
+    count:       c.count,
+  })).sort((a, b) => b.acertoMedio - a.acertoMedio);
+}
+
+/* Acerto médio da frente neste simulado vs anterior (para variação) */
+function getProfAcertoVsAnterior(key, comp, sim) {
+  if (sim === 'acumulado' || parseInt(sim, 10) <= 1) return null;
+  const simN = parseInt(sim, 10);
+  const qs1 = PROF_QUESTOES_DADOS.filter(q => q.profKey === key && q.sim === simN - 1 && (comp === 'todas' || q.comp === comp));
+  const qs2 = PROF_QUESTOES_DADOS.filter(q => q.profKey === key && q.sim === simN     && (comp === 'todas' || q.comp === comp));
+  if (!qs1.length || !qs2.length) return null;
+  const a1 = qs1.reduce((s, q) => s + q.acerto, 0) / qs1.length;
+  const a2 = qs2.reduce((s, q) => s + q.acerto, 0) / qs2.length;
+  return parseFloat((a2 - a1).toFixed(1));
+}
+
+/* Questões com maior impacto diagnóstico (alta discriminação + acerto moderado) */
+function getProfQuestoesImpacto(key, sim, comp) {
+  const qs = getProfQuestoesFiltradas(key, sim, comp);
+  return qs
+    .filter(q => q.discriminante >= 0.28)
+    .sort((a, b) => (b.discriminante * 0.6 + b.efi * 0.004) - (a.discriminante * 0.6 + a.efi * 0.004))
+    .slice(0, 6);
 }
 
 /* ── ETIQUETAS PARA SIMULADO NAS OPÇÕES ───────────────────── */
