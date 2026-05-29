@@ -11,12 +11,19 @@
 </head>
 <body>
 
+<!-- ═══ HAMBURGER ═══ -->
+<button class="hamburger-btn" onclick="toggleSidebar()" aria-label="Menu">
+  <span></span><span></span><span></span>
+</button>
+
 <!-- ═══ SIDEBAR ═══ -->
 <aside class="sidebar">
   <div class="sb-head">
-    <div class="sb-logo">
-      <svg class="sb-arc" viewBox="0 0 30 9" fill="none"><path d="M2 8Q15 1 28 8" stroke="#E8521A" stroke-width="2.8" stroke-linecap="round" fill="none"/></svg>
-      <span class="sb-wordmark">arco</span>
+    <div class="sb-head-brand">
+      <div class="sb-logo">
+        <svg class="sb-arc" viewBox="0 0 30 9" fill="none"><path d="M2 8Q15 1 28 8" stroke="#E8521A" stroke-width="2.8" stroke-linecap="round" fill="none"/></svg>
+        <span class="sb-wordmark">arco</span>
+      </div>
     </div>
     <div class="sb-tagline">Inteligência pedagógica<br>para gestão escolar.</div>
   </div>
@@ -46,12 +53,13 @@
       Importar dados
     </a>
   </nav>
-  <div class="sb-slogan">Transformando dados educacionais em <span>decisões pedagógicas.</span></div>
-  <div class="sb-user">
-    <div class="sb-av"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
-    <div><div class="sb-uname">Gestor Arco</div><div class="sb-urole">Arco Educação</div></div>
-  </div>
+  <div class="sb-spacer"></div>
+  <button class="sb-gear-btn" onclick="goTo('configuracoes')" title="Configurações">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    Configurações
+  </button>
 </aside>
+<div class="sb-overlay" onclick="toggleSidebar()"></div>
 
 <!-- ═══ MAIN ═══ -->
 <div class="main">
@@ -71,21 +79,17 @@
           <div>
             <div class="f-label">Simulado</div>
             <select class="fsel-input" id="sel-dash-simulado" onchange="switchDashSim(this.value)">
-              <option value="sim1">1º Simulado ENEM 2025</option>
-              <option value="sim2">2º Simulado ENEM 2025</option>
-              <option value="sim3">3º Simulado ENEM 2025</option>
-              <option value="sim4">4º Simulado ENEM 2025</option>
-              <option value="sim5" selected>5º Simulado ENEM 2025</option>
+              <option value="sim1">Ciclo 1 · 1ª Fase ITA</option>
+              <option value="sim2">Ciclo 2 · 1ª Fase ITA</option>
+              <option value="sim3">Ciclo 3 · 1ª Fase ITA</option>
+              <option value="sim4">Ciclo 4 · 1ª Fase ITA</option>
+              <option value="sim5" selected>Ciclo 5 · 1ª Fase ITA</option>
             </select>
           </div>
         </div>
-        <div class="ph-brand">
-          <div class="brand-logo">
-            <svg class="brand-arc" viewBox="0 0 22 7" fill="none"><path d="M1 6Q11 1 21 6" stroke="#E8521A" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
-            <span class="brand-word">arco</span>
-          </div>
-          <div class="brand-div"></div>
-          <div class="brand-sl">Transformando dados educacionais em <strong>decisões pedagógicas.</strong></div>
+        <div class="ph-user">
+          <div class="ph-user-av"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+          <div><div class="ph-user-name">Gestor Arco</div><div class="ph-user-role">Arco Educação</div></div>
         </div>
       </div>
     </div>
@@ -204,10 +208,9 @@
         <div class="ph-title">Simulados</div>
         <div class="ph-sub">Analise a aplicação, a qualidade da prova e o comportamento questão por questão.</div>
       </div>
-      <div class="ph-brand">
-        <div class="brand-logo"><svg class="brand-arc" viewBox="0 0 22 7" fill="none"><path d="M1 6Q11 1 21 6" stroke="#E8521A" stroke-width="2" stroke-linecap="round" fill="none"/></svg><span class="brand-word">arco</span></div>
-        <div class="brand-div"></div>
-        <div class="brand-sl">Transformando dados educacionais em <strong>decisões pedagógicas.</strong></div>
+      <div class="ph-user">
+        <div class="ph-user-av"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+        <div><div class="ph-user-name">Gestor Arco</div><div class="ph-user-role">Arco Educação</div></div>
       </div>
     </div>
     <!-- EXECUTIVE KPI STRIP -->
@@ -257,7 +260,7 @@
       <div>
         <div class="f-label">Simulado</div>
         <select class="fsel-input" id="sel-simulado" onchange="setSimulado(this.value)">
-          <option value="sim5">5º Simulado ENEM 2025</option>
+          <option value="sim5">Ciclo 5 · 1ª Fase ITA</option>
         </select>
       </div>
     </div>
@@ -448,11 +451,11 @@
           <div class="f-label">Visualizar</div>
           <select class="fsel-input" id="sel-vg-simulado" onchange="setEscolaVisaoSimulado(this.value)">
             <option value="acumulado">Geral acumulado</option>
-            <option value="4">5º Simulado</option>
-            <option value="3">4º Simulado</option>
-            <option value="2">3º Simulado</option>
-            <option value="1">2º Simulado</option>
-            <option value="0">1º Simulado</option>
+            <option value="4">Ciclo 5</option>
+            <option value="3">Ciclo 4</option>
+            <option value="2">Ciclo 3</option>
+            <option value="1">Ciclo 2</option>
+            <option value="0">Ciclo 1</option>
           </select>
         </div>
       </div>
@@ -561,11 +564,11 @@
           <div class="f-label">Visualizar</div>
           <select class="fsel-input" id="sel-desemp6-sim" onchange="setEscolaDesempenhoSimulado(this.value)">
             <option value="acumulado">Geral acumulado</option>
-            <option value="4">5º Simulado</option>
-            <option value="3">4º Simulado</option>
-            <option value="2">3º Simulado</option>
-            <option value="1">2º Simulado</option>
-            <option value="0">1º Simulado</option>
+            <option value="4">Ciclo 5</option>
+            <option value="3">Ciclo 4</option>
+            <option value="2">Ciclo 3</option>
+            <option value="1">Ciclo 2</option>
+            <option value="0">Ciclo 1</option>
           </select>
         </div>
       </div>
@@ -649,8 +652,6 @@
             <option value="Física">Física</option>
             <option value="Química">Química</option>
             <option value="Língua Inglesa">Língua Inglesa</option>
-            <option value="Linguagens">Linguagens</option>
-            <option value="C. Humanas">C. Humanas</option>
           </select>
         </div>
       </div>
@@ -714,11 +715,11 @@
             <div class="f-label">Simulado</div>
             <select class="fsel-input" id="al-rank-sim" onchange="setAlunoRankingSimulado(this.value)">
               <option value="acumulado">Acumulado (1–5)</option>
-              <option value="1">1º Simulado</option>
-              <option value="2">2º Simulado</option>
-              <option value="3">3º Simulado</option>
-              <option value="4">4º Simulado</option>
-              <option value="5">5º Simulado</option>
+              <option value="1">Ciclo 1</option>
+              <option value="2">Ciclo 2</option>
+              <option value="3">Ciclo 3</option>
+              <option value="4">Ciclo 4</option>
+              <option value="5">Ciclo 5</option>
             </select>
           </div>
         </div>
@@ -783,12 +784,11 @@
           <div class="card-sub" id="al-rank-sub">80 alunos · Ordenado por média geral</div>
         </div>
         <div style="overflow-x:auto">
-          <table class="tbl" style="min-width:860px">
+          <table class="tbl" id="al-rank-table" style="min-width:780px">
             <thead><tr>
               <th>Pos.</th><th>Aluno</th><th>Escola</th><th>Turma</th><th>Série</th>
-              <th id="al-rank-col-media">Média</th>
               <th>Mat.</th><th>Fís.</th><th>Qui.</th><th>Ing.</th>
-              <th>Part.</th><th>Evo.</th><th>Status</th>
+              <th>Média 1ªF</th><th>Evo.</th><th class="al-col-part">Part.</th>
             </tr></thead>
             <tbody id="al-rank-tbody"></tbody>
           </table>
@@ -817,11 +817,11 @@
             <div class="f-label">Simulado</div>
             <select class="fsel-input" id="al-perf-sim" onchange="setAlunoPerfilSimulado(this.value)">
               <option value="acumulado">Acumulado (1–5)</option>
-              <option value="1">1º Simulado</option>
-              <option value="2">2º Simulado</option>
-              <option value="3">3º Simulado</option>
-              <option value="4">4º Simulado</option>
-              <option value="5">5º Simulado</option>
+              <option value="1">Ciclo 1</option>
+              <option value="2">Ciclo 2</option>
+              <option value="3">Ciclo 3</option>
+              <option value="4">Ciclo 4</option>
+              <option value="5">Ciclo 5</option>
             </select>
           </div>
         </div>
@@ -908,8 +908,8 @@
           <div><div class="f-label">Simulado</div>
             <select class="fsel-input" id="sel-prof-sim" onchange="setProfSim(this.value)">
               <option value="acumulado">Acumulado (1–5)</option>
-              <option value="1">1º Simulado</option><option value="2">2º Simulado</option>
-              <option value="3">3º Simulado</option><option value="4">4º Simulado</option><option value="5">5º Simulado</option>
+              <option value="1">Ciclo 1</option><option value="2">Ciclo 2</option>
+              <option value="3">Ciclo 3</option><option value="4">Ciclo 4</option><option value="5">Ciclo 5</option>
             </select></div>
         </div>
         <div class="fsel">
@@ -1023,6 +1023,41 @@
       <div class="card mb12" id="prof-impacto-card"></div>
     </div>
 
+    <!-- ══ TAB 4: DEVOLUTIVA ══ -->
+    <div class="prof-tab-content hidden" id="ptab-devolutiva">
+      <div class="prof-dev-header mb12">
+        <div class="prof-dev-title">Devolutiva da frente</div>
+        <div class="prof-dev-sub">Leitura técnica dos itens e desempenho dos alunos — base para geração do documento pedagógico.</div>
+      </div>
+      <div class="g1 g4 mb12" id="prof-dev-kpis">
+        <div class="kpi"><div class="kpi-label">Acerto médio dos alunos</div><div class="kpi-val" id="pdev-kpi-acerto">—</div><div class="kpi-note" id="pdev-kpi-acerto-note">na frente selecionada</div></div>
+        <div class="kpi"><div class="kpi-label">Participação</div><div class="kpi-val" id="pdev-kpi-part">—</div><div class="kpi-note">questões respondidas</div></div>
+        <div class="kpi"><div class="kpi-label">Com resolução sugerida</div><div class="kpi-val" id="pdev-kpi-resolucao">—</div><div class="kpi-note" id="pdev-kpi-resolucao-note">itens com acerto &lt; 35%</div></div>
+        <div class="kpi"><div class="kpi-label">Com revisão técnica sugerida</div><div class="kpi-val" id="pdev-kpi-revisao">—</div><div class="kpi-note" id="pdev-kpi-revisao-note">itens com discriminante baixo</div></div>
+      </div>
+      <div class="g1 g2 mb12">
+        <div class="card">
+          <div class="card-title mb8">O que será incluído</div>
+          <div class="pi"><div class="pi-ico green"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg></div><div><div class="pi-name">Identificação da frente</div><div class="pi-sub">Professor e componentes analisados</div></div></div>
+          <div class="pi"><div class="pi-ico blue"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div><div><div class="pi-name">Desempenho dos alunos</div><div class="pi-sub">Acerto médio e evolução por simulado</div></div></div>
+          <div class="pi"><div class="pi-ico orange"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg></div><div><div class="pi-name">Qualidade técnica dos itens</div><div class="pi-sub">Discriminante, distratores e padrão de resposta</div></div></div>
+          <div class="pi"><div class="pi-ico amber"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div><div><div class="pi-name">Evidências pedagógicas</div><div class="pi-sub">Questões com resolução ou revisão técnica sugerida</div></div></div>
+        </div>
+        <div class="card" id="prof-dev-previa">
+          <div class="card-title mb8">Prévia da devolutiva</div>
+          <div id="prof-dev-previa-body">
+            <div style="font-size:12px;color:var(--t3);padding:8px 0">Selecione um professor e simulado para visualizar a prévia.</div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;margin-top:4px">
+        <button class="act-btn primary" style="padding:11px 24px;font-size:13px" onclick="generateProfessorFeedbackPDF(S.profKey, S.profSim)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          Gerar PDF da devolutiva
+        </button>
+      </div>
+    </div>
+
   </div>
   <div class="footer"><div class="footer-l"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Dados confidenciais.</div><div class="footer-r">© 2025 Arco Educação.</div></div>
 </div>
@@ -1068,7 +1103,7 @@
           <div>
             <div style="font-size:10.5px;color:var(--t4);font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:5px">Simulado</div>
             <select class="sel" style="width:100%" onchange="S.simId=this.value">
-              <option value="sim1">1º Simulado ENEM 2025</option>
+              <option value="sim1">Ciclo 1 · 1ª Fase ITA</option>
             </select>
           </div>
           <button class="act-btn primary" style="justify-content:center;margin-top:6px" onclick="gerarPDF()">
@@ -1087,8 +1122,8 @@
     </div>
     <div class="card">
       <div class="card-title mb8">Histórico de devolutivas geradas</div>
-      <div class="hist-item"><div class="hist-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg></div><div><div class="hist-title">Devolutiva — Escola A · Análise geral</div><div class="hist-meta">1º Simulado ENEM 2025 · Gerada em 15/05/2025</div></div><div class="hist-badge">Enviada</div></div>
-      <div class="hist-item"><div class="hist-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg></div><div><div class="hist-title">Relatório executivo da rede</div><div class="hist-meta">1º Simulado ENEM 2025 · Gerado em 13/05/2025</div></div><div class="hist-badge" style="background:var(--blue-lt);color:var(--blue-dk)">Pronto</div></div>
+      <div class="hist-item"><div class="hist-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg></div><div><div class="hist-title">Devolutiva — Escola A · Análise geral</div><div class="hist-meta">Ciclo 1 · 1ª Fase ITA · Gerada em 15/05/2025</div></div><div class="hist-badge">Enviada</div></div>
+      <div class="hist-item"><div class="hist-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg></div><div><div class="hist-title">Relatório executivo da rede</div><div class="hist-meta">Ciclo 1 · 1ª Fase ITA · Gerado em 13/05/2025</div></div><div class="hist-badge" style="background:var(--blue-lt);color:var(--blue-dk)">Pronto</div></div>
     </div>
   </div>
   <div class="footer"><div class="footer-l"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Dados confidenciais.</div><div class="footer-r">© 2025 Arco Educação.</div></div>

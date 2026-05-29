@@ -4,7 +4,10 @@
     {
       "label": "Servir frontend (Arco)",
       "type": "shell",
-      "command": "pkill -f 'http.server 8000' 2>/dev/null; python3 -m http.server 8000",
+      "command": "try { Get-Process -Id (Get-NetTCPConnection -LocalPort 8000 -ErrorAction SilentlyContinue).OwningProcess -ErrorAction SilentlyContinue | Stop-Process -Force } catch {}; python -m http.server 8000",
+      "options": {
+        "shell": { "executable": "powershell.exe", "args": ["-NoProfile", "-Command"] }
+      },
       "isBackground": true,
       "presentation": {
         "reveal": "always",
@@ -12,17 +15,16 @@
         "group": "arco"
       },
       "problemMatcher": [],
-      "runOptions": {
-        "instanceLimit": 1
-      },
+      "runOptions": { "instanceLimit": 1 },
       "detail": "Inicia um servidor HTTP estático em http://localhost:8000"
     },
     {
       "label": "Subir backend (FastAPI)",
       "type": "shell",
-      "command": "source .venv/bin/activate && pkill -f 'uvicorn app.main:app' 2>/dev/null; uvicorn app.main:app --port 8001 --reload",
+      "command": "try { Get-Process -Id (Get-NetTCPConnection -LocalPort 8001 -ErrorAction SilentlyContinue).OwningProcess -ErrorAction SilentlyContinue | Stop-Process -Force } catch {}; .venv\\Scripts\\python.exe -m uvicorn app.main:app --port 8001 --reload",
       "options": {
-        "cwd": "${workspaceFolder}/backend"
+        "cwd": "${workspaceFolder}/backend",
+        "shell": { "executable": "powershell.exe", "args": ["-NoProfile", "-Command"] }
       },
       "isBackground": true,
       "presentation": {
@@ -31,9 +33,7 @@
         "group": "arco"
       },
       "problemMatcher": [],
-      "runOptions": {
-        "instanceLimit": 1
-      },
+      "runOptions": { "instanceLimit": 1 },
       "detail": "Sobe a API Python em http://localhost:8001 (precisa de backend/.venv já criado)"
     },
     {

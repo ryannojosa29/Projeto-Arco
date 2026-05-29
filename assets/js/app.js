@@ -14,7 +14,28 @@ var _SIM_Q = [];
 var _evoTipo = 'media';
 
 /* ── NAVEGAÇÃO ─────────────────────────────────────────────── */
+function toggleSidebar() {
+  const sb = document.querySelector('.sidebar');
+  const ov = document.querySelector('.sb-overlay');
+  const hb = document.querySelector('.hamburger-btn');
+  if (!sb) return;
+  const opening = !sb.classList.contains('open');
+  sb.classList.toggle('open', opening);
+  if (ov) ov.classList.toggle('open', opening);
+  if (hb) hb.classList.toggle('sb-open', opening);
+}
+
+function _closeSidebar() {
+  const sb = document.querySelector('.sidebar');
+  const ov = document.querySelector('.sb-overlay');
+  const hb = document.querySelector('.hamburger-btn');
+  if (sb) sb.classList.remove('open');
+  if (ov) ov.classList.remove('open');
+  if (hb) hb.classList.remove('sb-open');
+}
+
 function goTo(page) {
+  _closeSidebar();
   document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
 
@@ -655,14 +676,14 @@ function _buildAlunosRanking() {
   const bestEvo  = alunos.length ? alunos.reduce((m, a) => Math.max(m, a.evolucao), -Infinity) : 0;
   const part     = typeof calcGrupoPart === 'function' ? calcGrupoPart(alunos) : 0;
 
-  _setKpi('al-kpi-media',   mediaVal.toFixed(1) + '%');
+  _setKpi('al-kpi-media',   (mediaVal / 10).toFixed(2));
   _setKpi('al-kpi-dest',    dest);
   _setKpi('al-kpi-atencao', atencao);
-  _setKpi('al-kpi-evo',     (bestEvo >= 0 ? '+' : '') + bestEvo.toFixed(1) + ' p.p.');
+  _setKpi('al-kpi-evo',     (bestEvo >= 0 ? '+' : '') + (bestEvo / 10).toFixed(1) + ' pts');
   _setKpi('al-kpi-part',    part + '%');
 
   const mediaNote = el('al-kpi-media-note');
-  if (mediaNote) mediaNote.textContent = sim === 'acumulado' ? 'Acumulada' : sim + 'º Simulado';
+  if (mediaNote) mediaNote.textContent = sim === 'acumulado' ? 'Acumulada' : 'Ciclo ' + sim;
 
   // Title + subtitle
   const titleParts = [];
@@ -675,29 +696,65 @@ function _buildAlunosRanking() {
   const subEl = el('al-rank-sub');
   if (subEl) subEl.textContent = alunos.length + ' alunos · Ordenado por ' + (ordLabels[ord] || 'Média geral');
 
-  const colEl = el('al-rank-col-media');
-  if (colEl) colEl.textContent = sim === 'acumulado' ? 'Média' : sim + 'º Sim.';
+  // Participação: visível só no modo acumulado
+  const rankTable = el('al-rank-tbody') && el('al-rank-tbody').closest('table');
+  if (rankTable) {
+    if (sim === 'acumulado') rankTable.classList.remove('hide-part');
+    else rankTable.classList.add('hide-part');
+  }
+
+  // Corte ITA 1ª fase: mín 5/12 acertos por disciplina = nota ≥ 4.1667
+  const MIN_NOTA = 50 / 12;
+  function _sc(v) {
+    const cls = v >= 7.5 ? 'sc-hi' : v >= 5.0 ? 'sc-mid' : 'sc-lo';
+    return '<span class="sc ' + cls + '">' + v.toFixed(1) + '</span>';
+  }
 
   // Table
   const tbody = el('al-rank-tbody');
   if (tbody) {
     tbody.innerHTML = rows.map(a => {
-      const val     = typeof getAlunoValSim === 'function' ? getAlunoValSim(a, sim) : a.media;
-      const evoCls  = a.evolucao >= 5 ? 'diff-pos' : a.evolucao < 0 ? 'diff-neg' : '';
+      // Notas por disciplina do ciclo selecionado (0–10)
+      const simIdx   = sim === 'acumulado' ? 4 : Math.max(0, parseInt(sim, 10) - 1);
+      const dScores  = (sim !== 'acumulado' && a.simDiscs && a.simDiscs[simIdx]) ? a.simDiscs[simIdx] : a.discs;
+      const mat = (dScores['Matemática']    || 0) / 10;
+      const fis = (dScores['Física']        || 0) / 10;
+      const qui = (dScores['Química']       || 0) / 10;
+      const ing = (dScores['Língua Inglesa']|| 0) / 10;
+      // Média ITA: (Mat+Fís+Qui)/36×10 = média dos três (Inglês não entra)
+      const mediaIta = (mat + fis + qui) / 3;
+      // Corte: < 5 acertos em qualquer disciplina OU média < 5.0
+      const cortado  = mat < MIN_NOTA || fis < MIN_NOTA || qui < MIN_NOTA || ing < MIN_NOTA || mediaIta < 5.0;
+      const nameCls  = cortado ? 'al-nome-cort' : 'al-nome-aprov';
+
+      // Evolução vs ciclo anterior (escala 0–10)
+      let evoStr = '—', evoCls = '';
+      if (sim === 'acumulado') {
+        const d = parseFloat(((a.sims[4] - a.sims[0]) / 10).toFixed(1));
+        evoCls  = d >= 0.5 ? 'diff-pos' : d < 0 ? 'diff-neg' : '';
+        evoStr  = (d >= 0 ? '+' : '') + d.toFixed(1);
+      } else {
+        const idx = parseInt(sim, 10) - 1;
+        if (idx > 0 && a.sims[idx] !== undefined && a.sims[idx - 1] !== undefined) {
+          const d = parseFloat(((a.sims[idx] - a.sims[idx - 1]) / 10).toFixed(1));
+          evoCls  = d >= 0.3 ? 'diff-pos' : d < 0 ? 'diff-neg' : '';
+          evoStr  = (d >= 0 ? '+' : '') + d.toFixed(1);
+        }
+      }
+
       return '<tr onclick="_goToPerfil(\'' + a.key + '\')" style="cursor:pointer">' +
         '<td>' + a.pos + '</td>' +
-        '<td><strong>' + a.nome + '</strong></td>' +
+        '<td><span class="' + nameCls + '">' + a.nome + '</span></td>' +
         '<td>' + a.escolaNome + '</td>' +
         '<td>' + a.turma + '</td>' +
         '<td>' + a.serie + '</td>' +
-        '<td>' + val.toFixed(1) + '%</td>' +
-        '<td>' + (a.discs['Matemática']    || 0).toFixed(1) + '%</td>' +
-        '<td>' + (a.discs['Física']        || 0).toFixed(1) + '%</td>' +
-        '<td>' + (a.discs['Química']       || 0).toFixed(1) + '%</td>' +
-        '<td>' + (a.discs['Língua Inglesa']|| 0).toFixed(1) + '%</td>' +
-        '<td>' + a.partRate + '%</td>' +
-        '<td class="' + evoCls + '">' + (a.evolucao >= 0 ? '+' : '') + a.evolucao.toFixed(1) + '</td>' +
-        '<td>' + _alunoStatusBadge(a.status) + '</td>' +
+        '<td>' + _sc(mat) + '</td>' +
+        '<td>' + _sc(fis) + '</td>' +
+        '<td>' + _sc(qui) + '</td>' +
+        '<td>' + _sc(ing) + '</td>' +
+        '<td style="font-weight:700;color:var(--t1)">' + mediaIta.toFixed(2) + '</td>' +
+        '<td class="' + evoCls + '">' + evoStr + '</td>' +
+        '<td class="al-col-part">' + a.partRate + '%</td>' +
         '</tr>';
     }).join('');
   }
@@ -705,19 +762,19 @@ function _buildAlunosRanking() {
   // Leitura do ranking
   const leituraEl = el('al-rank-leitura');
   if (leituraEl && alunos.length) {
-    const atLow  = alunos.filter(a => a.status === 'Atenção' || a.status === 'Queda recente');
-    const atAlta = alunos.filter(a => a.status === 'Em crescimento');
-    const escolasAt = {};
-    atLow.forEach(a => { escolasAt[a.escolaNome] = (escolasAt[a.escolaNome] || 0) + 1; });
-    const topEscolaAt = Object.entries(escolasAt).sort((a, b) => b[1] - a[1])[0];
+    const cortados  = rows.filter(a => {
+      const d = a.discs;
+      const mat = (d['Matemática']||0)/10, fis = (d['Física']||0)/10, qui = (d['Química']||0)/10, ing = (d['Língua Inglesa']||0)/10;
+      return mat < MIN_NOTA || fis < MIN_NOTA || qui < MIN_NOTA || ing < MIN_NOTA || (mat+fis+qui)/3 < 5.0;
+    });
+    const aprovados = alunos.length - cortados.length;
     const bestEvoAluno = alunos.slice().sort((a, b) => b.evolucao - a.evolucao)[0];
     const topMedia     = alunos.slice().sort((a, b) => b.media - a.media)[0];
-
     let txt = 'No recorte selecionado, ' + alunos.length + ' aluno' + (alunos.length !== 1 ? 's' : '') + '.';
-    if (atLow.length) txt += ' ' + atLow.length + ' aluno' + (atLow.length !== 1 ? 's' : '') + ' em atenção ou queda recente' + (topEscolaAt ? ', com concentração na ' + topEscolaAt[0] : '') + '.';
-    if (atAlta.length) txt += ' ' + atAlta.length + ' em crescimento consistente.';
-    if (topMedia) txt += ' Melhor desempenho: ' + topMedia.nome.split(' ')[0] + ' (' + topMedia.media.toFixed(1) + '% · ' + topMedia.escolaNome + ').';
-    if (bestEvoAluno) txt += ' Maior evolução: ' + bestEvoAluno.nome.split(' ')[0] + ' (+' + bestEvoAluno.evolucao.toFixed(1) + ' p.p.).';
+    txt += ' ' + aprovados + ' possíveis aprovados para a 2ª fase (sem corte em nenhuma disciplina).';
+    if (cortados.length) txt += ' ' + cortados.length + ' cortado' + (cortados.length !== 1 ? 's' : '') + ' por nota mínima ou média ITA.';
+    if (topMedia) txt += ' Melhor média ITA: ' + topMedia.nome.split(' ')[0] + ' (' + (topMedia.media / 10).toFixed(2) + ' · ' + topMedia.escolaNome + ').';
+    if (bestEvoAluno) txt += ' Maior evolução: ' + bestEvoAluno.nome.split(' ')[0] + ' (+' + (bestEvoAluno.evolucao / 10).toFixed(1) + ' pts).';
     leituraEl.textContent = txt;
   }
 }
@@ -727,7 +784,7 @@ function _getAlunoDiagnostico(aluno, sim, mediaVal, discData, forteDisc, fracaDi
   const crescing = aluno.sims[4] - aluno.sims[3];
   const forteVal = (discData[forteDisc] || 0).toFixed(1);
   const fracaVal = (discData[fracaDisc] || 0).toFixed(1);
-  const simLabel = sim === 'acumulado' ? 'acumulado' : sim + 'º Simulado';
+  const simLabel = sim === 'acumulado' ? 'acumulado' : 'Ciclo ' + sim;
   const simIdx   = sim === 'acumulado' ? 4 : Math.max(0, parseInt(sim, 10) - 1);
   const redeRef  = REDE_6_MEDIA[simIdx] !== undefined ? REDE_6_MEDIA[simIdx] : REDE_6_MEDIA[4];
   const diff     = parseFloat((mediaVal - redeRef).toFixed(1));
@@ -939,7 +996,7 @@ function _buildAlunoPerfil() {
   const chipEscolaEl = el('al-chip-escola'); if (chipEscolaEl) chipEscolaEl.textContent = aluno.escolaNome;
   const chipTurmaEl  = el('al-chip-turma');  if (chipTurmaEl)  chipTurmaEl.textContent  = aluno.turma;
   const chipSerieEl  = el('al-chip-serie');  if (chipSerieEl)  chipSerieEl.textContent  = aluno.serie;
-  const chipSimEl    = el('al-chip-sim');    if (chipSimEl)    chipSimEl.textContent    = sim === 'acumulado' ? 'Acumulado (1–5)' : sim + 'º Simulado';
+  const chipSimEl    = el('al-chip-sim');    if (chipSimEl)    chipSimEl.textContent    = sim === 'acumulado' ? 'Acumulado (1–5)' : 'Ciclo ' + sim;
   const rankTagEl    = el('al-perf-rank-tag');
   if (rankTagEl) rankTagEl.textContent = 'Nº ' + aluno.rankEscola + 'º na escola · Nº ' + aluno.rankRede + 'º na rede';
   const statusEl = el('al-perf-status');
@@ -956,7 +1013,7 @@ function _buildAlunoPerfil() {
   _setKpi('al-perf-kpi-forte', forteDisc);
   _setKpi('al-perf-kpi-fraca', fracaDisc);
   const mediaNote = el('al-perf-kpi-media-note');
-  if (mediaNote) mediaNote.textContent = sim === 'acumulado' ? 'Acumulada' : sim + 'º Simulado';
+  if (mediaNote) mediaNote.textContent = sim === 'acumulado' ? 'Acumulada' : 'Ciclo ' + sim;
   const forteNote = el('al-perf-kpi-forte-note');
   if (forteNote) forteNote.textContent = (discData[forteDisc] || 0).toFixed(1) + '%';
   const fracaNote = el('al-perf-kpi-fraca-note');
@@ -974,7 +1031,7 @@ function _buildAlunoPerfil() {
     const prim       = aluno.nome.split(' ')[0];
     let txt = prim + ' apresenta ' + (sim === 'acumulado'
       ? 'média acumulada de ' + mediaVal.toFixed(1) + '% (' + (vsRede >= 0 ? '+' : '') + vsRede + ' p.p. vs. rede)'
-      : mediaVal.toFixed(1) + '% no ' + sim + 'º Simulado (' + (vsRede >= 0 ? '+' : '') + vsRede + ' p.p. vs. rede)') +
+      : mediaVal.toFixed(1) + '% no Ciclo ' + sim + ' (' + (vsRede >= 0 ? '+' : '') + vsRede + ' p.p. vs. rede)') +
       ' — ' + aluno.status.toLowerCase() + ', ' + aluno.rankRede + 'º na rede.';
     if (sim === 'acumulado') {
       const cresc = aluno.evolucao;
@@ -1225,7 +1282,7 @@ const DASH_SIM_DATA = {
     ],
     panoramaDetalhe: [
       { rows: [
-        { label: '1º Simulado', val: '43,5%' },
+        { label: 'Ciclo 1', val: '43,5%' },
         { label: 'Anterior', val: '—' },
         { label: 'Tendência', val: 'Ponto de partida', cls: 'warn' }
       ]},
@@ -1268,7 +1325,7 @@ const DASH_SIM_DATA = {
       { ico:'exam',    corClass:'ico-orange', titulo:'Simulados',   badgeText:'Alerta',   badgeCor:'badge-att',   desc:'Questões críticas identificadas.',     page:'simulados' },
       { ico:'teacher', corClass:'ico-blue',   titulo:'Professores', badgeText:'Atenção',  badgeCor:'badge-att',   desc:'3 professores com baixo impacto.',     page:'professores' },
       { ico:'student', corClass:'ico-red',    titulo:'Alunos',      badgeText:'Crítico',  badgeCor:'badge-crit',  desc:'1.528 alunos precisam de atenção.',    page:'alunos' },
-      { ico:'chat',    corClass:'ico-teal',   titulo:'Devolutivas', badgeText:'Pronto',   badgeCor:'badge-ok',    desc:'2 devolutivas prontas para envio.',    page:'devolutivas' }
+      { ico:'chat',    corClass:'ico-teal',   titulo:'Devolutivas', badgeText:'Pronto',   badgeCor:'badge-ok',    desc:'2 devolutivas prontas para envio.',    page:'professores' }
     ]
   },
   sim2: {
@@ -1289,8 +1346,8 @@ const DASH_SIM_DATA = {
     ],
     panoramaDetalhe: [
       { rows: [
-        { label: '2º Simulado', val: '45,1%' },
-        { label: '1º Simulado', val: '43,5%' },
+        { label: 'Ciclo 2', val: '45,1%' },
+        { label: 'Ciclo 1', val: '43,5%' },
         { label: 'Variação', val: '+1,6 p.p.', cls: 'pos' },
         { label: 'Tendência', val: 'Crescente', cls: 'pos' }
       ]},
@@ -1331,7 +1388,7 @@ const DASH_SIM_DATA = {
       { ico:'exam',    corClass:'ico-orange', titulo:'Simulados',   badgeText:'Alerta',    badgeCor:'badge-att',   desc:'Questões críticas identificadas.',     page:'simulados' },
       { ico:'teacher', corClass:'ico-green',  titulo:'Professores', badgeText:'Destaque',  badgeCor:'badge-above', desc:'22% dos professores acima da média.',  page:'professores' },
       { ico:'student', corClass:'ico-red',    titulo:'Alunos',      badgeText:'Alerta',    badgeCor:'badge-att',   desc:'1.287 alunos precisam de atenção.',    page:'alunos' },
-      { ico:'chat',    corClass:'ico-teal',   titulo:'Devolutivas', badgeText:'Pronto',    badgeCor:'badge-ok',    desc:'2 devolutivas prontas para envio.',    page:'devolutivas' }
+      { ico:'chat',    corClass:'ico-teal',   titulo:'Devolutivas', badgeText:'Pronto',    badgeCor:'badge-ok',    desc:'2 devolutivas prontas para envio.',    page:'professores' }
     ]
   },
   sim3: {
@@ -1352,8 +1409,8 @@ const DASH_SIM_DATA = {
     ],
     panoramaDetalhe: [
       { rows: [
-        { label: '3º Simulado', val: '47,8%' },
-        { label: '2º Simulado', val: '45,1%' },
+        { label: 'Ciclo 3', val: '47,8%' },
+        { label: 'Ciclo 2', val: '45,1%' },
         { label: 'Variação', val: '+2,7 p.p.', cls: 'pos' },
         { label: 'Tendência', val: 'Crescente', cls: 'pos' }
       ]},
@@ -1393,7 +1450,7 @@ const DASH_SIM_DATA = {
       { ico:'exam',    corClass:'ico-orange', titulo:'Simulados',   badgeText:'Alerta',    badgeCor:'badge-att',   desc:'Questões críticas identificadas.',     page:'simulados' },
       { ico:'teacher', corClass:'ico-green',  titulo:'Professores', badgeText:'Destaque',  badgeCor:'badge-above', desc:'18% dos professores acima da média.',  page:'professores' },
       { ico:'student', corClass:'ico-red',    titulo:'Alunos',      badgeText:'Atenção',   badgeCor:'badge-att',   desc:'1.087 alunos precisam de atenção.',    page:'alunos' },
-      { ico:'chat',    corClass:'ico-teal',   titulo:'Devolutivas', badgeText:'Pronto',    badgeCor:'badge-ok',    desc:'2 devolutivas prontas para envio.',    page:'devolutivas' }
+      { ico:'chat',    corClass:'ico-teal',   titulo:'Devolutivas', badgeText:'Pronto',    badgeCor:'badge-ok',    desc:'2 devolutivas prontas para envio.',    page:'professores' }
     ]
   },
   sim4: {
@@ -1414,8 +1471,8 @@ const DASH_SIM_DATA = {
     ],
     panoramaDetalhe: [
       { rows: [
-        { label: '4º Simulado', val: '50,2%' },
-        { label: '3º Simulado', val: '47,8%' },
+        { label: 'Ciclo 4', val: '50,2%' },
+        { label: 'Ciclo 3', val: '47,8%' },
         { label: 'Variação', val: '+2,4 p.p.', cls: 'pos' },
         { label: 'Tendência', val: 'Crescente', cls: 'pos' }
       ]},
@@ -1455,7 +1512,7 @@ const DASH_SIM_DATA = {
       { ico:'exam',    corClass:'ico-orange', titulo:'Simulados',   badgeText:'Alerta',    badgeCor:'badge-att',   desc:'Questões críticas identificadas.',     page:'simulados' },
       { ico:'teacher', corClass:'ico-green',  titulo:'Professores', badgeText:'Destaque',  badgeCor:'badge-above', desc:'20% dos professores acima da média.',  page:'professores' },
       { ico:'student', corClass:'ico-teal',   titulo:'Alunos',      badgeText:'Estável',   badgeCor:'badge-avg',   desc:'964 alunos com desempenho abaixo.',    page:'alunos' },
-      { ico:'chat',    corClass:'ico-teal',   titulo:'Devolutivas', badgeText:'Pronto',    badgeCor:'badge-ok',    desc:'2 devolutivas prontas para envio.',    page:'devolutivas' }
+      { ico:'chat',    corClass:'ico-teal',   titulo:'Devolutivas', badgeText:'Pronto',    badgeCor:'badge-ok',    desc:'2 devolutivas prontas para envio.',    page:'professores' }
     ]
   },
   sim5: {
@@ -1476,8 +1533,8 @@ const DASH_SIM_DATA = {
     ],
     panoramaDetalhe: [
       { rows: [
-        { label: '5º Simulado', val: '53,6%' },
-        { label: '4º Simulado', val: '50,2%' },
+        { label: 'Ciclo 5', val: '53,6%' },
+        { label: 'Ciclo 4', val: '50,2%' },
         { label: 'Variação', val: '+3,4 p.p.', cls: 'pos' },
         { label: 'Tendência', val: 'Crescente', cls: 'pos' }
       ]},
@@ -1517,7 +1574,7 @@ const DASH_SIM_DATA = {
       { ico:'exam',    corClass:'ico-orange', titulo:'Simulados',   badgeText:'Alerta',    badgeCor:'badge-crit',  desc:'Participação 8% abaixo do esperado.',    page:'simulados' },
       { ico:'teacher', corClass:'ico-green',  titulo:'Professores', badgeText:'Destaque',  badgeCor:'badge-above', desc:'18% dos professores acima da média.',    page:'professores' },
       { ico:'student', corClass:'ico-teal',   titulo:'Alunos',      badgeText:'Alerta',    badgeCor:'badge-att',   desc:'842 alunos precisam de acompanhamento.', page:'alunos' },
-      { ico:'chat',    corClass:'ico-blue',   titulo:'Devolutivas', badgeText:'Pronto',    badgeCor:'badge-ok',    desc:'2 devolutivas prontas para envio.',      page:'devolutivas' }
+      { ico:'chat',    corClass:'ico-blue',   titulo:'Devolutivas', badgeText:'Pronto',    badgeCor:'badge-ok',    desc:'2 devolutivas prontas para envio.',      page:'professores' }
     ]
   }
 };
@@ -2359,7 +2416,7 @@ function _buildProfPainel() {
   const resumo = getProfResumo(S.profKey, S.profSim, S.profComp);
   const qs     = getProfQuestoesFiltradas(S.profKey, S.profSim, S.profComp);
   const evoAcerto = getProfEvoAcerto(S.profKey, S.profComp);
-  const simTxt = S.profSim === 'acumulado' ? 'Acumulado (1–5)' : S.profSim + 'º Simulado';
+  const simTxt = S.profSim === 'acumulado' ? 'Acumulado (1–5)' : 'Ciclo ' + S.profSim;
   const status = _profStatusFrente(resumo, qs);
 
   const excelentes = qs.filter(q => q.status === 'excelente').length;
@@ -2754,7 +2811,7 @@ function _renderProfQuestaoDetalhe(id) {
   detEl.innerHTML =
     `<div class="prof-det-head">` +
       `<div>` +
-        `<div class="prof-det-num">Simulado ${q.sim} · Item ${q.num}</div>` +
+        `<div class="prof-det-num">Ciclo ${q.sim} · 1ª Fase · Item ${q.num}</div>` +
         `<div class="prof-det-comp">${q.comp}</div>` +
       `</div>` +
       `<span class="prof-qual-badge pq-${efiCls}">${efiLbl} · EFI ${efi}</span>` +
@@ -2778,6 +2835,71 @@ function _renderProfQuestaoDetalhe(id) {
     `<div class="prof-det-actions">` +
       `<button class="prof-act-btn" onclick="alert('Devolutiva em desenvolvimento')">Gerar devolutiva</button>` +
       `<button class="prof-act-btn" onclick="alert('Item marcado para revisão')">Marcar para revisão</button>` +
+    `</div>`;
+}
+
+/* ── DEVOLUTIVA DA FRENTE (Tab 4 de Professores) ──────────── */
+function _buildProfDevolutiva() {
+  const resumo = getProfResumo(S.profKey, S.profSim, S.profComp);
+  const qs     = getProfQuestoesFiltradas(S.profKey, S.profSim, S.profComp);
+  const pDados = getProfDados(S.profKey);
+
+  // KPIs
+  const acertoEl    = el('pdev-kpi-acerto');
+  const partEl      = el('pdev-kpi-part');
+  const resolEl     = el('pdev-kpi-resolucao');
+  const revisaoEl   = el('pdev-kpi-revisao');
+  const resolNoteEl = el('pdev-kpi-resolucao-note');
+  const revisNoteEl = el('pdev-kpi-revisao-note');
+
+  if (acertoEl)    acertoEl.textContent    = resumo.acertoMedio + '%';
+  if (partEl)      partEl.textContent      = resumo.nqs || '—';
+
+  const comResol = qs.filter(q => q.acerto < 35).length;
+  const comRevis = qs.filter(q => q.status === 'revisao').length;
+  if (resolEl)     resolEl.textContent     = comResol;
+  if (revisaoEl)   revisaoEl.textContent   = comRevis;
+  if (resolNoteEl) resolNoteEl.textContent = comResol === 1 ? 'item com acerto < 35%' : 'itens com acerto < 35%';
+  if (revisNoteEl) revisNoteEl.textContent = comRevis === 1 ? 'item com discriminante baixo' : 'itens com discriminante baixo';
+
+  // Prévia da devolutiva
+  const previaEl = el('prof-dev-previa-body');
+  if (!previaEl) return;
+
+  if (!resumo.nqs) {
+    previaEl.innerHTML = '<div style="font-size:12px;color:var(--t3);padding:8px 0">Nenhum dado para os filtros selecionados.</div>';
+    return;
+  }
+
+  const simLabel = S.profSim === 'acumulado' ? 'todos os ciclos' : `Ciclo ${S.profSim.replace('sim','')}`;
+  const compLabel = S.profComp === 'todas' ? 'todos os componentes' : S.profComp;
+
+  const linhaAcerto = resumo.acertoMedio >= 50
+    ? `O acerto médio da frente foi de <strong>${resumo.acertoMedio}%</strong>, dentro do esperado para o nível analisado.`
+    : `O acerto médio da frente foi de <strong>${resumo.acertoMedio}%</strong>, abaixo do referencial esperado — requer atenção nos próximos ciclos.`;
+
+  const linhaRevisao = comRevis > 0
+    ? `${comRevis} item(ns) com revisão técnica sugerida — discriminante abaixo do referencial mínimo.`
+    : 'Todos os itens apresentam discriminante dentro do esperado.';
+
+  previaEl.innerHTML =
+    `<div class="prof-leitura-blocos">` +
+      `<div class="prof-leitura-bloco">` +
+        `<div class="prof-leitura-label">Escopo</div>` +
+        `<div class="prof-leitura-texto"><strong>${pDados.nome}</strong> — ${pDados.disc} · ${compLabel} · ${simLabel}</div>` +
+      `</div>` +
+      `<div class="prof-leitura-bloco">` +
+        `<div class="prof-leitura-label">Desempenho dos alunos</div>` +
+        `<div class="prof-leitura-texto">${linhaAcerto}</div>` +
+      `</div>` +
+      `<div class="prof-leitura-bloco">` +
+        `<div class="prof-leitura-label">Qualidade técnica dos itens</div>` +
+        `<div class="prof-leitura-texto">${resumo.nqs} item(ns) analisado(s). EFI médio: ${resumo.efiMedio}. Distratores funcionais: ${resumo.distFuncionais}%. ${linhaRevisao}</div>` +
+      `</div>` +
+      `<div class="prof-leitura-bloco">` +
+        `<div class="prof-leitura-label">Evidências pedagógicas</div>` +
+        `<div class="prof-leitura-texto">${comResol > 0 ? `${comResol} item(ns) com resolução sugerida (acerto < 35%). ` : ''}${comRevis > 0 ? `${comRevis} item(ns) com revisão técnica sugerida.` : 'Nenhum item requer revisão técnica urgente.'}</div>` +
+      `</div>` +
     `</div>`;
 }
 

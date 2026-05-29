@@ -317,3 +317,112 @@ function gerarPDF() {
 
   doc.save('devolutiva-arco-' + S.simId + '-' + S.escolaKey + '.pdf');
 }
+
+function generateProfessorFeedbackPDF(profKey, profSim) {
+  const pDados = (typeof getProfDados === 'function') ? getProfDados(profKey) : null;
+  const resumo = (typeof getProfResumo === 'function') ? getProfResumo(profKey, profSim, S.profComp) : null;
+  if (!pDados || !resumo || !resumo.nqs) {
+    alert('Nenhum dado disponível para gerar a devolutiva. Selecione um professor e simulado.');
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const W = 210, H = 297, PAD = 18;
+
+  const navy  = [15, 31, 61];
+  const orange = [232, 82, 26];
+  const white  = [255, 255, 255];
+  const gray   = [158, 158, 152];
+
+  function setColor(c) { doc.setTextColor(...c); }
+  function setFill(c)  { doc.setFillColor(...c); }
+
+  const simLabel = profSim === 'acumulado' ? 'Acumulado (Sim 1–5)' : 'Simulado ' + profSim.replace('sim','');
+  const compLabel = S.profComp === 'todas' ? 'Todos os componentes' : S.profComp;
+  const qs = (typeof getProfQuestoesFiltradas === 'function') ? getProfQuestoesFiltradas(profKey, profSim, S.profComp) : [];
+  const comResol = qs.filter(q => q.acerto < 35).length;
+  const comRevis = qs.filter(q => q.status === 'revisao').length;
+
+  // ── Capa ──
+  setFill(navy);
+  doc.rect(0, 0, W, H, 'F');
+  setFill(orange);
+  doc.rect(0, H - 18, W, 18, 'F');
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(28);
+  setColor(white);
+  doc.text('ARCO', PAD, 36);
+
+  doc.setFontSize(11);
+  setColor([255, 255, 255]);
+  doc.setFont('helvetica', 'normal');
+  doc.text('Sistema de Devolutiva Pedagógica', PAD, 45);
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(20);
+  setColor(white);
+  doc.text('Devolutiva da Frente', PAD, 90);
+
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(13);
+  doc.text(pDados.nome, PAD, 103);
+  doc.setFontSize(11);
+  doc.text(pDados.disc + ' · ' + compLabel, PAD, 112);
+  doc.text(simLabel, PAD, 120);
+
+  doc.setFontSize(9);
+  setColor(gray);
+  doc.text('Gerado em ' + new Date().toLocaleDateString('pt-BR'), PAD, H - 24);
+
+  // ── Página 2: Resumo ──
+  doc.addPage();
+  setFill(white);
+  doc.rect(0, 0, W, H, 'F');
+
+  setFill(navy);
+  doc.rect(0, 0, W, 14, 'F');
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(9);
+  setColor(white);
+  doc.text('ARCO EDUCAÇÃO — Devolutiva da Frente', PAD, 9.5);
+
+  let y = 30;
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(14);
+  setColor(navy);
+  doc.text('Leitura técnica da frente', PAD, y);
+  y += 10;
+
+  const linhas = [
+    ['Escopo',                `${pDados.nome} — ${pDados.disc} · ${compLabel} · ${simLabel}`],
+    ['Itens analisados',      String(resumo.nqs)],
+    ['Acerto médio',          resumo.acertoMedio + '%'],
+    ['EFI médio',             String(resumo.efiMedio)],
+    ['Distratores funcionais', resumo.distFuncionais + '%'],
+    ['Com resolução sugerida', String(comResol) + ' item(ns)'],
+    ['Com revisão técnica',   String(comRevis) + ' item(ns)'],
+  ];
+
+  linhas.forEach(([lbl, val]) => {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    setColor(gray);
+    doc.text(lbl.toUpperCase(), PAD, y);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    setColor(navy);
+    doc.text(val, PAD, y + 6);
+    y += 16;
+  });
+
+  setFill(navy);
+  doc.rect(0, H - 10, W, 10, 'F');
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(7);
+  setColor(white);
+  doc.text('Arco Educação — Uso exclusivo interno', PAD, H - 4);
+
+  doc.save('devolutiva-professor-' + profKey + '-' + profSim + '.pdf');
+}

@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Arco · Acesso</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 7'><path d='M1 6Q11 1 21 6' stroke='%23E8521A' stroke-width='2.5' stroke-linecap='round' fill='none'/></svg>"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,600;1,700;1,800&display=swap" rel="stylesheet"/>
+<style>
+/* ── RESET ────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; }
+button { font-family: inherit; cursor: pointer; }
+
+/* ── BODY ─────────────────────────────────────────────────── */
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  -webkit-font-smoothing: antialiased;
+  background:
+    radial-gradient(ellipse 70% 60% at 20% 10%, rgba(15,31,61,.08) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 50% at 80% 90%, rgba(15,31,61,.06) 0%, transparent 60%),
+    #C9C5BF;
+}
+
+/* ── CARD ─────────────────────────────────────────────────── */
+.card {
+  display: flex;
+  width: 100%;
+  max-width: 1100px;
+  min-height: 648px;
+  border-radius: 22px;
+  overflow: hidden;
+  border: 1px solid rgba(0,0,0,.07);
+  box-shadow:
+    0 0 0 1px rgba(255,255,255,.25) inset,
+    0 2px 4px rgba(0,0,0,.04),
+    0 8px 20px rgba(0,0,0,.08),
+    0 24px 56px rgba(0,0,0,.14),
+    0 56px 100px rgba(0,0,0,.10);
+}
+
+/* ══════════════════════════════════════════════════════════
+   LEFT PANEL
+══════════════════════════════════════════════════════════ */
+.lp {
+  width: 43%;
+  flex-shrink: 0;
+  background: #F8F6F3;
+  padding: 60px 56px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  position: relative;
+}
+
+/* Orange accent strip */
+.lp::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 4px;
+  background: linear-gradient(180deg, #E8521A 0%, #B83A10 100%);
+  border-radius: 0 2px 2px 0;
+}
+
+/* Eyebrow */
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin-bottom: 28px;
+}
+.eyebrow-dash {
+  width: 22px; height: 2px;
+  background: #E8521A;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+.eyebrow-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: #8A8A8A;
+}
+
+/* Heading */
+.lp-h1 {
+  font-size: 44px;
+  font-weight: 800;
+  color: #0D1B36;
+  line-height: 1.06;
+  letter-spacing: -1.2px;
+  margin-bottom: 18px;
+}
+.lp-h1 em {
+  font-style: italic;
+  font-weight: 700;
+  color: #E8521A;
+}
+
+/* Description */
+.lp-desc {
+  font-size: 13.5px;
+  color: #5A5A6A;
+  line-height: 1.72;
+  margin-bottom: 28px;
+  max-width: 340px;
+}
+
+/* Secure badge */
+.secure-badge {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  background: rgba(15,31,61,.04);
+  border: 1px solid rgba(15,31,61,.08);
+  border-radius: 10px;
+  margin-bottom: 30px;
+}
+.secure-ico {
+  width: 34px; height: 34px;
+  border-radius: 8px;
+  background: rgba(232,82,26,.10);
+  display: flex; align-items: center; justify-content: center;
+  color: #E8521A; flex-shrink: 0;
+}
+.secure-ico svg { width: 16px; height: 16px; }
+.secure-text {
+  font-size: 12px;
+  color: #5A5A6A;
+  line-height: 1.6;
+  padding-top: 1px;
+}
+
+/* Form labels */
+.f-label {
+  display: block;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: #0D1B36;
+  margin-bottom: 8px;
+}
+
+/* Input fields */
+.f-field {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  height: 52px;
+  padding: 0 16px;
+  border: 1.5px solid #DDD9D4;
+  border-radius: 10px;
+  background: #FFFFFF;
+  margin-bottom: 18px;
+  transition: border-color .2s cubic-bezier(.4,0,.2,1), box-shadow .2s cubic-bezier(.4,0,.2,1);
+}
+.f-field:focus-within {
+  border-color: #E8521A;
+  border-width: 2px;
+  box-shadow: 0 0 0 4px rgba(232,82,26,.10);
+}
+.f-field.is-error {
+  border-color: #DC2626;
+  border-width: 2px;
+  box-shadow: 0 0 0 4px rgba(220,38,38,.08);
+}
+.f-ico {
+  color: #B0ADA8;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  transition: color .2s;
+}
+.f-ico svg { width: 16px; height: 16px; }
+.f-field:focus-within .f-ico { color: #E8521A; }
+.f-field input {
+  flex: 1;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #0D1B36;
+  background: transparent;
+  min-width: 0;
+}
+.f-field input::placeholder { color: #B8B5B0; font-weight: 400; }
+.f-eye {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  color: #B0ADA8;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  border-radius: 4px;
+  transition: color .15s, background .15s;
+}
+.f-eye:hover { color: #0D1B36; background: rgba(0,0,0,.05); }
+.f-eye svg { width: 16px; height: 16px; }
+
+/* Error message */
+.error-msg {
+  display: none;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #DC2626;
+  margin-bottom: 14px;
+  padding: 9px 12px;
+  background: rgba(220,38,38,.06);
+  border-radius: 8px;
+  border: 1px solid rgba(220,38,38,.15);
+}
+.error-msg.show { display: flex; }
+.error-msg svg { flex-shrink: 0; width: 14px; height: 14px; }
+
+/* Remember + forgot row */
+.f-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 26px;
+}
+.f-remember {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+.f-remember input[type=checkbox] {
+  width: 15px; height: 15px;
+  accent-color: #E8521A;
+  cursor: pointer;
+  flex-shrink: 0;
+  border-radius: 4px;
+}
+.f-remember span { font-size: 13px; color: #5A5A6A; }
+.f-forgot {
+  font-size: 13px;
+  font-weight: 700;
+  color: #E8521A;
+  text-decoration: none;
+  transition: color .15s;
+}
+.f-forgot:hover { color: #B83A10; }
+
+/* CTA button */
+.btn-login {
+  width: 100%;
+  height: 56px;
+  background: linear-gradient(120deg, #E8521A 0%, #D24014 100%);
+  color: #fff;
+  border: none;
+  border-radius: 11px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -.01em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  position: relative;
+  overflow: hidden;
+  transition: transform .18s cubic-bezier(.4,0,.2,1),
+              box-shadow .18s cubic-bezier(.4,0,.2,1),
+              background .18s;
+  box-shadow: 0 4px 12px rgba(232,82,26,.28), 0 1px 3px rgba(232,82,26,.3);
+}
+.btn-login::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255,255,255,.12) 0%, transparent 60%);
+  border-radius: inherit;
+}
+.btn-login:hover {
+  background: linear-gradient(120deg, #D44616 0%, #BF3810 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(232,82,26,.40), 0 2px 6px rgba(232,82,26,.30);
+}
+.btn-login:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(232,82,26,.22);
+}
+.btn-login:disabled {
+  opacity: .65;
+  cursor: default;
+  transform: none;
+  box-shadow: none;
+}
+.btn-login .btn-arrow {
+  display: flex;
+  align-items: center;
+  transition: transform .2s cubic-bezier(.4,0,.2,1);
+}
+.btn-login:hover .btn-arrow { transform: translateX(4px); }
+.btn-login svg { width: 18px; height: 18px; }
+
+/* Divider + footer */
+.lp-divider {
+  height: 1px;
+  background: rgba(15,31,61,.08);
+  margin-top: 24px;
+  margin-bottom: 18px;
+}
+.lp-footer {
+  text-align: center;
+  font-size: 13px;
+  color: #9A9A9A;
+}
+.lp-footer a {
+  color: #E8521A;
+  font-weight: 700;
+  text-decoration: none;
+  transition: color .15s;
+}
+.lp-footer a:hover { color: #B83A10; }
+
+/* ══════════════════════════════════════════════════════════
+   RIGHT PANEL
+══════════════════════════════════════════════════════════ */
+.rp {
+  flex: 1;
+  padding: 48px 52px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse 55% 40% at 97% 1%, rgba(232,82,26,.22) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 55% at 95% 2%, rgba(60,100,200,.14) 0%, transparent 60%),
+    linear-gradient(155deg, #13213E 0%, #0C1A31 40%, #071325 100%);
+}
+
+/* Full-panel decorative SVG */
+.rp-deco {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Brand */
+.rp-brand {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  position: relative;
+  z-index: 2;
+  margin-bottom: 30px;
+}
+.rp-logo-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1;
+  gap: 1px;
+}
+.rp-logo-word {
+  font-size: 29px;
+  font-weight: 800;
+  color: #fff;
+  letter-spacing: -1.2px;
+  line-height: 1;
+}
+.rp-brand-sep {
+  width: 1px;
+  height: 44px;
+  background: rgba(255,255,255,.15);
+  flex-shrink: 0;
+}
+.rp-tagline {
+  font-size: 12.5px;
+  color: rgba(255,255,255,.52);
+  line-height: 1.6;
+}
+.rp-tagline strong { color: #E8521A; font-weight: 700; }
+
+/* Pill nav */
+.rp-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  border: 1px solid rgba(255,255,255,.13);
+  border-radius: 99px;
+  padding: 10px 22px;
+  width: fit-content;
+  position: relative;
+  z-index: 2;
+  margin-bottom: 32px;
+  background: rgba(255,255,255,.04);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.rp-pill-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: rgba(255,255,255,.7);
+  padding: 0 18px;
+}
+.rp-pill-item:first-child { padding-left: 0; }
+.rp-pill-item:last-child  { padding-right: 0; }
+.rp-pill-item svg { color: #E8521A; width: 15px; height: 15px; flex-shrink: 0; }
+.rp-pill-sep {
+  width: 1px; height: 17px;
+  background: rgba(255,255,255,.15);
+  flex-shrink: 0;
+}
+
+/* Main heading */
+.rp-h2 {
+  font-size: 36px;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.13;
+  letter-spacing: -.6px;
+  margin-bottom: 16px;
+  position: relative;
+  z-index: 2;
+  text-shadow: 0 2px 20px rgba(0,0,0,.25);
+}
+.rp-h2 em {
+  font-style: italic;
+  font-weight: 700;
+  color: #E8521A;
+}
+
+/* Rule */
+.rp-rule {
+  width: 32px; height: 2.5px;
+  background: #E8521A;
+  border-radius: 2px;
+  margin-bottom: 16px;
+  position: relative;
+  z-index: 2;
+}
+
+/* Description */
+.rp-desc {
+  font-size: 13px;
+  color: rgba(255,255,255,.48);
+  line-height: 1.72;
+  margin-bottom: auto;
+  padding-bottom: 30px;
+  position: relative;
+  z-index: 2;
+  max-width: 420px;
+}
+
+/* Feature cards */
+.rp-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  position: relative;
+  z-index: 2;
+}
+.rp-card {
+  background: rgba(255,255,255,.045);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px;
+  padding: 20px 16px 22px;
+  position: relative;
+  overflow: hidden;
+  transition:
+    background .22s cubic-bezier(.4,0,.2,1),
+    border-color .22s cubic-bezier(.4,0,.2,1),
+    transform .22s cubic-bezier(.4,0,.2,1),
+    box-shadow .22s cubic-bezier(.4,0,.2,1);
+}
+/* Top accent line on hover */
+.rp-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 16px; right: 16px;
+  height: 1.5px;
+  background: linear-gradient(90deg, transparent, #E8521A 50%, transparent);
+  opacity: 0;
+  transition: opacity .22s;
+}
+.rp-card:hover {
+  background: rgba(255,255,255,.08);
+  border-color: rgba(232,82,26,.22);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 28px rgba(0,0,0,.2), 0 0 0 1px rgba(232,82,26,.12);
+}
+.rp-card:hover::before { opacity: 1; }
+
+/* Card icon badge */
+.rp-card-ico {
+  width: 40px; height: 40px;
+  border-radius: 10px;
+  background: rgba(232,82,26,.14);
+  border: 1px solid rgba(232,82,26,.18);
+  display: flex; align-items: center; justify-content: center;
+  color: #E8521A;
+  margin-bottom: 14px;
+  transition: background .22s, border-color .22s;
+}
+.rp-card:hover .rp-card-ico {
+  background: rgba(232,82,26,.24);
+  border-color: rgba(232,82,26,.35);
+}
+.rp-card-ico svg { width: 20px; height: 20px; }
+.rp-card-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: rgba(255,255,255,.9);
+  margin-bottom: 6px;
+  letter-spacing: -.1px;
+}
+.rp-card-desc {
+  font-size: 11px;
+  color: rgba(255,255,255,.38);
+  line-height: 1.6;
+}
+</style>
+</head>
+<body>
+
+<div class="card">
+
+  <!-- ══ LEFT PANEL ══ -->
+  <div class="lp">
+
+    <div class="eyebrow">
+      <div class="eyebrow-dash"></div>
+      <span class="eyebrow-label">Acesso · Coordenação</span>
+    </div>
+
+    <h1 class="lp-h1">
+      Visão pedagógica da<br>
+      rede, <em>decisões</em><br>
+      com clareza.
+    </h1>
+
+    <p class="lp-desc">
+      Acompanhe a qualidade do simulado, o desempenho por frentes, a evolução das escolas e das turmas e identifique onde a intervenção pedagógica precisa acontecer primeiro.
+    </p>
+
+    <div class="secure-badge">
+      <div class="secure-ico">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+      </div>
+      <p class="secure-text">Ambiente seguro e exclusivo para coordenadores da rede Arco Educação.</p>
+    </div>
+
+    <form id="form" onsubmit="handleLogin(event)" novalidate>
+
+      <label class="f-label" for="inp-user">Usuário</label>
+      <div class="f-field" id="wrap-user">
+        <span class="f-ico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+          </svg>
+        </span>
+        <input type="email" id="inp-user" placeholder="e-mail institucional" autocomplete="username"/>
+      </div>
+
+      <label class="f-label" for="inp-pass">Senha</label>
+      <div class="f-field" id="wrap-pass">
+        <span class="f-ico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </span>
+        <input type="password" id="inp-pass" placeholder="••••••••••••" autocomplete="current-password"/>
+        <button type="button" class="f-eye" id="btn-eye" onclick="togglePass()" aria-label="Mostrar senha">
+          <svg id="eye-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="f-row">
+        <label class="f-remember">
+          <input type="checkbox" id="chk-remember"/>
+          <span>Manter conectado</span>
+        </label>
+        <a href="#" class="f-forgot" onclick="return false">Esqueci minha senha</a>
+      </div>
+
+      <div class="error-msg" id="error-msg">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        Usuário ou senha incorretos. Verifique e tente novamente.
+      </div>
+
+      <button type="submit" class="btn-login" id="btn-login">
+        Entrar no painel da coordenação
+        <span class="btn-arrow">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>
+          </svg>
+        </span>
+      </button>
+
+    </form>
+
+    <div class="lp-divider"></div>
+    <p class="lp-footer">Primeiro acesso? <a href="#" onclick="return false">Solicitar credenciais</a></p>
+  </div>
+
+  <!-- ══ RIGHT PANEL ══ -->
+  <div class="rp">
+
+    <!-- Decorative SVG: full-panel, precise arcs + radial lines from top-right corner -->
+    <svg class="rp-deco" viewBox="0 0 640 648" preserveAspectRatio="xMaxYMin slice" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs>
+        <!-- Radial fade mask: lines fade away from focal point -->
+        <radialGradient id="ray-fade" cx="100%" cy="0%" r="100%" gradientUnits="objectBoundingBox">
+          <stop offset="0%"   stop-color="white" stop-opacity="1"/>
+          <stop offset="70%"  stop-color="white" stop-opacity="0.4"/>
+          <stop offset="100%" stop-color="white" stop-opacity="0"/>
+        </radialGradient>
+        <mask id="ray-mask">
+          <rect width="640" height="648" fill="url(#ray-fade)"/>
+        </mask>
+      </defs>
+
+      <!-- ── ORANGE RADIAL LINES from (640, 0) ── -->
+      <g mask="url(#ray-mask)">
+        <!-- Hitting bottom edge (y=648) -->
+        <line x1="640" y1="0" x2="596" y2="648" stroke="#E8521A" stroke-width=".55" opacity=".30"/>
+        <line x1="640" y1="0" x2="530" y2="648" stroke="#E8521A" stroke-width=".55" opacity=".26"/>
+        <line x1="640" y1="0" x2="440" y2="648" stroke="#E8521A" stroke-width=".50" opacity=".22"/>
+        <line x1="640" y1="0" x2="338" y2="648" stroke="#E8521A" stroke-width=".50" opacity=".18"/>
+        <line x1="640" y1="0" x2="226" y2="648" stroke="#E8521A" stroke-width=".45" opacity=".15"/>
+        <line x1="640" y1="0" x2="108" y2="648" stroke="#E8521A" stroke-width=".45" opacity=".12"/>
+        <line x1="640" y1="0" x2="8"   y2="648" stroke="#E8521A" stroke-width=".40" opacity=".10"/>
+        <!-- Hitting left edge (x=0) -->
+        <line x1="640" y1="0" x2="0" y2="580" stroke="#E8521A" stroke-width=".40" opacity=".09"/>
+        <line x1="640" y1="0" x2="0" y2="460" stroke="#E8521A" stroke-width=".40" opacity=".08"/>
+        <line x1="640" y1="0" x2="0" y2="340" stroke="#E8521A" stroke-width=".35" opacity=".07"/>
+        <line x1="640" y1="0" x2="0" y2="230" stroke="#E8521A" stroke-width=".35" opacity=".06"/>
+        <line x1="640" y1="0" x2="0" y2="135" stroke="#E8521A" stroke-width=".30" opacity=".05"/>
+        <line x1="640" y1="0" x2="0" y2="58"  stroke="#E8521A" stroke-width=".30" opacity=".04"/>
+      </g>
+
+      <!-- ── BLUE/PERIWINKLE CONCENTRIC ARCS from (640, 0) ── -->
+      <!-- Quarter-circle arcs: M (640-R, 0) A R R 0 0 1 640 R -->
+      <path d="M 530 0 A 110 110 0 0 1 640 110"  stroke="rgba(140,170,255,.32)" stroke-width="1.0" fill="none"/>
+      <path d="M 450 0 A 190 190 0 0 1 640 190"  stroke="rgba(140,170,255,.26)" stroke-width=".90" fill="none"/>
+      <path d="M 356 0 A 284 284 0 0 1 640 284"  stroke="rgba(140,170,255,.22)" stroke-width=".80" fill="none"/>
+      <path d="M 250 0 A 390 390 0 0 1 640 390"  stroke="rgba(140,170,255,.18)" stroke-width=".70" fill="none"/>
+      <path d="M 130 0 A 510 510 0 0 1 640 510"  stroke="rgba(140,170,255,.14)" stroke-width=".65" fill="none"/>
+      <path d="M   0 0 A 640 640 0 0 1 640 640"  stroke="rgba(140,170,255,.10)" stroke-width=".60" fill="none"/>
+      <!-- Larger arcs — start on left edge -->
+      <!-- R=790: left edge at y=sqrt(790²-640²)≈453 -->
+      <path d="M 0 453 A 790 790 0 0 1 640 648"  stroke="rgba(140,170,255,.08)" stroke-width=".55" fill="none"/>
+      <!-- R=970: left edge at y=sqrt(970²-640²)≈726 — hits bottom near (0,648) area -->
+      <path d="M 0 648 A 960 960 0 0 1 640 648"  stroke="rgba(140,170,255,.05)" stroke-width=".50" fill="none"/>
+
+      <!-- ── FOCAL GLOW RINGS at (640, 0) ── -->
+      <!-- Only the bottom-left quadrant of each circle is visible -->
+      <circle cx="640" cy="0" r="90"  stroke="rgba(232,82,26,.22)" stroke-width="1.2" fill="none"/>
+      <circle cx="640" cy="0" r="52"  stroke="rgba(232,82,26,.30)" stroke-width="1.0" fill="none"/>
+      <circle cx="640" cy="0" r="24"  stroke="rgba(232,82,26,.40)" stroke-width="1.2" fill="none"/>
+
+      <!-- Focal star/glow dot -->
+      <circle cx="625" cy="18" r="55" fill="rgba(232,82,26,.07)"/>
+      <circle cx="625" cy="18" r="28" fill="rgba(232,82,26,.10)"/>
+      <circle cx="625" cy="18" r="12" fill="rgba(232,82,26,.18)"/>
+      <circle cx="625" cy="18" r="5"  fill="rgba(232,82,26,.70)"/>
+      <circle cx="625" cy="18" r="2.5" fill="rgba(255,255,255,.95)"/>
+      <!-- Lens flare cross -->
+      <line x1="614" y1="18" x2="636" y2="18" stroke="rgba(255,255,255,.5)" stroke-width=".8"/>
+      <line x1="625" y1="7"  x2="625" y2="29" stroke="rgba(255,255,255,.5)" stroke-width=".8"/>
+    </svg>
+
+    <!-- Brand -->
+    <div class="rp-brand">
+      <div class="rp-logo-wrap">
+        <svg viewBox="0 0 52 13" fill="none" width="52" height="13" style="margin-bottom:-2px">
+          <path d="M3 11Q26 2 49 11" stroke="#E8521A" stroke-width="3" stroke-linecap="round" fill="none"/>
+        </svg>
+        <span class="rp-logo-word">arco</span>
+      </div>
+      <div class="rp-brand-sep"></div>
+      <div class="rp-tagline">
+        Transformando dados educacionais<br>
+        em <strong>decisões pedagógicas.</strong>
+      </div>
+    </div>
+
+    <!-- Pill nav -->
+    <div class="rp-pill">
+      <div class="rp-pill-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+        </svg>
+        Simulados
+      </div>
+      <div class="rp-pill-sep"></div>
+      <div class="rp-pill-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+        Escolas
+      </div>
+      <div class="rp-pill-sep"></div>
+      <div class="rp-pill-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        Turmas
+      </div>
+    </div>
+
+    <!-- Main heading -->
+    <h2 class="rp-h2">
+      Do simulado à rede inteira.<br>
+      Inteligência para orientar<br>
+      cada <em>decisão pedagógica.</em>
+    </h2>
+
+    <div class="rp-rule"></div>
+
+    <p class="rp-desc">
+      Cruze resultados, compare escolas, acompanhe turmas, leia sinais de atenção e transforme evidências em ação com mais rapidez e profundidade.
+    </p>
+
+    <!-- Feature cards -->
+    <div class="rp-cards">
+
+      <div class="rp-card">
+        <div class="rp-card-ico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="6.5"/>
+            <line x1="20" y1="20" x2="16.2" y2="16.2"/>
+            <path d="M8.5 11 L11 13.5 L15 9"/>
+          </svg>
+        </div>
+        <div class="rp-card-title">Simulado</div>
+        <div class="rp-card-desc">Qualidade da prova, distribuição e sinais de atenção.</div>
+      </div>
+
+      <div class="rp-card">
+        <div class="rp-card-ico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+        </div>
+        <div class="rp-card-title">Escolas</div>
+        <div class="rp-card-desc">Comparações da rede e leitura de desempenho por unidade.</div>
+      </div>
+
+      <div class="rp-card">
+        <div class="rp-card-ico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+        </div>
+        <div class="rp-card-title">Turmas</div>
+        <div class="rp-card-desc">Evolução coletiva, participação e consistência acadêmica.</div>
+      </div>
+
+      <div class="rp-card">
+        <div class="rp-card-ico">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+            <circle cx="12" cy="7" r="4"/>
+          </svg>
+        </div>
+        <div class="rp-card-title">Alunos</div>
+        <div class="rp-card-desc">Leitura individual, prioridades e acompanhamento pedagógico.</div>
+      </div>
+
+    </div>
+
+  </div><!-- /rp -->
+
+</div><!-- /card -->
+
+<script>
+'use strict';
+
+const CREDS = { email: 'gestor@arco.com.br', pass: 'ryan123' };
+
+function handleLogin(e) {
+  e.preventDefault();
+  const email = document.getElementById('inp-user').value.trim().toLowerCase();
+  const pass  = document.getElementById('inp-pass').value;
+  const errEl = document.getElementById('error-msg');
+  const wUser = document.getElementById('wrap-user');
+  const wPass = document.getElementById('wrap-pass');
+  const btn   = document.getElementById('btn-login');
+
+  wUser.classList.remove('is-error');
+  wPass.classList.remove('is-error');
+  errEl.classList.remove('show');
+
+  if (email === CREDS.email && pass === CREDS.pass) {
+    btn.disabled = true;
+    btn.innerHTML = '<span style="opacity:.8">Autenticando</span><span class="btn-arrow" style="opacity:.8"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>';
+    setTimeout(() => { window.location.href = 'index.html'; }, 800);
+  } else {
+    wUser.classList.add('is-error');
+    wPass.classList.add('is-error');
+    errEl.classList.add('show');
+    document.getElementById('inp-pass').value = '';
+    document.getElementById('inp-pass').focus();
+    /* Shake animation */
+    const form = document.getElementById('form');
+    form.style.animation = 'shake .4s cubic-bezier(.36,.07,.19,.97) both';
+    setTimeout(() => { form.style.animation = ''; }, 450);
+  }
+}
+
+function togglePass() {
+  const inp = document.getElementById('inp-pass');
+  const ico = document.getElementById('eye-ico');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+  ico.innerHTML = inp.type === 'text'
+    ? '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>'
+    : '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+}
+
+['inp-user','inp-pass'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => {
+    document.getElementById('wrap-user').classList.remove('is-error');
+    document.getElementById('wrap-pass').classList.remove('is-error');
+    document.getElementById('error-msg').classList.remove('show');
+  });
+});
+
+/* Inject shake keyframes */
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes shake {
+    10%,90%  { transform: translateX(-2px); }
+    20%,80%  { transform: translateX(4px); }
+    30%,50%,70% { transform: translateX(-6px); }
+    40%,60%  { transform: translateX(6px); }
+  }
+`;
+document.head.appendChild(style);
+</script>
+
+</body>
+</html>

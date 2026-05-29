@@ -38,7 +38,7 @@ const S = {
   alunoPerfilSimulado:  'acumulado',
 
   /* Professores */
-  profKey:             'silva',
+  profKey:             'cezar',
   profTab:             'painel',
   profSim:             'acumulado',
   profComp:            'todas',
@@ -186,9 +186,10 @@ function _buildAlunosCurrentTab() {
 
 function refreshProfessores() {
   switch (S.profTab) {
-    case 'painel':        if (typeof _buildProfPainel       === 'function') _buildProfPainel();       break;
-    case 'itens':         if (typeof _buildProfItens        === 'function') _buildProfItens();        break;
-    case 'aprendizagem':  if (typeof _buildProfAprendizagem === 'function') _buildProfAprendizagem(); break;
+    case 'painel':        if (typeof _buildProfPainel        === 'function') _buildProfPainel();        break;
+    case 'itens':         if (typeof _buildProfItens         === 'function') _buildProfItens();         break;
+    case 'aprendizagem':  if (typeof _buildProfAprendizagem  === 'function') _buildProfAprendizagem();  break;
+    case 'devolutiva':    if (typeof _buildProfDevolutiva    === 'function') _buildProfDevolutiva();    break;
   }
 }
 
