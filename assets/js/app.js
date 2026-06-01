@@ -60,6 +60,7 @@ function goTo(page) {
 
 /* ── INICIALIZADORES DE PÁGINA ────────────────────────────── */
 function _initDashboard() {
+  _populateDashSimSelect();
   _renderDashboard(S.simId);
 }
 
@@ -2344,12 +2345,35 @@ function _buildEvolucaoContent() {
 }
 
 /* ── POPULADORES DE SELECT ─────────────────────────────────── */
-function _populateSimSelect() {
-  const sel = el('sel-simulado');
-  if (!sel || sel.options.length > 1) return;
-  sel.innerHTML = SIMULADOS.map(s =>
-    `<option value="sim${s.id}"${('sim' + s.id) === S.simId ? ' selected' : ''}>${s.label}</option>`
+
+/* Simulados disponíveis: reais (vindos da API, em ARCO._cache.simulados)
+   com fallback ao mock quando o banco está vazio ou a API offline.
+   value = chave (mesmo formato 'simN' usado em getQuestoesForSim/_simIdx). */
+function _simuladosDisponiveis() {
+  const real = window.ARCO && window.ARCO._cache && window.ARCO._cache.simulados;
+  if (Array.isArray(real) && real.length) {
+    return real.map(s => ({
+      value: s.chave,
+      label: s.nome || s.nome_curto || s.chave,
+    }));
+  }
+  return SIMULADOS.map(s => ({ value: 'sim' + s.id, label: s.label }));
+}
+
+function _renderSimOptions(sel) {
+  if (!sel) return;
+  const sims = _simuladosDisponiveis();
+  sel.innerHTML = sims.map(s =>
+    `<option value="${s.value}"${s.value === S.simId ? ' selected' : ''}>${s.label}</option>`
   ).join('');
+}
+
+function _populateSimSelect() {
+  _renderSimOptions(el('sel-simulado'));
+}
+
+function _populateDashSimSelect() {
+  _renderSimOptions(el('sel-dash-simulado'));
 }
 
 function _populateEscolaSelect() {
@@ -3034,6 +3058,13 @@ document.addEventListener('DOMContentLoaded', async function () {
     } catch (err) {
       console.warn('[arco] bootstrap erro (seguindo no mock):', err);
     }
+  }
+
+  // Se o simulado default ('sim5') não existir entre os reais, cai no primeiro
+  // simulado disponível (evita dropdown/abas apontando para algo inexistente).
+  const _sims = _simuladosDisponiveis();
+  if (_sims.length && !_sims.some(s => s.value === S.simId)) {
+    S.simId = _sims[0].value;
   }
 
   // Inicia no dashboard

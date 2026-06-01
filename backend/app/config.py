@@ -15,6 +15,11 @@ class Settings(BaseSettings):
     # Em produção (Vercel), defina FRONTEND_ORIGINS com a URL exata do front.
     frontend_origins: str = "*"
 
+    # Observabilidade. LOG_LEVEL: DEBUG|INFO|WARNING|ERROR.
+    # LOG_FORMAT: "json" (produção, 1 evento por linha) ou "text" (dev local).
+    log_level: str = "INFO"
+    log_format: str = "json"
+
     model_config = SettingsConfigDict(
         env_file=str(ROOT_ENV),
         env_file_encoding="utf-8",
