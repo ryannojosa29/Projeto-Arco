@@ -9,6 +9,10 @@ from typing import Optional
 
 from openpyxl import load_workbook
 
+from .logging_config import get_logger
+
+logger = get_logger("app.parser")
+
 # header normalizado -> chave interna
 HEADER_MAP = {
     "número da questão": "numero",
@@ -47,18 +51,30 @@ def _int(v) -> int:
 def parse_gabarito(content: bytes):
     """Retorna (questoes, erros). 'questoes' é uma lista de dicts prontos para o banco.
 
-    Levanta ValueError em problemas estruturais (aba/colunas ausentes).
+    Levanta ValueError em problemas estruturais (arquivo inválido/aba/colunas ausentes).
     Erros por-linha são acumulados em 'erros' sem abortar o import.
     """
-    wb = load_workbook(io.BytesIO(content), data_only=True, read_only=True)
+    try:
+        wb = load_workbook(io.BytesIO(content), data_only=True, read_only=True)
+    except Exception as e:
+        # arquivo corrompido / não é um .xlsx → erro do usuário (400), não 500.
+        logger.warning("parse.arquivo_invalido", extra={"extra": {"erro": str(e)}})
+        raise ValueError("Arquivo inválido: não foi possível ler como .xlsx.")
+
+    aba = "Gabarito" if "Gabarito" in wb.sheetnames else wb.worksheets[0].title
     ws = wb["Gabarito"] if "Gabarito" in wb.sheetnames else wb.worksheets[0]
 
     rows = list(ws.iter_rows(values_only=True))
+    logger.debug(
+        "parse.planilha",
+        extra={"extra": {"aba": aba, "abas_disponiveis": wb.sheetnames, "linhas": len(rows)}},
+    )
     if not rows:
         raise ValueError("Planilha vazia.")
 
     header = [_norm(c) for c in rows[0]]
     col = {HEADER_MAP[h]: i for i, h in enumerate(header) if h in HEADER_MAP}
+    logger.debug("parse.colunas_detectadas", extra={"extra": {"colunas": sorted(col.keys())}})
     missing = REQUIRED - col.keys()
     if missing:
         # mapeia de volta para os nomes amigáveis
@@ -113,4 +129,8 @@ def parse_gabarito(content: bytes):
     if not questoes:
         raise ValueError("Nenhuma questão válida encontrada na planilha.")
 
+    logger.info(
+        "parse.resultado",
+        extra={"extra": {"questoes": len(questoes), "erros": len(erros)}},
+    )
     return questoes, erros
