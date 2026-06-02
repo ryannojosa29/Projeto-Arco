@@ -3,7 +3,7 @@
    Sem chaves do Supabase aqui — o navegador nunca fala com o Supabase.
 ═══════════════════════════════════════════════════════════ */
 window.ARCO = window.ARCO || {};
-window.ARCO.API_BASE = 'http://localhost:8001';
+window.ARCO.API_BASE = 'https://projeto-arco.onrender.com';
 
 /* Modo de exibição (governança de mock — ver assets/data-status.json):
    'demo'     → mostra tudo; o que não é real ganha selo "DEMONSTRATIVO".
