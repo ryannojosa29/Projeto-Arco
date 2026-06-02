@@ -7,19 +7,19 @@
 
 /* ── TEMA PLOTLY ───────────────────────────────────────────── */
 const CT = {
-  font: { family: "'Plus Jakarta Sans',system-ui,sans-serif", color: '#6B6B66', size: 11 },
+  font: { family: "'Plus Jakarta Sans',system-ui,sans-serif", color: '#6B6B66', size: 12 },
   paper_bgcolor: 'rgba(0,0,0,0)',
   plot_bgcolor:  'rgba(0,0,0,0)',
 };
 const CFG = { responsive: true, displayModeBar: false };
-const M   = { t: 6, r: 10, b: 28, l: 42 };
-const MC  = { t: 6, r: 6,  b: 6,  l: 6  };
+const M   = { t: 8, r: 14, b: 32, l: 46 };
+const MC  = { t: 8, r: 8,  b: 8,  l: 8  };
 
 /* Cores semânticas */
 const C = {
-  orange:  '#E8521A',
-  navy:    '#0F1F3D',
-  blue:    '#1D4ED8',
+  orange:  '#E8563A',
+  navy:    '#0D1B3E',
+  blue:    '#2563EB',
   green:   '#15803D',
   green2:  '#4ADE80',
   amber:   '#B45309',
@@ -27,6 +27,42 @@ const C = {
   slate:   '#94A3B8',
   border:  '#E8E6DF',
 };
+
+/* ── ANIMAÇÃO DE ENTRADA PARA GRÁFICOS DE BARRA ──────────────
+   Renderiza barras do zero e anima até os valores reais.
+   Gráficos de linha/pie usam Plotly.react() normal.
+─────────────────────────────────────────────────────────────── */
+function renderWithAnim(id, traces, layout) {
+  if (!el(id)) return;
+
+  const zeroTraces = traces.map(t => {
+    if (t.type !== 'bar') return t;
+    const z = { ...t, marker: { ...t.marker } };
+    if (t.orientation === 'h') z.x = Array.isArray(t.x) ? t.x.map(() => 0) : t.x;
+    else                        z.y = Array.isArray(t.y) ? t.y.map(() => 0) : t.y;
+    if (Array.isArray(t.text))  z.text = t.text.map(() => '');
+    return z;
+  });
+
+  Plotly.react(id, zeroTraces, layout, CFG);
+
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    Plotly.animate(id, {
+      data: traces.map(t => {
+        if (t.type !== 'bar') return {};
+        const upd = { marker: t.marker };
+        if (t.orientation === 'h') upd.x = t.x;
+        else                        upd.y = t.y;
+        if (t.text) upd.text = t.text;
+        return upd;
+      }),
+      traces: traces.map((_, i) => i),
+    }, {
+      transition: { duration: 760, easing: 'cubic-in-out' },
+      frame:      { duration: 760, redraw: false },
+    });
+  }));
+}
 
 /* Paleta de distribuição por faixa (5 níveis) */
 const FAIXA_COLORS = [C.green, C.green2, C.slate, '#F59E0B', C.red];
@@ -58,16 +94,16 @@ function renderSimDistChart(q) {
     i === distIdx ? C.orange : C.slate
   );
 
-  Plotly.react('sim-dist-chart',
+  renderWithAnim('sim-dist-chart',
     [{ type:'bar', y: alts, x: vals, orientation:'h',
-       marker: { color: colors, opacity: .88 },
+       marker: { color: colors, opacity: .92 },
        text: vals.map(v => v + '%'), textposition: 'outside',
-       textfont: { size: 10 },
+       textfont: { size: 11 },
     }],
-    { ...CT, margin: { t:4, r:40, b:4, l:24 },
-      xaxis: { range:[0,105], ticksuffix:'%', gridcolor: C.border, tickfont:{ size:9 }, zeroline:false },
-      yaxis: { tickfont:{ size:11 } },
-    }, CFG
+    { ...CT, margin: { t:4, r:44, b:4, l:26 },
+      xaxis: { range:[0,105], ticksuffix:'%', gridcolor: C.border, tickfont:{ size:10 }, zeroline:false },
+      yaxis: { tickfont:{ size:12 } },
+    }
   );
 }
 
@@ -76,16 +112,16 @@ function renderSimTurmaChart(q) {
   const t1 = Math.max(10, q.acerto - 10);
   const t2 = Math.min(95, q.acerto + 5);
   const rede = q.acerto;
-  Plotly.react('sim-turma-chart',
+  renderWithAnim('sim-turma-chart',
     [{ type:'bar', x:['Turma 1','Turma 2','Rede'],
        y:[t1, t2, rede],
-       marker: { color:[C.blue, C.blue, C.navy], opacity:[.75,.75,.9] },
-       text:[t1+'%', t2+'%', rede+'%'], textposition:'outside', textfont:{ size:10 },
+       marker: { color:[C.blue, C.blue, C.navy], opacity:[.82,.82,.95] },
+       text:[t1+'%', t2+'%', rede+'%'], textposition:'outside', textfont:{ size:11 },
     }],
-    { ...CT, margin:{ t:4, r:8, b:26, l:36 },
-      yaxis:{ range:[0,105], ticksuffix:'%', gridcolor:C.border, tickfont:{size:9} },
-      xaxis:{ tickfont:{size:10} },
-    }, CFG
+    { ...CT, margin:{ t:4, r:8, b:30, l:38 },
+      yaxis:{ range:[0,105], ticksuffix:'%', gridcolor:C.border, tickfont:{size:10} },
+      xaxis:{ tickfont:{size:11} },
+    }
   );
 }
 
@@ -130,14 +166,14 @@ function renderEscolaEvoChart(escolaKey) {
   Plotly.react('chart-escola-evo',
     [{ type:'scatter', mode:'lines+markers', name: e.nome,
        x: SIM_LABELS_CURTOS, y: e.evo,
-       line:{ color:C.orange, width:2.5 }, marker:{ size:5 } },
+       line:{ color:C.blue, width:3 }, marker:{ size:7, color:C.blue } },
      { type:'scatter', mode:'lines', name:'Média rede',
        x: SIM_LABELS_CURTOS, y: REDE_MEDIA_SIM,
-       line:{ color:C.slate, width:1.5, dash:'dot' } }],
+       line:{ color:C.slate, width:2, dash:'dot' } }],
     { ...CT, margin:M,
-      xaxis:{ tickfont:{size:9}, gridcolor:C.border },
-      yaxis:{ ticksuffix:'%', tickfont:{size:9}, gridcolor:C.border, range:[25,80] },
-      legend:{ font:{size:9} } },
+      xaxis:{ tickfont:{size:10}, gridcolor:C.border },
+      yaxis:{ ticksuffix:'%', tickfont:{size:10}, gridcolor:C.border, range:[25,80] },
+      legend:{ font:{size:10} } },
     CFG
   );
 }
@@ -154,33 +190,32 @@ function renderEscolaFaixaChart(escolaKey) {
     Math.round(Math.max(2, (52 - base) * 0.9)),
   ].map(v => Math.max(2, v));
 
-  Plotly.react('chart-escola-faixa',
+  renderWithAnim('chart-escola-faixa',
     [{ type:'bar', orientation:'h', x: faixa, y: FAIXA_LABELS,
-       marker:{ color: FAIXA_COLORS, opacity:.85 },
-       text: faixa.map(v => v + '%'), textposition:'outside', textfont:{ size:10 },
+       marker:{ color: FAIXA_COLORS, opacity:.92 },
+       text: faixa.map(v => v + '%'), textposition:'outside', textfont:{ size:11 },
     }],
-    { ...CT, margin:{ t:4, r:40, b:16, l:90 },
-      xaxis:{ ticksuffix:'%', gridcolor:C.border, tickfont:{size:9} },
-      yaxis:{ tickfont:{size:10} },
-    }, CFG
+    { ...CT, margin:{ t:4, r:44, b:16, l:96 },
+      xaxis:{ ticksuffix:'%', gridcolor:C.border, tickfont:{size:10} },
+      yaxis:{ tickfont:{size:11} },
+    }
   );
 }
 
 function renderCompEscolaChart(escolaKey) {
   if (!el('chart-comp-escola')) return;
   const comps = getEscolaComponents(escolaKey);
-  Plotly.react('chart-comp-escola',
+  renderWithAnim('chart-comp-escola',
     [{ type:'bar', name: getEscola(escolaKey).nome,
        y: comps.map(c=>c.disc), x: comps.map(c=>c.mediaEscola),
-       orientation:'h', marker:{ color:C.orange, opacity:.85 } },
+       orientation:'h', marker:{ color:C.blue, opacity:.88 } },
      { type:'bar', name:'Média rede',
        y: comps.map(c=>c.disc), x: comps.map(c=>c.mediaRede),
        orientation:'h', marker:{ color:C.slate, opacity:.55 } }],
-    { ...CT, margin:{ t:4, r:40, b:24, l:100 }, barmode:'group',
-      xaxis:{ ticksuffix:'%', gridcolor:C.border, tickfont:{size:9} },
-      yaxis:{ tickfont:{size:9.5} },
-      legend:{ font:{size:9} } },
-    CFG
+    { ...CT, margin:{ t:4, r:44, b:28, l:106 }, barmode:'group',
+      xaxis:{ ticksuffix:'%', gridcolor:C.border, tickfont:{size:10} },
+      yaxis:{ tickfont:{size:10} },
+      legend:{ font:{size:10} } }
   );
 }
 
@@ -189,13 +224,13 @@ function renderPartEvoChart() {
   Plotly.react('chart-part-evo',
     [{ type:'scatter', mode:'lines+markers', name:'Escola A',
        x: SIM_LABELS_CURTOS, y:[88,90,89,91,92],
-       line:{ color:C.orange, width:2.5 }, marker:{ size:5 } },
+       line:{ color:C.blue, width:3 }, marker:{ size:7, color:C.blue } },
      { type:'scatter', mode:'lines', name:'Rede',
        x: SIM_LABELS_CURTOS, y:[82,84,83,85,87],
-       line:{ color:C.slate, width:1.5, dash:'dot' } }],
+       line:{ color:C.slate, width:2, dash:'dot' } }],
     { ...CT, margin:M,
-      xaxis:{ tickfont:{size:9} },
-      yaxis:{ ticksuffix:'%', tickfont:{size:9}, gridcolor:C.border },
+      xaxis:{ tickfont:{size:10} },
+      yaxis:{ ticksuffix:'%', tickfont:{size:10}, gridcolor:C.border },
       legend:{ font:{size:9} } },
     CFG
   );
@@ -222,14 +257,14 @@ function renderEvoGeralChart(escolaKey) {
   Plotly.react('chart-evo-geral',
     [{ type:'scatter', mode:'lines+markers', name: e.nome,
        x: SIM_LABELS_CURTOS, y: e.evo,
-       line:{ color:C.orange, width:2.5 }, marker:{ size:5 } },
+       line:{ color:C.blue, width:3 }, marker:{ size:7, color:C.blue } },
      { type:'scatter', mode:'lines', name:'Rede',
        x: SIM_LABELS_CURTOS, y: REDE_MEDIA_SIM,
-       line:{ color:C.slate, width:1.5, dash:'dot' } }],
+       line:{ color:C.slate, width:2, dash:'dot' } }],
     { ...CT, margin:M,
-      xaxis:{ tickfont:{size:9} },
-      yaxis:{ ticksuffix:'%', tickfont:{size:9}, gridcolor:C.border },
-      legend:{ font:{size:9} } },
+      xaxis:{ tickfont:{size:10} },
+      yaxis:{ ticksuffix:'%', tickfont:{size:10}, gridcolor:C.border },
+      legend:{ font:{size:10} } },
     CFG
   );
 }
@@ -245,10 +280,10 @@ function renderEvoRankingChart(escolaKey) {
   Plotly.react('chart-evo-ranking',
     [{ type:'scatter', mode:'lines+markers', name:'Posição',
        x: SIM_LABELS_CURTOS, y: rankEvo,
-       line:{ color:C.blue, width:2.5 }, marker:{ size:5 } }],
+       line:{ color:C.orange, width:3 }, marker:{ size:7, color:C.orange } }],
     { ...CT, margin:M,
-      xaxis:{ tickfont:{size:9} },
-      yaxis:{ tickfont:{size:9}, gridcolor:C.border, autorange:'reversed', dtick:1 },
+      xaxis:{ tickfont:{size:10} },
+      yaxis:{ tickfont:{size:10}, gridcolor:C.border, autorange:'reversed', dtick:1 },
     }, CFG
   );
 }
@@ -268,11 +303,11 @@ function renderDesemp6DiscsChart(key, si, isAcum) {
     if (isAcum) return parseFloat((arr.reduce((s, v) => s + v, 0) / arr.length).toFixed(1));
     return arr[si];
   });
-  Plotly.react('chart-desemp6-discs',
+  renderWithAnim('chart-desemp6-discs',
     [{ type:'bar', name: e.nome,
        y: discs, x: escolaVals, orientation:'h',
-       marker:{ color:C.orange, opacity:.85 },
-       text: escolaVals.map(v => v.toFixed(1) + '%'), textposition:'outside', textfont:{ size:9 },
+       marker:{ color:C.blue, opacity:.88 },
+       text: escolaVals.map(v => v.toFixed(1) + '%'), textposition:'outside', textfont:{ size:10 },
     },
     { type:'bar', name:'Rede',
        y: discs, x: redeVals, orientation:'h',
@@ -294,15 +329,15 @@ function renderDesemp6FaixaChart(key, si, isAcum) {
     ? parseFloat((REDE_6_MEDIA.reduce((s, v) => s + v, 0) / 5).toFixed(1))
     : REDE_6_MEDIA[si];
   const faixa     = calcEscola6FaixaDist(escolaMed, redeMed);
-  Plotly.react('chart-desemp6-faixa',
+  renderWithAnim('chart-desemp6-faixa',
     [{ type:'bar', orientation:'h', x: faixa, y: FAIXA_LABELS,
-       marker:{ color: FAIXA_COLORS, opacity:.85 },
-       text: faixa.map(v => v + '%'), textposition:'outside', textfont:{ size:10 },
+       marker:{ color: FAIXA_COLORS, opacity:.92 },
+       text: faixa.map(v => v + '%'), textposition:'outside', textfont:{ size:11 },
     }],
-    { ...CT, margin:{ t:4, r:40, b:16, l:90 },
-      xaxis:{ ticksuffix:'%', gridcolor:C.border, tickfont:{ size:9 } },
-      yaxis:{ tickfont:{ size:10 } },
-    }, CFG
+    { ...CT, margin:{ t:4, r:44, b:16, l:96 },
+      xaxis:{ ticksuffix:'%', gridcolor:C.border, tickfont:{ size:10 } },
+      yaxis:{ tickfont:{ size:11 } },
+    }
   );
 }
 
@@ -312,14 +347,14 @@ function renderDesemp6EvoChart(key) {
   Plotly.react('chart-desemp6-evo',
     [{ type:'scatter', mode:'lines+markers', name: e.nome,
        x: SIM_LABELS_CURTOS, y: e.media,
-       line:{ color:C.orange, width:2.5 }, marker:{ size:5 } },
+       line:{ color:C.blue, width:3 }, marker:{ size:7, color:C.blue } },
      { type:'scatter', mode:'lines', name:'Rede',
        x: SIM_LABELS_CURTOS, y: REDE_6_MEDIA,
-       line:{ color:C.slate, width:1.5, dash:'dot' } }],
+       line:{ color:C.slate, width:2, dash:'dot' } }],
     { ...CT, margin:M,
-      xaxis:{ tickfont:{ size:9 }, gridcolor:C.border },
-      yaxis:{ ticksuffix:'%', tickfont:{ size:9 }, gridcolor:C.border },
-      legend:{ font:{ size:9 } } },
+      xaxis:{ tickfont:{ size:10 }, gridcolor:C.border },
+      yaxis:{ ticksuffix:'%', tickfont:{ size:10 }, gridcolor:C.border },
+      legend:{ font:{ size:10 } } },
     CFG
   );
 }
@@ -371,18 +406,17 @@ function renderAlunoAreaChart() {
   if (!el('chart-aluno-area')) return;
   const disc = ['Matemática','Física','Química','Língua Inglesa','C. Humanas'];
   const medias = [58.6, 43.8, 57.0, 63.3, 52.1];
-  Plotly.react('chart-aluno-area',
+  renderWithAnim('chart-aluno-area',
     [{ type:'bar', name:'Média alunos',
        y: disc, x: medias, orientation:'h',
-       marker:{ color:C.orange, opacity:.82 } },
+       marker:{ color:C.blue, opacity:.88 } },
      { type:'scatter', mode:'lines', name:'Meta (60%)',
        x:[60,60,60,60,60], y: disc,
-       line:{ color:C.slate, width:1.5, dash:'dot' }, hoverinfo:'skip' }],
-    { ...CT, margin:{ t:4, r:42, b:16, l:106 },
-      xaxis:{ range:[0,85], ticksuffix:'%', gridcolor:C.border, tickfont:{size:9} },
-      yaxis:{ tickfont:{size:9.5} },
-      legend:{ font:{size:9} } },
-    CFG
+       line:{ color:C.orange, width:2, dash:'dot' }, hoverinfo:'skip' }],
+    { ...CT, margin:{ t:4, r:44, b:16, l:112 },
+      xaxis:{ range:[0,85], ticksuffix:'%', gridcolor:C.border, tickfont:{size:10} },
+      yaxis:{ tickfont:{size:10} },
+      legend:{ font:{size:10} } }
   );
 }
 
@@ -404,14 +438,14 @@ function renderAlunoEvoChart(alunoKey) {
   Plotly.react('chart-aluno-evo',
     [{ type:'scatter', mode:'lines+markers', name: d.nome.split(' ')[0],
        x: SIM_LABELS_CURTOS, y: d.evo,
-       line:{ color:C.orange, width:2.5 }, marker:{ size:5 } },
+       line:{ color:C.blue, width:3 }, marker:{ size:7, color:C.blue } },
      { type:'scatter', mode:'lines', name:'Rede',
        x: SIM_LABELS_CURTOS, y: REDE_MEDIA_SIM,
-       line:{ color:C.slate, width:1.5, dash:'dot' } }],
+       line:{ color:C.slate, width:2, dash:'dot' } }],
     { ...CT, margin:M,
-      xaxis:{ tickfont:{size:9}, gridcolor:C.border },
-      yaxis:{ ticksuffix:'%', tickfont:{size:9}, gridcolor:C.border },
-      legend:{ font:{size:9} } },
+      xaxis:{ tickfont:{size:10}, gridcolor:C.border },
+      yaxis:{ ticksuffix:'%', tickfont:{size:10}, gridcolor:C.border },
+      legend:{ font:{size:10} } },
     CFG
   );
 }
@@ -429,30 +463,28 @@ function renderAlunoDesempenhoCharts() {
     );
 
   if (el('chart-alunos-geral-faixa'))
-    Plotly.react('chart-alunos-geral-faixa',
+    renderWithAnim('chart-alunos-geral-faixa',
       [{ type:'bar', orientation:'h', x:[21,33,36,9,1], y: FAIXA_LABELS,
-         marker:{ color: FAIXA_COLORS, opacity:.85 },
-         text:['21%','33%','36%','9%','1%'], textposition:'outside', textfont:{ size:10 },
+         marker:{ color: FAIXA_COLORS, opacity:.92 },
+         text:['21%','33%','36%','9%','1%'], textposition:'outside', textfont:{ size:11 },
       }],
-      { ...CT, margin:{ t:4, r:42, b:16, l:92 },
-        xaxis:{ ticksuffix:'%', gridcolor:C.border, tickfont:{size:9} },
-        yaxis:{ tickfont:{size:9.5} } },
-      CFG
+      { ...CT, margin:{ t:4, r:44, b:16, l:96 },
+        xaxis:{ ticksuffix:'%', gridcolor:C.border, tickfont:{size:10} },
+        yaxis:{ tickfont:{size:10} } }
     );
 }
 
 function renderAlunoEvoRedeChart() {
   if (!el('chart-alunos-evo-rede')) return;
-  Plotly.react('chart-alunos-evo-rede',
+  renderWithAnim('chart-alunos-evo-rede',
     [{ type:'bar', name:'Média',
        x: SIM_LABELS_CURTOS, y: REDE_MEDIA_SIM,
-       marker:{ color:C.orange, opacity:.85 },
-       text: REDE_MEDIA_SIM.map(v => v + '%'), textposition:'outside', textfont:{ size:10 },
+       marker:{ color:C.blue, opacity:.88 },
+       text: REDE_MEDIA_SIM.map(v => v + '%'), textposition:'outside', textfont:{ size:11 },
     }],
-    { ...CT, margin:{ t:6, r:8, b:30, l:38 },
-      xaxis:{ tickfont:{size:10} },
-      yaxis:{ ticksuffix:'%', tickfont:{size:9}, gridcolor:C.border } },
-    CFG
+    { ...CT, margin:{ t:6, r:8, b:32, l:40 },
+      xaxis:{ tickfont:{size:11} },
+      yaxis:{ ticksuffix:'%', tickfont:{size:10}, gridcolor:C.border } }
   );
 }
 
