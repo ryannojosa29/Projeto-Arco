@@ -1806,7 +1806,12 @@ select.sel:hover { border-color: var(--orange); }
 .evo-tipo-btn.active { background: var(--navy); color: #fff; }
 
 /* ── EVOLUÇÃO CHARTS GRID (columns set dynamically by JS) ───── */
-.evo-charts-grid { display: grid; gap: 12px; }
+.evo-charts-grid { display: grid; gap: 16px; }
+.evo-chart-card { padding: 20px 20px 10px !important; }
+.evo-chart-title {
+  font-size: 13px; font-weight: 800; color: var(--t1);
+  letter-spacing: -.15px; margin-bottom: 12px;
+}
 
 /* ── DISCIPLINAS TAB — LAYOUT PREMIUM ───────────────────────── */
 .disc-tab-grid {

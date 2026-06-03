@@ -2139,43 +2139,92 @@ function renderEvolucaoCharts(tipo) {
 
   const charts = tipoData.charts || [];
   const labels = (typeof SIM_EVO_LABELS !== 'undefined') ? SIM_EVO_LABELS : ['1º','2º','3º','4º','5º'];
-
-  // Grid columns: max 3 per row
-  const cols = Math.min(charts.length, 3);
-  grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+  grid.style.gridTemplateColumns = '1fr';
 
   grid.innerHTML = charts.map((c, i) =>
-    `<div class="card">
-      <div class="card-title mb2" style="font-size:11.5px;min-height:32px">${c.title}</div>
-      <div id="evo-chart-${i}" style="height:170px"></div>
+    `<div class="card evo-chart-card">
+      <div class="evo-chart-title">${c.title}</div>
+      <div id="evo-chart-${i}" style="height:320px"></div>
     </div>`
   ).join('');
 
-  const baseMgn  = { t: 8, r: 10, b: 30, l: 36 };
-  const baseFont = { family: 'Inter, sans-serif', size: 9.5, color: '#6B7280' };
   const cfg = { displayModeBar: false, responsive: true };
+
+  function _rgba(hex, a) {
+    const r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+    return `rgba(${r},${g},${b},${a})`;
+  }
 
   charts.forEach((c, i) => {
     const divEl = document.getElementById('evo-chart-' + i);
     if (!divEl || typeof Plotly === 'undefined') return;
-    const multi  = c.traces.length > 1;
-    const traces = c.traces.map(t => ({
-      x: labels, y: t.data, type: 'scatter', mode: 'lines+markers',
-      name: t.label,
-      line:   { color: t.color, width: t.dash ? 1.5 : 2.5, dash: t.dash || 'solid' },
-      marker: { color: t.color, size: t.dash ? 4 : 5.5 },
-      hovertemplate: (multi ? t.label + ': ' : '') + '%{y}' + tipoData.unit + '<extra></extra>',
-    }));
+
+    const multi = c.traces.length > 1;
+
+    const rawY = c.traces.flatMap(t => t.data);
+    const yPad = (Math.max(...rawY) - Math.min(...rawY)) * 0.18;
+    const yMin = Math.floor(Math.min(...rawY) - yPad);
+    const yMax = Math.ceil(Math.max(...rawY)  + yPad);
+
+    const baseTrace = (!multi) ? [{
+      x: labels, y: labels.map(() => yMin),
+      type: 'scatter', mode: 'none',
+      showlegend: false, hoverinfo: 'skip', fill: 'none',
+    }] : [];
+
+    const fullTraces = [
+      ...baseTrace,
+      ...c.traces.map(t => {
+        const isDash  = !!t.dash;
+        const useFill = !multi && !isDash;
+        return {
+          x: labels, y: t.data,
+          type: 'scatter', mode: 'lines+markers',
+          name: t.label,
+          line: {
+            color: t.color, width: isDash ? 2 : 3.5,
+            dash: t.dash || 'solid', shape: 'spline', smoothing: 0.65,
+          },
+          marker: isDash
+            ? { color: t.color, size: 5 }
+            : { size: 10, color: '#fff', line: { color: t.color, width: 2.8 } },
+          fill:      useFill ? 'tonexty' : 'none',
+          fillcolor: useFill ? _rgba(t.color, 0.10) : 'transparent',
+          hovertemplate: (multi ? '<b>' + t.label + '</b>: ' : '') + '%{y}' + tipoData.unit + '<extra></extra>',
+        };
+      }),
+    ];
+
     const layout = {
-      margin: baseMgn,
+      margin: { t: 16, r: 18, b: 38, l: 44 },
       paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
-      font: baseFont,
-      xaxis: { gridcolor: '#F0EDE8', tickfont: { size: 8.5 }, fixedrange: true },
-      yaxis: { gridcolor: '#F0EDE8', tickfont: { size: 8.5 }, fixedrange: true, ticksuffix: tipoData.unit },
+      font: { family: "'Plus Jakarta Sans',system-ui,sans-serif", size: 11, color: '#6B6B66' },
+      xaxis: { gridcolor: '#EDEAE3', tickfont: { size: 10 }, fixedrange: true, linecolor: '#E8E6DF' },
+      yaxis: { gridcolor: '#EDEAE3', tickfont: { size: 10 }, fixedrange: true, ticksuffix: tipoData.unit, range: [yMin, yMax] },
       showlegend: multi,
-      legend: { font: { size: 8.5 }, orientation: 'h', x: 0, y: 1.08, xanchor: 'left' },
+      legend: { font: { size: 10 }, orientation: 'h', x: 0, y: 1.1, xanchor: 'left' },
     };
-    Plotly.react(divEl, traces, layout, cfg);
+
+    Plotly.react(divEl, fullTraces, layout, cfg);
+
+    const animDelay = 80 + i * 160;
+    setTimeout(() => {
+      divEl.querySelectorAll('.js-line').forEach((path, pi) => {
+        const len = path.getTotalLength ? path.getTotalLength() : 0;
+        if (!len) return;
+        path.style.transition = 'none';
+        path.style.strokeDasharray  = len;
+        path.style.strokeDashoffset = len;
+        path.getBoundingClientRect();
+        path.style.transition = `stroke-dashoffset 1s cubic-bezier(0.4,0,0.2,1) ${pi * 0.08}s`;
+        path.style.strokeDashoffset = '0';
+      });
+      divEl.querySelectorAll('.js-fill, .point').forEach(el => {
+        el.style.opacity = '0';
+        el.style.transition = 'opacity 0.6s ease 0.7s';
+        requestAnimationFrame(() => { el.style.opacity = '1'; });
+      });
+    }, animDelay);
   });
 
   const insight = typeof tipoData.insight === 'function' ? tipoData.insight() : tipoData.insight;
