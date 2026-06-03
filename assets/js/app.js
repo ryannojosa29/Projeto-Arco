@@ -2199,7 +2199,7 @@ function renderEvolucaoCharts(tipo) {
       margin: { t: 16, r: 18, b: 38, l: 44 },
       paper_bgcolor: 'transparent', plot_bgcolor: 'transparent',
       font: { family: "'Plus Jakarta Sans',system-ui,sans-serif", size: 11, color: '#6B6B66' },
-      xaxis: { gridcolor: '#EDEAE3', tickfont: { size: 10 }, fixedrange: true, linecolor: '#E8E6DF' },
+      xaxis: { gridcolor: '#EDEAE3', tickfont: { size: 10 }, fixedrange: true, linecolor: '#E8E6DF', range: [-0.4, labels.length - 0.6] },
       yaxis: { gridcolor: '#EDEAE3', tickfont: { size: 10 }, fixedrange: true, ticksuffix: tipoData.unit, range: [yMin, yMax] },
       showlegend: multi,
       legend: { font: { size: 10 }, orientation: 'h', x: 0, y: 1.1, xanchor: 'left' },
