@@ -1,0 +1,39 @@
+{
+  "_doc": "Regra de atribuição questão -> professor (docs/09 §3.2). Renomeie para professores.json para ativar. Sem este arquivo, professor_id fica null e o pipeline segue rodando.",
+
+  "_formato_por_intervalo": {
+    "regra": "por_intervalo",
+    "mapping": {
+      "sim1": [
+        { "de": 1,  "ate": 12, "professor_id": 1 },
+        { "de": 13, "ate": 24, "professor_id": 2 },
+        { "de": 25, "ate": 36, "professor_id": 3 },
+        { "de": 37, "ate": 48, "professor_id": 4 }
+      ],
+      "*": [
+        { "de": 1, "ate": 48, "professor_id": 1 }
+      ]
+    }
+  },
+
+  "_formato_por_disciplina": {
+    "regra": "por_disciplina",
+    "mapping": {
+      "Matemática":     1,
+      "Física":         2,
+      "Química":        3,
+      "Língua Inglesa": 4
+    }
+  },
+
+  "_formato_por_frente": {
+    "regra": "por_frente",
+    "_obs": "Executado após o Estágio 2 (precisa da classificação de frente).",
+    "mapping": {
+      "Cinemática":     2,
+      "Dinâmica":       2,
+      "Eletrodinâmica": 5,
+      "Trigonometria":  1
+    }
+  }
+}

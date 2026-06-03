@@ -4,6 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Importar gabarito — Arco</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml"/>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <link rel="stylesheet" href="assets/css/tokens.css"/>
 <link rel="stylesheet" href="assets/css/main.css"/>
@@ -37,6 +38,16 @@
   .ciclo-actions { display:flex; gap: 8px; }
   .ciclo-actions button { padding: 7px 12px; font-size: 12px; font-weight: 600; }
   .empty { color: var(--t4,#6b6b78); font-size: 13px; text-align: center; padding: 16px; border: 1px dashed var(--border,#e6e6ee); border-radius: 10px; }
+  select { width:100%; padding:10px 12px; border:1px solid var(--border,#dcdce6); border-radius:8px; font:inherit; background:#fff; box-sizing:border-box; }
+  .blocos { display:grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .bloco-card { padding:10px 12px; border:1px solid var(--border,#e6e6ee); border-radius:10px; background:#fafafb; }
+  .bloco-num { font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:#E8521A; margin-bottom:4px; }
+  .bloco-range { font-size:11px; color:var(--t4,#6b6b78); margin-bottom:8px; }
+  .check-row { display:flex; gap:18px; margin-top:6px; }
+  .check-row label { text-transform:none; letter-spacing:0; font-size:13px; font-weight:500; color:var(--t2,#2b2b35); display:flex; align-items:center; gap:6px; cursor:pointer; }
+  .check-row input { margin:0; }
+  .dup-warn { color:#92400e; font-size:12px; margin-top:8px; display:none; }
+  @media (max-width: 640px) { .blocos { grid-template-columns: repeat(2, 1fr); } }
 </style>
 </head>
 <body>
@@ -70,6 +81,71 @@
       <small id="warn-replace" style="margin-left:12px; color:#92400e; display:none">⚠️ esse ciclo já tem dados — vai substituí-los.</small>
     </form>
     <div id="out" class="out info" style="display:none"></div>
+  </div>
+
+  <!-- Importar prova (.docx) — Estágios 1, 2 e 3 do pipeline -->
+  <div class="card">
+    <h2>Importar prova (.docx) e gerar metadados</h2>
+    <div class="sub" style="margin: 0 0 16px;">
+      Requer o gabarito (.xlsx) do ciclo já importado. A prova roda os 3 estágios do
+      pipeline: parser do documento, classificação por IA (frente + assunto principal e secundário) e diagnóstico
+      das questões priorizadas.
+    </div>
+    <form id="form-prova">
+      <div class="row two">
+        <div>
+          <label for="p-chave">Ciclo</label>
+          <select id="p-chave" name="chave" required>
+            <option value="">Selecione o ciclo…</option>
+          </select>
+          <small>Apenas ciclos que já têm gabarito importado.</small>
+        </div>
+        <div>
+          <label for="p-arquivo">Prova (.docx)</label>
+          <input id="p-arquivo" name="arquivo" type="file" accept=".docx" required/>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Sequência de disciplinas por bloco (12 questões cada)</label>
+          <div class="blocos">
+            <div class="bloco-card">
+              <div class="bloco-num">Bloco 1</div>
+              <div class="bloco-range">Q1 – Q12</div>
+              <select class="seq" data-bloco="0" required></select>
+            </div>
+            <div class="bloco-card">
+              <div class="bloco-num">Bloco 2</div>
+              <div class="bloco-range">Q13 – Q24</div>
+              <select class="seq" data-bloco="1" required></select>
+            </div>
+            <div class="bloco-card">
+              <div class="bloco-num">Bloco 3</div>
+              <div class="bloco-range">Q25 – Q36</div>
+              <select class="seq" data-bloco="2" required></select>
+            </div>
+            <div class="bloco-card">
+              <div class="bloco-num">Bloco 4</div>
+              <div class="bloco-range">Q37 – Q48</div>
+              <select class="seq" data-bloco="3" required></select>
+            </div>
+          </div>
+          <div id="seq-dup" class="dup-warn">⚠️ a mesma disciplina aparece em mais de um bloco.</div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="check-row">
+          <label><input type="checkbox" id="p-enriquecer" checked/> Enriquecer (Estágio 2 — IA classifica frente e assuntos)</label>
+          <label><input type="checkbox" id="p-diagnosticar" checked/> Diagnosticar (Estágio 3 — IA gera devolutiva nas priorizadas)</label>
+        </div>
+      </div>
+
+      <button id="btn-prova" type="submit">Importar prova</button>
+      <small style="margin-left:12px; color:var(--t4,#6b6b78);">Pode demorar (uma chamada IA por questão).</small>
+    </form>
+    <div id="out-prova" class="out info" style="display:none"></div>
   </div>
 
   <!-- Lista de ciclos -->
@@ -111,7 +187,7 @@
   }
   cicloIn.addEventListener('input', checaSubstituicao);
 
-  async function carregarLista() {
+  let carregarLista = async function () {
     lista.innerHTML = '<div class="empty">Carregando…</div>';
     try {
       const res = await fetch(`${BASE}/api/simulados`);
@@ -141,7 +217,7 @@
         </div>
       </div>`).join('');
     checaSubstituicao();
-  }
+  };
 
   lista.addEventListener('click', async (ev) => {
     const btnEl = ev.target.closest('button[data-act]');
@@ -197,6 +273,114 @@
     }
   });
 
+  // ── Card 2: importar prova (.docx) ─────────────────────────
+  const DISCIPLINAS = ["Matemática", "Física", "Química", "Língua Inglesa"];
+  const formProva   = document.getElementById('form-prova');
+  const btnProva    = document.getElementById('btn-prova');
+  const outProva    = document.getElementById('out-prova');
+  const selChave    = document.getElementById('p-chave');
+  const selsSeq     = Array.from(document.querySelectorAll('select.seq'));
+  const dupWarn     = document.getElementById('seq-dup');
+
+  function showProva(kind, text) {
+    outProva.style.display = 'block';
+    outProva.className = 'out ' + kind;
+    outProva.textContent = text;
+  }
+
+  function preencherSelectsDisciplina() {
+    // default: ordem natural
+    selsSeq.forEach((sel, i) => {
+      sel.innerHTML = DISCIPLINAS.map(d => `<option value="${d}"${d===DISCIPLINAS[i]?' selected':''}>${d}</option>`).join('');
+    });
+  }
+
+  function checaDuplicatasSeq() {
+    const vals = selsSeq.map(s => s.value);
+    const dup = vals.length !== new Set(vals).size;
+    dupWarn.style.display = dup ? '' : 'none';
+    btnProva.disabled = dup || !selChave.value;
+  }
+  selsSeq.forEach(s => s.addEventListener('change', checaDuplicatasSeq));
+  selChave.addEventListener('change', checaDuplicatasSeq);
+
+  function atualizarCicloDropdown() {
+    const opcoes = ciclosExistentes.map(c =>
+      `<option value="${c.chave}">${c.ordem}º — ${c.nome}</option>`
+    ).join('');
+    selChave.innerHTML = `<option value="">Selecione o ciclo…</option>` + opcoes;
+    checaDuplicatasSeq();
+  }
+
+  // Envolve carregarLista pra atualizar o dropdown também
+  const carregarListaOriginal = carregarLista;
+  carregarLista = async function () {
+    await carregarListaOriginal();
+    atualizarCicloDropdown();
+  };
+
+  formProva.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const vals = selsSeq.map(s => s.value);
+    if (new Set(vals).size !== 4) {
+      showProva('err', 'Cada bloco precisa ter uma disciplina diferente.');
+      return;
+    }
+    const chave = selChave.value;
+    if (!chave) {
+      showProva('err', 'Selecione o ciclo.');
+      return;
+    }
+    const arq = document.getElementById('p-arquivo').files[0];
+    if (!arq) {
+      showProva('err', 'Selecione o arquivo .docx.');
+      return;
+    }
+
+    btnProva.disabled = true;
+    showProva('info', 'Enviando… (uma chamada IA por questão; pode demorar)');
+    const fd = new FormData();
+    fd.append('arquivo', arq);
+    fd.append('sequencia_disciplinas', vals.join(','));
+    const params = new URLSearchParams({
+      enriquecer: document.getElementById('p-enriquecer').checked ? 'true' : 'false',
+      diagnosticar: document.getElementById('p-diagnosticar').checked ? 'true' : 'false',
+    });
+
+    try {
+      const res = await fetch(`${BASE}/api/simulados/${encodeURIComponent(chave)}/prova?${params}`, {
+        method: 'POST', body: fd,
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        showProva('err', `Erro ${res.status}: ${json.detail || res.statusText}`);
+      } else if (json.status === 'ja_importado') {
+        showProva('info', `Esse .docx (sha=${json.sha256?.slice(0,8) || '?'}) já foi importado para ${chave}. Nada para fazer.`);
+      } else {
+        const e2 = json.estagio2 || {};
+        const e3 = json.estagio3 || {};
+        const partes = [
+          `✓ Prova importada em ${json.duration_ms} ms.`,
+          `${json.questoes} questões processadas. ${json.warnings_count} warnings.`,
+          `Estágio 2 (enriquecimento): ${e2.ok || 0} ok, ${e2.cache_hit || 0} via cache, ${e2.failed || 0} falharam.`,
+          `Estágio 3 (diagnóstico): ${json.priorizadas} priorizadas, ${e3.ok || 0} ok, ${e3.failed || 0} falharam.`,
+        ];
+        if (json.warnings && json.warnings.length) {
+          partes.push('Warnings (primeiros 8):');
+          partes.push(json.warnings.slice(0, 8).map(w => '  - ' + w).join('\n'));
+          if (json.warnings.length > 8) partes.push(`  ... e mais ${json.warnings.length - 8}`);
+        }
+        showProva('ok', partes.join('\n'));
+      }
+    } catch (err) {
+      showProva('err', `Falha na chamada: ${err.message}\n\nA API Python está rodando em ${BASE}?`);
+    } finally {
+      btnProva.disabled = false;
+      checaDuplicatasSeq();
+    }
+  });
+
+  preencherSelectsDisciplina();
   carregarLista();
 })();
 </script>

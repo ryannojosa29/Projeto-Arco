@@ -4,3 +4,5 @@ supabase==2.4.3
 openpyxl
 python-multipart
 pydantic-settings
+pypandoc
+anthropic>=0.40.0

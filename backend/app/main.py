@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 
 from .config import settings
 from .logging_config import get_logger, request_id_var, setup_logging
-from .routers import importacoes, simulados
+from .routers import importacoes, provas, simulados
 
 # Configura o logging antes de qualquer outra coisa.
 setup_logging(level=settings.log_level, fmt=settings.log_format)
@@ -109,6 +109,7 @@ async def on_shutdown():
 
 app.include_router(importacoes.router)
 app.include_router(simulados.router)
+app.include_router(provas.router)
 
 
 @app.get("/health")
