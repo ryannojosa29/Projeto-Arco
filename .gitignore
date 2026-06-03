@@ -7,6 +7,10 @@ __pycache__/
 *.pyc
 backend/.venv/
 
+# Fase 2 — artefatos do pipeline de ingestão (.docx)
+backend/.cache/
+backend/config/professores.json
+
 # Supabase CLI
 supabase/.temp/
 supabase/.branches/

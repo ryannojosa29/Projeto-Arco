@@ -25,18 +25,33 @@ A regra central é:
 
 | Entrada | Conteúdo | Papel |
 |---|---|---|
-| `Simulado_Combinado.docx` | 48 questões, enunciados, alternativas, resoluções, imagens | Fonte de texto, resolução e figuras |
-| `Gabarito_questoes.xlsx` | Por questão: disciplina, gabarito, acertos, contagem A–E, itens mais marcados | Fonte autoritativa de gabarito e estatística |
+| `Simulado_Combinado.docx` | 48 questões, enunciados, alternativas, resoluções (opcionais), imagens | Fonte de texto e figuras |
+| `Gabarito_questoes.xlsx` | Por questão: gabarito, acertos, contagem A–E, itens mais marcados | Fonte autoritativa de gabarito e estatística |
+| **Sequência de disciplinas no upload** | 4 valores únicos, na ordem dos blocos | Define disciplina por questão (Q1-12 = bloco 1, ..., Q37-48 = bloco 4) |
 | Regra de atribuição de professor | Determinística (sem LLM) | Liga cada questão ao professor/frente responsável |
+
+### 2.0 Estrutura fixa do simulado
+
+Todo simulado tem **4 blocos de 12 questões**, um por disciplina. A ordem dos
+blocos varia entre simulados e é decidida quando o coordenador monta a prova —
+por isso a **sequência é informada no upload do .docx**, no frontend. Cálculo:
+
+```python
+disciplina(n) = sequencia[(n - 1) // 12]   # n em 1..48
+```
+
+A sequência informada é **autoritativa**: sobrescreve `questoes.disciplina`
+gravada pelo xlsx anterior. Quando diverge do xlsx, o backend registra warning
+mas mantém a do upload (o simulado é a verdade do contexto).
 
 ### 2.1 O que a análise do `.docx` de exemplo revelou
 
 | Sinal | Achado | Implicação |
 |---|---|---|
-| Marcador `QUESTÃO N` | 48 ocorrências limpas e numeradas | Split por questão é regex puro, sem IA |
-| `Assunto:` | Presente em 35/48 questões | Quando existe, é entrada forte; quando falta, a IA preenche |
-| `Resolução:` / `Resposta:` | Presentes mas inconsistentes (33 "Resposta:") | Parser tolera variação, não exige |
-| Cabeçalho de matéria/professor | Ausente | Atribuição vem de regra externa, nunca de inferência |
+| Marcador `QUESTÃO N` | 48 ocorrências (algumas como `**[QUESTÃO N]{.mark}**` quando destacadas no Word) | Split por questão tolera bold/itálico/highlight |
+| `Assunto:` | Presente em 34/48 questões | Quando existe, vai para `questoes.assunto` (texto livre da banca); quando falta, a IA classifica do zero |
+| `Resolução:` / `Resposta:` | Presentes em ~26/48 e ~47/48 respectivamente | **Opcionais.** Quando faltam, não há warning; o LLM infere do enunciado |
+| Cabeçalho de matéria/professor | Ausente | Disciplina vem da sequência informada no upload; professor vem de regra externa |
 | Imagens | 48 PNGs embutidos | Extraíveis deterministicamente |
 | Equações | 205 blocos OMML (MathML do Word) | Exigem Pandoc para preservar como LaTeX — strip de XML destrói a matemática |
 | Cruzamento | 48 questões (.docx) = 48 (xlsx) = 48 (mock) | Coerência confirmada; um valida o outro |
@@ -82,12 +97,19 @@ Responsabilidade: virar o `.docx` num JSON canônico de 48 questões.
 - Usar **Pandoc** (`pandoc -f docx -t markdown+latex_math`) para preservar as
   205 equações como LaTeX legível.
 - Extrair imagens para `media/sim{N}/q{numero}_img{k}.png` com hash de conteúdo.
-- Split por `^QUESTÃO\s+\d+$`.
-- Por bloco extrair: `enunciado`, `alternativas{A..E}`, `assunto?`,
-  `resolucao?`, `gabarito_doc?`, `equacoes_latex[]`, `imagens[]`.
-- Cruzar com `Gabarito_questoes.xlsx`. Se `gabarito_doc ≠ gabarito_xlsx`,
-  registrar `warning` e manter o do xlsx (autoritativo).
-- Idempotência: hash do `.docx` + hash por questão. Nada mudou, nada reprocessa.
+- Split por `QUESTÃO N` (regex tolera bold/itálico do Word: `**QUESTÃO 5**`,
+  `**[QUESTÃO 25]{.mark}**`).
+- Por bloco extrair: `enunciado`, `alternativas{A..E}`, `assunto?` (texto livre da
+  banca), `resolucao?` (opcional, sem warning), `gabarito_doc?` (auditoria),
+  `equacoes_latex[]`, `imagens[]`.
+- **Disciplina vem da sequência informada no upload** (não do xlsx). Cálculo
+  `disc = sequencia[(n-1)//12]`. Divergência com o xlsx vira warning, mas a
+  sequência vence.
+- Gabarito autoritativo é o do xlsx. Se `gabarito_doc ≠ gabarito_xlsx`, registra
+  warning e mantém o xlsx.
+- Idempotência: hash do `.docx` (chave única por `(simulado_id, sha256)`) + hash
+  por questão. Mesmo arquivo re-uploadado devolve resultado em cache sem
+  reprocessar.
 - Saída validada com Pydantic.
 
 ### 3.2 Estágio 1.5 — Atribuição de professor (sem LLM)
@@ -103,25 +125,52 @@ ainda precisa ser especificada** (ver seção 7). O posicionamento no pipeline
 
 Responsabilidade: gerar metadados pedagógicos **antes de ver qualquer dado de
 aluno**, mantendo o sinal limpo. Entrada por questão:
-`{enunciado, alternativas, assunto?, resolucao?, disciplina}`. Saída JSON estrito:
+`{enunciado, alternativas, assunto?, resolucao?, disciplina}` (resolução é
+opcional — quando ausente, o LLM infere do enunciado).
+
+Cada questão tem **1 ou 2 assuntos**. Quando há dois, `assunto_principal`
+sustenta a maior parte do raciocínio; `assunto_secundario` é apoio. Os dois
+podem vir de **frentes diferentes** (questão integradora). Saída JSON estrito:
 
 ```jsonc
 {
-  "frente": "Mecânica",                      // enum por disciplina
-  "subtopicos": ["MRU", "MUV"],
-  "habilidades_cognitivas": ["modelar", "calcular"],  // vocabulário fechado
-  "pre_requisitos": ["produtos notáveis", "irracionalidade quadrática"],
-  "dificuldade_esperada": 4,                 // 1–5, calibrada ITA
+  "frente_principal": "Cinemática",                     // capítulo do docs/10
+  "assunto_principal": "Lançamento de projéteis",       // bullet sob frente_principal
+  "frente_secundaria": "Energia",                       // null se mono-assunto
+  "assunto_secundario": "Conservação da energia",       // null se mono-assunto
+  "habilidades_cognitivas": ["modelar", "calcular"],
+  "pre_requisitos": ["Operações vetoriais", "Equação horária"],
+  "dificuldade_esperada": 4,                            // 1–5, calibrada ITA
   "hipotese_erro_por_alternativa": {
-    "A": "esqueceu o termo cruzado do produto notável",
+    "A": "confundiu velocidade com aceleração no eixo vertical",
     "B": "...", "C": "...", "D": "...", "E": "gabarito"
   },
-  "tags_busca": ["produto-notavel", "racional-irracional"]
+  "tags_busca": ["projetil", "decomposicao-vetorial"]
 }
 ```
 
-Validação Pydantic com `Literal[...]` nos enums; 1 retry se o schema falhar;
-`enrichment_status=failed` se persistir. Cacheado por hash da questão.
+**Vocabulário fechado** com `Literal[...]` no schema Pydantic:
+
+- Frentes: `FrenteMatematica = Literal["Conjuntos e Lógica", ...]`, etc. — cada
+  Literal restrito à disciplina.
+- Assuntos: bullets sob a frente correspondente em `docs/10`.
+- `habilidades_cognitivas`: `Literal` fechado de 8 valores.
+
+**Regras cruzadas** (validador além do shape Pydantic):
+
+1. `assunto_principal` ∈ subtópicos de `frente_principal`.
+2. `assunto_secundario` ∈ subtópicos de `frente_secundaria` (quando ambos preenchidos).
+3. Par secundário anda junto: ou ambos não-nulos ou ambos nulos.
+4. (frente_principal, assunto_principal) ≠ (frente_secundaria, assunto_secundario).
+5. Para frentes **sem bullets no edital** (Química Orgânica 11.1–11.6 e Língua
+   Inglesa "Interpretação"), o assunto é **autorreferência**: igual ao nome da
+   frente. Ex: `frente="Interpretação", assunto="Interpretação"`.
+
+Mudanças no edital exigem atualização do código e bump em `enrichment_version`.
+
+Comportamento em falha: 1 retry se o schema falhar; `enrichment_status=failed` se
+persistir. Cacheado por hash da questão + versão do prompt + versão da taxonomia
++ modelo.
 
 ### 3.4 Estágio 3 — Diagnóstico pós-aplicação
 
@@ -159,9 +208,9 @@ Isso preenche diretamente a "Página 3 da Devolutiva" (`docs/05` §13.3).
 
 | Já existe | O que falta |
 |---|---|
-| `questoes` com `assunto` e `competencia` nullable (`20260527000001_fase1.sql`) | Tabela `questao_meta` (1:1) com `frente`, `subtopicos`, `habilidades`, `pre_requisitos`, `dificuldade_esperada`, `hipotese_erro_por_alternativa`, `resolucao_latex`, `enrichment_version`, `enrichment_status` |
-| `questao_resultados` com acerto, contagens, itens mais marcados | Tabela `questao_diagnostico` (1:1, só priorizadas) com `hipotese_pedagogica`, `evidencia_no_distrator`, `sugestao_abordagem` |
-| Endpoint `POST /api/importacoes` (xlsx) | Endpoint `POST /api/simulados/{chave}/prova` (docx) que dispara os Estágios 1→2 |
+| `questoes` com `assunto` e `competencia` nullable (`20260527000001_fase1.sql`) | Tabela `questao_meta` (1:1) com `frente_principal`, `assunto_principal`, `frente_secundaria`, `assunto_secundario`, `habilidades_cognitivas`, `pre_requisitos`, `dificuldade_esperada`, `hipotese_erro_por_alternativa`, `resolucao_latex`, `enrichment_version`, `enrichment_status` |
+| `questao_resultados` com acerto, contagens, itens mais marcados | Tabela `questao_diagnostico` (1:1, só priorizadas) com `hipotese_pedagogica`, `evidencia_no_distrator`, `sugestao_abordagem`, `motivo_priorizacao` |
+| Endpoint `POST /api/importacoes` (xlsx) | Endpoint `POST /api/simulados/{chave}/prova` (docx, com `sequencia_disciplinas`) que dispara os Estágios 1→3 |
 | — | Tabela `professores` (`nome`, `disciplina`, `frente`, vigência) + FK `questoes.professor_id` |
 
 `questao_meta` é tabela separada de `questoes` de propósito: a `questoes` é o

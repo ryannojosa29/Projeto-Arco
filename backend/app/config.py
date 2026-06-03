@@ -20,6 +20,18 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     log_format: str = "json"
 
+    # Fase 2 — pipeline .docx + agentes. Vazio quando indisponível: o parser
+    # (Estágio 1) e o assigner (Estágio 1.5) seguem rodando; os Estágios 2 e 3
+    # falham com mensagem clara em vez de tentar uma chamada sem credencial.
+    anthropic_api_key: str = ""
+    enrichment_model: str = "claude-sonnet-4-6"
+    diagnostic_model: str = "claude-opus-4-7"
+
+    # Diretórios de artefatos do pipeline. Relativos à raiz do repositório.
+    media_dir: str = "backend/.cache/media"
+    enrichment_cache_dir: str = "backend/.cache/enrichment"
+    professores_config: str = "backend/config/professores.json"
+
     model_config = SettingsConfigDict(
         env_file=str(ROOT_ENV),
         env_file_encoding="utf-8",
